@@ -34,3 +34,5 @@ class MMU {
     this.ram[addr + 1] = mostSigByte;
   }
 }
+
+module.exports = MMU;

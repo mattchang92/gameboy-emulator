@@ -21,3 +21,5 @@ class CPU {
     this.mmu = new MMU(this.ram);
   }
 }
+
+module.exports = CPU;
