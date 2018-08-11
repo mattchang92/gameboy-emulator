@@ -13,7 +13,7 @@ class MMU {
     addr = addr & 0xffff;
 
     const leastSigByte = this.ram[addr];
-    const mostSigByte = this.ram[addr + 1];
+    const mostSigByte = this.ram[(addr + 1) & 0xffff];
 
     return (mostSigByte << 8) | leastSigByte;
   }
@@ -31,7 +31,7 @@ class MMU {
     const mostSigByte = (val >>> 8) & 0xff;
 
     this.ram[addr] = leastSigByte;
-    this.ram[addr + 1] = mostSigByte;
+    this.ram[(addr + 1) & 0xffff] = mostSigByte;
   }
 }
 
