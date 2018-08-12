@@ -12,6 +12,7 @@ module.exports = {
     "no-console": "off",
     "no-continue": 'off',
     "max-len": "off",
-    "no-return-assign": "off"
+    "no-return-assign": "off",
+    "no-unused-expressions": "off"
   }
 };
