@@ -63,6 +63,38 @@ const OPCODES = {
   DECA: 0x3d,
   LDAn: 0x3e,
   CFF: 0x3f,
+  LDBB: 0x40,
+  LDBC: 0x41,
+  LDBD: 0x42,
+  LDBE: 0x43,
+  LDBH: 0x44,
+  LDBL: 0x45,
+  LDBHLm: 0x46,
+  LDBA: 0x47,
+  LDCB: 0x48,
+  LDCC: 0x49,
+  LDCD: 0x4a,
+  LDCE: 0x4b,
+  LDCH: 0x4c,
+  LDCL: 0x4d,
+  LDCHLm: 0x4e,
+  LDCA: 0x4f,
+  LDDB: 0x50,
+  LDDC: 0x51,
+  LDDD: 0x52,
+  LDDE: 0x53,
+  LDDH: 0x54,
+  LDDL: 0x55,
+  LDDHLm: 0x56,
+  LDDA: 0x57,
+  LDEB: 0x58,
+  LDEC: 0x59,
+  LDED: 0x5a,
+  LDEE: 0x5b,
+  LDEH: 0x5c,
+  LDEL: 0x5d,
+  LDEHLm: 0x5e,
+  LDEA: 0x5f,
 };
 
 // Zero (0x80): Set if the last operation produced a result of 0;
@@ -94,6 +126,7 @@ const setHalfCarry = (cpu, val, num) => {
 // }
 
 const opcodes = {
+  /* ------------------------ 0x0 ------------------------ */
   [OPCODES.NOP]: () => {},
   [OPCODES.LDBCnn]: (cpu) => {
     cpu.C = cpu.mmu.read8(cpu.PC);
@@ -172,6 +205,8 @@ const opcodes = {
     cpu.A = ((cpu.A >>> 1) + (bit * 0x80)) & 0xff;
     cpu.F = bit ? 0x10 : 0;
   },
+
+  /* ------------------------ 0x1 ------------------------ */
   [OPCODES.STOP]: (cpu) => {
     cpu.PC++;
   },
@@ -309,6 +344,8 @@ const opcodes = {
     if (cpu.A === 0) cpu.F |= 0x80;
     if (c) cpu.F |= 0x10;
   },
+
+  /* ------------------------ 0x2------------------------ */
   [OPCODES.JRZn]: (cpu) => {
     const zero = (cpu.F >> 7) & 0xff;
     let val = cpu.mmu.read8(cpu.PC++);
@@ -356,6 +393,8 @@ const opcodes = {
     cpu.A = (~cpu.A) & 0xff;
     setFlags(cpu, cpu.A, 1);
   },
+
+  /* ------------------------ 0x3 ------------------------ */
   [OPCODES.JRNCn]: (cpu) => {
     const carry = cpu.F & 0x10;
     let val = cpu.mmu.read8(cpu.PC++);
@@ -425,6 +464,42 @@ const opcodes = {
   },
   [OPCODES.LDAn]: cpu => cpu.A = cpu.mmu.read8(cpu.PC++),
   [OPCODES.CFF]: cpu => cpu.F &= ~0x10,
+
+  /* ------------------------ 0x4 ------------------------ */
+  [OPCODES.LDBB]: cpu => cpu.B = cpu.B,
+  [OPCODES.LDBC]: cpu => cpu.B = cpu.C,
+  [OPCODES.LDBD]: cpu => cpu.B = cpu.D,
+  [OPCODES.LDBE]: cpu => cpu.B = cpu.E,
+  [OPCODES.LDBH]: cpu => cpu.B = cpu.H,
+  [OPCODES.LDBL]: cpu => cpu.B = cpu.L,
+  [OPCODES.LDBHLm]: cpu => cpu.B = cpu.mmu.read8(((cpu.H << 8) | cpu.L)),
+  [OPCODES.LDBA]: cpu => cpu.B = cpu.A,
+  [OPCODES.LDCB]: cpu => cpu.C = cpu.B,
+  [OPCODES.LDCC]: cpu => cpu.C = cpu.C,
+  [OPCODES.LDCD]: cpu => cpu.C = cpu.D,
+  [OPCODES.LDCE]: cpu => cpu.C = cpu.E,
+  [OPCODES.LDCH]: cpu => cpu.C = cpu.H,
+  [OPCODES.LDCL]: cpu => cpu.C = cpu.L,
+  [OPCODES.LDCHLm]: cpu => cpu.C = cpu.mmu.read8((cpu.H << 8) | cpu.L),
+  [OPCODES.LDCA]: cpu => cpu.C = cpu.A,
+
+  /* ------------------------ 0x5 ------------------------ */
+  [OPCODES.LDDB]: cpu => cpu.D = cpu.B,
+  [OPCODES.LDDC]: cpu => cpu.D = cpu.C,
+  [OPCODES.LDDD]: cpu => cpu.D = cpu.D,
+  [OPCODES.LDDE]: cpu => cpu.D = cpu.E,
+  [OPCODES.LDDH]: cpu => cpu.D = cpu.H,
+  [OPCODES.LDDL]: cpu => cpu.D = cpu.L,
+  [OPCODES.LDDHLm]: cpu => cpu.D = cpu.mmu.read8((cpu.H << 8) | cpu.L),
+  [OPCODES.LDDA]: cpu => cpu.D = cpu.A,
+  [OPCODES.LDEB]: cpu => cpu.E = cpu.B,
+  [OPCODES.LDEC]: cpu => cpu.E = cpu.C,
+  [OPCODES.LDED]: cpu => cpu.E = cpu.D,
+  [OPCODES.LDEE]: cpu => cpu.E = cpu.E,
+  [OPCODES.LDEH]: cpu => cpu.E = cpu.H,
+  [OPCODES.LDEL]: cpu => cpu.E = cpu.L,
+  [OPCODES.LDEHLm]: cpu => cpu.E = cpu.mmu.read8((cpu.H << 8) | cpu.L),
+  [OPCODES.LDEA]: cpu => cpu.E = cpu.A,
 };
 
 
