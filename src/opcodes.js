@@ -219,6 +219,45 @@ const OPCODES = {
   CALLnn: 0xcd,
   ADCAn: 0xce,
   RST08: 0xcf,
+
+  RETNC: 0xd0,
+  POPDE: 0xd1,
+  JPNCnn: 0xd2,
+  CALLNCnn: 0xd4,
+  PUSHDE: 0xd5,
+  SUBAn: 0xd6,
+  RST10: 0xd7,
+  RETC: 0xd8,
+  RETI: 0xd9, // set interupts?
+  JPCnn: 0xda,
+  CALLCnn: 0xdc,
+  SBCAn: 0xde,
+  RST18: 0xdf,
+
+  LDHnmA: 0xe0,
+  POPHL: 0xe1,
+  LDHCmA: 0xe2,
+  PUSHHL: 0xe5,
+  ANDn: 0xe6,
+  RST20: 0xe7,
+  ADDSPd: 0xe8,
+  JPHLm: 0xe9,
+  LDnnmA: 0xea,
+  XORn: 0xee,
+  RST28: 0xef,
+
+  LDHAnm: 0xf0,
+  POPAF: 0xf1,
+  DI: 0xf3, // disable interupts. no interupts yet
+  PUSHAF: 0xf5,
+  ORn: 0xf6,
+  RST30: 0xf7,
+  LDHLSPd: 0xf8,
+  LDSPHL: 0xf9,
+  LDAnnm: 0xfa,
+  EI: 0xfb, // enable interupts. no interupts yet
+  CPn: 0xfe,
+  RST38: 0xff,
 };
 
 // Zero (0x80): Set if the last operation produced a result of 0;
@@ -252,9 +291,8 @@ const opcodes = {
   /* ------------------------ 0x0 ------------------------ */
   [OPCODES.NOP]: () => {},
   [OPCODES.LDBCnn]: (cpu) => {
-    cpu.C = cpu.mmu.read8(cpu.PC);
-    cpu.B = cpu.mmu.read8(cpu.PC + 1);
-    cpu.PC += 2;
+    cpu.C = cpu.mmu.read8(cpu.PC++);
+    cpu.B = cpu.mmu.read8(cpu.PC++);
   },
   [OPCODES.LDBCmA]: (cpu) => {
     cpu.mmu.write8(cpu.B << 8 | cpu.C, cpu.A);
@@ -938,6 +976,152 @@ const opcodes = {
     cpu.SP -= 2;
     cpu.mmu.write16(cpu.SP, cpu.PC);
     cpu.PC = 0x08;
+  },
+
+  /* ------------------------ 0xd ------------------------ */
+  [OPCODES.RETNC]: (cpu) => {
+    if (!(cpu.F & 0x10)) {
+      cpu.PC = cpu.mmu.read16(cpu.SP);
+      cpu.SP += 2;
+    }
+  },
+  [OPCODES.POPDE]: (cpu) => {
+    cpu.E = cpu.mmu.read8(cpu.SP++);
+    cpu.D = cpu.mmu.read8(cpu.SP++);
+  },
+  [OPCODES.JPNCnn]: (cpu) => { !(cpu.F & 0x10) ? cpu.PC = cpu.mmu.read16(cpu.PC) : cpu.PC += 2; },
+  [OPCODES.CALLNCnn]: (cpu) => {
+    if (!(cpu.F & 0x81)) {
+      cpu.SP -= 2;
+      cpu.mmu.write16(cpu.SP, cpu.PC + 2);
+      cpu.PC = cpu.mmu.read16(cpu.PC);
+    } else {
+      cpu.PC += 2;
+    }
+  },
+  [OPCODES.PUSHDE]: (cpu) => {
+    cpu.SP -= 2;
+    cpu.mmu.write16(cpu.SP, (cpu.D << 8) | cpu.E);
+  },
+  [OPCODES.SUBAn]: (cpu) => {
+    const val = cpu.mmu.read8(cpu.PC++);
+    setFlags(cpu, cpu.A - val, 1);
+    setHalfCarry(cpu, cpu.A, val, 1);
+    cpu.A = (cpu.A - val) & 0xff;
+  },
+  [OPCODES.RST10]: (cpu) => {
+    cpu.SP -= 2;
+    cpu.mmu.write16(cpu.SP, cpu.PC);
+    cpu.PC = 0x10;
+  },
+  [OPCODES.RETC]: (cpu) => {
+    if (cpu.F & 0x10) {
+      cpu.PC = cpu.mmu.read16(cpu.SP);
+      cpu.SP += 2;
+    }
+  },
+  [OPCODES.RETI]: (cpu) => {
+    cpu.PC = cpu.mmu.read16(cpu.SP);
+    cpu.SP += 2;
+  },
+  [OPCODES.JPCnn]: (cpu) => { cpu.F & 0x10 ? cpu.PC = cpu.mmu.read16(cpu.PC) : cpu.PC += 2; },
+  [OPCODES.CALLCnn]: (cpu) => {
+    if (cpu.F & 0x10) {
+      cpu.SP -= 2;
+      cpu.mmu.write16(cpu.SP, cpu.PC + 2);
+      cpu.PC = cpu.mmu.read16(cpu.PC);
+    } else {
+      cpu.PC += 2;
+    }
+  },
+  [OPCODES.SBCAn]: (cpu) => {
+    const val = cpu.mmu.read8(cpu.PC++);
+    const carry = (cpu.F & 0x10) ? 1 : 0;
+    setFlags(cpu, cpu.A - val - carry, 1);
+    setHalfCarry(cpu, cpu.A, val + carry, 1);
+    cpu.A = (cpu.A - val - carry) & 0xff;
+  },
+  [OPCODES.RST18]: (cpu) => {
+    cpu.SP -= 2;
+    cpu.mmu.write16(cpu.SP, cpu.PC);
+    cpu.PC = 0x18;
+  },
+
+  /* ------------------------ 0xe ------------------------ */
+  [OPCODES.LDHnmA]: (cpu) => { cpu.mmu.write8(0xff00 | cpu.mmu.read8(cpu.PC++), cpu.A); },
+  [OPCODES.POPHL]: (cpu) => {
+    cpu.L = cpu.mmu.read8(cpu.SP++);
+    cpu.H = cpu.mmu.read8(cpu.SP++);
+  },
+  [OPCODES.LDHCmA]: (cpu) => { cpu.mmu.write8(0xff00 | cpu.C, cpu.A); },
+  [OPCODES.PUSHHL]: (cpu) => {
+    cpu.SP -= 2;
+    cpu.mmu.write16(cpu.SP, (cpu.H << 8) | cpu.L);
+  },
+  [OPCODES.ANDn]: (cpu) => { cpu.A &= cpu.mmu.read8(cpu.PC++); cpu.F = !cpu.A ? 0xa0 : 0x20; },
+  [OPCODES.RST20]: (cpu) => {
+    cpu.SP -= 2;
+    cpu.mmu.write16(cpu.SP, cpu.PC);
+    cpu.PC = 0x20;
+  },
+  [OPCODES.ADDSPd]: (cpu) => {
+    let i = cpu.mmu.read8(cpu.PC++);
+    if (i > 127) i = -((~i + 1) & 0xff);
+    cpu.SP += i;
+    cpu.F &= 0x30; // TODO set carry/half carry
+  },
+  [OPCODES.JPHLm]: (cpu) => { cpu.PC = (cpu.H << 8) | cpu.L; },
+  [OPCODES.LDnnmA]: (cpu) => {
+    cpu.mmu.write8(cpu.mmu.read16(cpu.PC), cpu.A);
+    cpu.PC += 2;
+  },
+  [OPCODES.XORn]: (cpu) => { cpu.A ^= cpu.mmu.read8(cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; },
+  [OPCODES.RST28]: (cpu) => {
+    cpu.SP -= 2;
+    cpu.mmu.write16(cpu.SP, cpu.PC);
+    cpu.PC = 0x28;
+  },
+
+  /* ------------------------ 0xf ------------------------ */
+  [OPCODES.LDHAnm]: (cpu) => { cpu.A = cpu.mmu.read8(0xff00 | cpu.mmu.read8(cpu.PC++)); },
+  [OPCODES.POPAF]: (cpu) => {
+    cpu.F = cpu.mmu.read8(cpu.SP++) & 0xf0;
+    cpu.A = cpu.mmu.read8(cpu.SP++);
+  },
+  [OPCODES.DI]: (cpu) => { cpu; },
+  [OPCODES.PUSHAF]: (cpu) => {
+    cpu.SP -= 2;
+    cpu.mmu.write16(cpu.SP, (cpu.A << 8) | cpu.F);
+  },
+  [OPCODES.ORn]: (cpu) => { cpu.A |= cpu.mmu.read8(cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; },
+  [OPCODES.RST30]: (cpu) => {
+    cpu.SP -= 2;
+    cpu.mmu.write16(cpu.SP, cpu.PC);
+    cpu.PC = 0x30;
+  },
+  [OPCODES.LDHLSPd]: (cpu) => {
+    let i = cpu.mmu.read8(cpu.PC++);
+    if (i > 127) i = -((~i + 1) & 0xff);
+    i += cpu.SP; // TODO check arry flags
+    cpu.H = (i >> 8) & 0xff;
+    cpu.L = i & 0xff;
+  },
+  [OPCODES.LDSPHL]: (cpu) => { cpu.SP = (cpu.H << 8) | cpu.L; },
+  [OPCODES.LDAnnm]: (cpu) => {
+    const addr = cpu.mmu.read16(cpu.PC);
+    cpu.A = cpu.mmu.read8(addr);
+    cpu.PC += 2;
+  },
+  [OPCODES.EI]: (cpu) => { cpu; },
+  [OPCODES.CPn]: (cpu) => {
+    const val = cpu.mmu.read8(cpu.PC++);
+    setFlags(cpu, cpu.A - val, 1);
+    setHalfCarry(cpu, cpu.A, val, 1);
+  },
+  [OPCODES.RST38]: (cpu) => {
+    cpu.SP -= 2;
+    cpu.mmu.write16(cpu.SP, cpu.PC);
+    cpu.PC = 0x38;
   },
 };
 
