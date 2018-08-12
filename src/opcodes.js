@@ -41,12 +41,28 @@ const OPCODES = {
   DAA: 0x27, // ??????
   JRZn: 0x28,
   ADDHLHL: 0x29,
-  LDIAHLm: 0x3a,
+  LDIAHLm: 0x2a,
   DECHL: 0x2b,
   INCL: 0x2c,
   DECL: 0x2d,
   LDLn: 0x2e,
   CPL: 0x2f,
+  JRNCn: 0x30,
+  LDSPnn: 0x31,
+  LDDHLmA: 0x32,
+  INCSP: 0x33,
+  INCHLm: 0x34,
+  DECHLm: 0x35,
+  LDHLmn: 0x36,
+  SCF: 0x37,
+  JRCn: 0x38,
+  ADDHLSP: 0x39,
+  LDDAHLm: 0x3a,
+  DECSP: 0x3b,
+  INCA: 0x3c,
+  DECA: 0x3d,
+  LDAn: 0x3e,
+  CFF: 0x3f,
 };
 
 // Zero (0x80): Set if the last operation produced a result of 0;
@@ -157,7 +173,7 @@ const opcodes = {
     cpu.F = bit ? 0x10 : 0;
   },
   [OPCODES.STOP]: (cpu) => {
-    cpu.PC++
+    cpu.PC++;
   },
   [OPCODES.LDDEnn]: (cpu) => {
     cpu.E = cpu.mmu.read8(cpu.PC);
@@ -274,14 +290,14 @@ const opcodes = {
     cpu.H = cpu.mmu.read8(cpu.PC++);
   },
   [OPCODES.DAA]: (cpu) => {
-    const sub = (cpu.F&0x40) ? 1 : 0; 
-    const h = (cpu.F&0x20) ? 1 : 0;
-    const c = (cpu.F&0x10) ? 1 :0;
+    const sub = (cpu.F & 0x40) ? 1 : 0;
+    const h = (cpu.F & 0x20) ? 1 : 0;
+    let c = (cpu.F & 0x10) ? 1 : 0;
     if (sub) {
       if (h) cpu.A = (cpu.A - 0x6) & 0xFF;
       if (c) cpu.A -= 0x60;
     } else {
-      if ((cpu.A&0xF) > 9 || h) cpu.A += 0x6;
+      if ((cpu.A & 0xF) > 9 || h) cpu.A += 0x6;
       if (cpu.A > 0x9F || c) cpu.A += 0x60;
     }
 
@@ -289,8 +305,8 @@ const opcodes = {
 
     cpu.A &= 0xFF;
     cpu.F &= 0x40;
-    
-    if (cpu.A == 0) cpu.F |= 0x80;
+
+    if (cpu.A === 0) cpu.F |= 0x80;
     if (c) cpu.F |= 0x10;
   },
   [OPCODES.JRZn]: (cpu) => {
@@ -301,7 +317,7 @@ const opcodes = {
   },
   [OPCODES.ADDHLHL]: (cpu) => {
     let hl = (cpu.H << 8) + cpu.L;
-    hl = hl << 1;
+    hl <<= 1;
     if (hl > 0xffff) {
       cpu.F |= 0x10;
     } else {
@@ -325,7 +341,7 @@ const opcodes = {
     const l = cpu.L;
     cpu.L++;
     setFlags(cpu, cpu.L);
-    setHalfCarry(cpu, e, 1);
+    setHalfCarry(cpu, l, 1);
     cpu.L &= 0xff;
   },
   [OPCODES.DECL]: (cpu) => {
@@ -339,6 +355,80 @@ const opcodes = {
   [OPCODES.CPL]: (cpu) => {
     cpu.A = (~cpu.A) & 0xff;
     setFlags(cpu, cpu.A, 1);
-  }
+  },
+  [OPCODES.JRNCn]: (cpu) => {
+    const carry = cpu.F & 0x10;
+    let val = cpu.mmu.read8(cpu.PC++);
+    if (val > 127) val = -((~val + 1) & 0xff);
+    if (!carry) cpu.PC += val;
+  },
+  [OPCODES.LDSPnn]: (cpu) => {
+    cpu.SP = cpu.mmu.read16(cpu.PC);
+    cpu.PC += 2;
+  },
+  [OPCODES.LDDHLmA]: (cpu) => {
+    cpu.mmu.write8(cpu.H << 8 | cpu.L, cpu.A);
+    cpu.L = (cpu.L - 1) & 0xff;
+    if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
+  },
+  [OPCODES.INCSP]: cpu => (cpu.SP = (cpu.SP + 1) & 0xffff),
+  [OPCODES.INCHLm]: (cpu) => {
+    const val = (cpu.mmu.read8((cpu.H << 8) | cpu.L) + 1) & 0xff;
+    cpu.mmu.write8((cpu.H << 8) | cpu.L);
+    setFlags(cpu, val);
+  },
+  [OPCODES.DECHLm]: (cpu) => {
+    const val = (cpu.mmu.read8((cpu.H << 8) | cpu.L) - 1) & 0xff;
+    cpu.mmu.write8((cpu.H << 8) | cpu.L);
+    setFlags(cpu, val, 1);
+  },
+  [OPCODES.LDHLmn]: (cpu) => {
+    cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.mmu.read8(cpu.PC++));
+  },
+  [OPCODES.SCF]: cpu => (cpu.F |= 0x10),
+  [OPCODES.JRZn]: (cpu) => {
+    const carry = cpu.F & 0x10;
+    let val = cpu.mmu.read8(cpu.PC++);
+    if (val > 127) val = -((~val + 1) & 0xff);
+    if (carry) cpu.PC += val;
+  },
+  [OPCODES.ADDHLSP]: (cpu) => {
+    let hl = (cpu.H << 8) + cpu.L;
+    hl += cpu.SP;
+    if (hl > 0xffff) {
+      cpu.F |= 0x10;
+    } else {
+      cpu.F &= 0xef;
+    }
+    cpu.F &= ~0x40;
+    cpu.H = (hl >>> 8) & 0xff;
+    cpu.L = hl & 0xff;
+  },
+  [OPCODES.LDDAHLm]: (cpu) => {
+    const address = (cpu.H << 8) + cpu.L;
+    cpu.A = cpu.mmu.read8(address);
+    cpu.L = (cpu.L - 1) & 0xff;
+    if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
+  },
+  [OPCODES.DECSP]: cpu => (cpu.SP = (cpu.SP - 1) & 0xffff),
+  [OPCODES.INCA]: (cpu) => {
+    const a = cpu.A;
+    cpu.A++;
+    setFlags(cpu, cpu.A);
+    setHalfCarry(cpu, a, 1);
+    cpu.A &= 0xff;
+  },
+  [OPCODES.DECA]: (cpu) => {
+    cpu.A--;
+    setFlags(cpu, cpu.A, 1);
+    cpu.A &= 0xff;
+  },
+  [OPCODES.LDAn]: cpu => cpu.A = cpu.mmu.read8(cpu.PC++),
+  [OPCODES.CFF]: cpu => cpu.F &= ~0x10,
 };
 
+
+module.exports = {
+  opcodes,
+  OPCODES,
+};
