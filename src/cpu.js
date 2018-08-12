@@ -24,6 +24,11 @@ class CPU {
     this.SP = 0,
     this.M = 0,
     this.T = 0,
+
+    // halt
+    this.HALT = 0,
+
+    // components
     this.ram = new CPUMemory();
     this.mmu = new MMU(this.ram);
   }
