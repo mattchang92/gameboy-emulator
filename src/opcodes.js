@@ -1,5 +1,5 @@
 const OPCODES = {
-  NOPE: 0x00,
+  NOP: 0x00,
   LDBCnn: 0x01,
   LDBCmA: 0x02,
   INCBC: 0x03,
