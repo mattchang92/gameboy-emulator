@@ -289,30 +289,36 @@ const setHalfCarry = (cpu, a, b, isSub) => {
 
 const opcodes = {
   /* ------------------------ 0x0 ------------------------ */
-  [OPCODES.NOP]: () => {},
+  [OPCODES.NOP]: (cpu) => { cpu.M = 1; cpu.T = 4; },
   [OPCODES.LDBCnn]: (cpu) => {
-    cpu.C = cpu.mmu.read8(cpu.PC++);
-    cpu.B = cpu.mmu.read8(cpu.PC++);
+    cpu.C = cpu.mmu.read8(cpu, cpu.PC++);
+    cpu.B = cpu.mmu.read8(cpu, cpu.PC++);
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDBCmA]: (cpu) => {
     cpu.mmu.write8(cpu.B << 8 | cpu.C, cpu.A);
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.INCBC]: (cpu) => {
     cpu.C = (cpu.C + 1) & 0xff;
     if (!cpu.C) cpu.B = (cpu.B + 1) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.INCB]: (cpu) => {
     setFlags(cpu, cpu.B + 1);
     setHalfCarry(cpu, cpu.B, 1);
     cpu.B = ++cpu.B & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.DECB]: (cpu) => {
     cpu.B--;
     setFlags(cpu, cpu.B, 1);
     cpu.B &= 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.LDBn]: (cpu) => {
-    cpu.B = cpu.mmu.read8(cpu.PC++);
+    cpu.B = cpu.mmu.read8(cpu, cpu.PC++);
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.RLCA]: (cpu) => {
     const bit = cpu.A >>> 7;
@@ -323,6 +329,7 @@ const opcodes = {
     const address = cpu.mmu.read16(cpu.PC);
     cpu.mmu.write16(address, cpu.SP);
     cpu.PC += 2;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADDHLBC]: (cpu) => {
     let hl = (cpu.H << 8) + cpu.L;
@@ -335,32 +342,39 @@ const opcodes = {
     cpu.F &= ~0x40;
     cpu.H = (hl >>> 8) & 0xff;
     cpu.L = hl & 0xff;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDABCm]: (cpu) => {
     const address = (cpu.B << 8) + cpu.C;
-    cpu.A = cpu.mmu.read8(address);
+    cpu.A = cpu.mmu.read8(cpu, address);
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.DECBC]: (cpu) => {
     cpu.C = (cpu.C - 1) & 0xff;
     if (cpu.C === 0xff) cpu.B = (cpu.B - 1) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.INCC]: (cpu) => {
     setFlags(cpu, cpu.C + 1);
     setHalfCarry(cpu, cpu.C, 1);
     cpu.C = ++cpu.C & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.DECC]: (cpu) => {
     cpu.C--;
     setFlags(cpu, cpu.C, 1);
     cpu.C &= 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.LDCn]: (cpu) => {
-    cpu.C = cpu.mmu.read8(cpu.PC++);
+    cpu.C = cpu.mmu.read8(cpu, cpu.PC++);
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.RRCA]: (cpu) => {
     const bit = cpu.A & 1;
     cpu.A = ((cpu.A >>> 1) + (bit * 0x80)) & 0xff;
     cpu.F = bit ? 0x10 : 0;
+    cpu.M = 1; cpu.T = 4;
   },
 
   /* ------------------------ 0x1 ------------------------ */
@@ -368,40 +382,48 @@ const opcodes = {
     cpu.PC++;
   },
   [OPCODES.LDDEnn]: (cpu) => {
-    cpu.E = cpu.mmu.read8(cpu.PC);
-    cpu.D = cpu.mmu.read8((cpu.PC + 1) & 0xffff);
+    cpu.E = cpu.mmu.read8(cpu, cpu.PC);
+    cpu.D = cpu.mmu.read8(cpu, (cpu.PC + 1) & 0xffff);
     cpu.PC += 2;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDDEmA]: (cpu) => {
     cpu.mmu.write8(cpu.D << 8 | cpu.E, cpu.A);
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.INCDE]: (cpu) => {
     cpu.E = (cpu.E + 1) & 0xff;
     if (!cpu.E) cpu.D = (cpu.D + 1) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.INCD]: (cpu) => {
     setFlags(cpu, cpu.D + 1);
     setHalfCarry(cpu, cpu.D, 1);
     cpu.D = ++cpu.D & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.DECD]: (cpu) => {
     cpu.D--;
     setFlags(cpu, cpu.D, 1);
     cpu.D &= 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.LDDn]: (cpu) => {
-    cpu.D = cpu.mmu.read8(cpu.PC++);
+    cpu.D = cpu.mmu.read8(cpu, cpu.PC++);
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.RLA]: (cpu) => {
     const bit = cpu.A >>> 7;
     const carry = (cpu.F >>> 4) && 0xff;
     cpu.F = bit ? 0x10 : 0;
     cpu.A = ((cpu.A << 1) + carry) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.JRn]: (cpu) => {
-    let val = cpu.mmu.read8(cpu.PC++);
+    let val = cpu.mmu.read8(cpu, cpu.PC++);
     if (val > 127) val = -((~val + 1) & 0xff);
     cpu.PC += val;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.ADDHLDE]: (cpu) => {
     let hl = (cpu.H << 8) + cpu.L;
@@ -414,68 +436,83 @@ const opcodes = {
     cpu.F &= ~0x40;
     cpu.H = (hl >>> 8) & 0xff;
     cpu.L = hl & 0xff;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDADEm]: (cpu) => {
     const address = (cpu.D << 8) + cpu.E;
-    cpu.A = cpu.mmu.read8(address);
+    cpu.A = cpu.mmu.read8(cpu, address);
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.DECDE]: (cpu) => {
     cpu.E = (cpu.E - 1) & 0xff;
     if (cpu.E === 0xff) cpu.C = (cpu.C - 1) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.INCE]: (cpu) => {
     setFlags(cpu, cpu.E + 1);
     setHalfCarry(cpu, cpu.E, 1);
     cpu.E = ++cpu.E & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.DECE]: (cpu) => {
     cpu.E--;
     setFlags(cpu, cpu.E, 1);
     cpu.E &= 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.LDEn]: (cpu) => {
-    cpu.E = cpu.mmu.read8(cpu.PC++);
+    cpu.E = cpu.mmu.read8(cpu, cpu.PC++);
+    cpu.M = 2; cpu.T = 48;
   },
   [OPCODES.RRA]: (cpu) => {
     const bit = cpu.A & 1;
     const carry = (cpu.F >>> 4) && 0xff;
     cpu.F = bit ? 0x10 : 0;
     cpu.A = ((cpu.A >>> 1) + (carry * 0x80)) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.JRNZn]: (cpu) => {
     const zero = (cpu.F >> 7) & 0xff;
-    let val = cpu.mmu.read8(cpu.PC++);
+    let val = cpu.mmu.read8(cpu, cpu.PC++);
     if (val > 127) val = -((~val + 1) & 0xff);
     if (!zero) cpu.PC += val;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDHLnn]: (cpu) => {
-    cpu.L = cpu.mmu.read8(cpu.PC);
-    cpu.H = cpu.mmu.read8(cpu.PC + 1);
+    cpu.L = cpu.mmu.read8(cpu, cpu.PC);
+    cpu.H = cpu.mmu.read8(cpu, cpu.PC + 1);
     cpu.PC += 2;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDIHLmA]: (cpu) => {
     cpu.mmu.write8(cpu.H << 8 | cpu.L, cpu.A);
     cpu.L = (cpu.L + 1) & 0xff;
     if (!cpu.L) cpu.H = (cpu.H + 1) & 0xff;
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.INCHL]: (cpu) => {
     cpu.L = (cpu.L + 1) & 0xff;
     if (!cpu.L) cpu.H = (cpu.H + 1) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.INCH]: (cpu) => {
     setFlags(cpu, cpu.H + 1);
     setHalfCarry(cpu, cpu.H, 1);
     cpu.H = ++cpu.H & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.DECH]: (cpu) => {
     cpu.H--;
     setFlags(cpu, cpu.H, 1);
     cpu.H &= 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.LDHn]: (cpu) => {
-    cpu.H = cpu.mmu.read8(cpu.PC++);
+    cpu.H = cpu.mmu.read8(cpu, cpu.PC++);
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.DAA]: (cpu) => {
+    // Potentially illegal instruction?
     const sub = (cpu.F & 0x40) ? 1 : 0;
     const h = (cpu.F & 0x20) ? 1 : 0;
     let c = (cpu.F & 0x10) ? 1 : 0;
@@ -499,9 +536,10 @@ const opcodes = {
   /* ------------------------ 0x2------------------------ */
   [OPCODES.JRZn]: (cpu) => {
     const zero = (cpu.F >> 7) & 0xff;
-    let val = cpu.mmu.read8(cpu.PC++);
+    let val = cpu.mmu.read8(cpu, cpu.PC++);
     if (val > 127) val = -((~val + 1) & 0xff);
     if (zero) cpu.PC += val;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.ADDHLHL]: (cpu) => {
     let hl = (cpu.H << 8) + cpu.L;
@@ -514,71 +552,85 @@ const opcodes = {
     cpu.F &= ~0x40;
     cpu.H = (hl >>> 8) & 0xff;
     cpu.L = hl & 0xff;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDIAHLm]: (cpu) => {
     const address = (cpu.H << 8) + cpu.L;
-    cpu.A = cpu.mmu.read8(address);
+    cpu.A = cpu.mmu.read8(cpu, address);
     cpu.L = (cpu.L + 1) & 0xff;
     if (!cpu.L) cpu.H = (cpu.H + 1) & 0xff;
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.DECHL]: (cpu) => {
     cpu.L = (cpu.L - 1) & 0xff;
     if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.INCL]: (cpu) => {
     setFlags(cpu, cpu.L + 1);
     setHalfCarry(cpu, cpu.L, 1);
     cpu.L = ++cpu.L & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.DECL]: (cpu) => {
     cpu.L--;
     setFlags(cpu, cpu.L, 1);
     cpu.L &= 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.LDLn]: (cpu) => {
-    cpu.L = cpu.mmu.read8(cpu.PC++);
+    cpu.L = cpu.mmu.read8(cpu, cpu.PC++);
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.CMPL]: (cpu) => {
     cpu.A = (~cpu.A) & 0xff;
     setFlags(cpu, cpu.A, 1);
+    cpu.M = 1; cpu.T = 4;
   },
 
   /* ------------------------ 0x3 ------------------------ */
   [OPCODES.JRNCn]: (cpu) => {
+    cpu.M = 2; cpu.T = 4;
     const carry = cpu.F & 0x10;
-    let val = cpu.mmu.read8(cpu.PC++);
+    let val = cpu.mmu.read8(cpu, cpu.PC++);
     if (val > 127) val = -((~val + 1) & 0xff);
-    if (!carry) cpu.PC += val;
+    if (!carry) { cpu.PC += val; cpu.M++; cpu.T += 4; }
   },
   [OPCODES.LDSPnn]: (cpu) => {
     cpu.SP = cpu.mmu.read16(cpu.PC);
     cpu.PC += 2;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDDHLmA]: (cpu) => {
     cpu.mmu.write8(cpu.H << 8 | cpu.L, cpu.A);
     cpu.L = (cpu.L - 1) & 0xff;
     if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
+    cpu.M = 2; cpu.T = 8;
   },
-  [OPCODES.INCSP]: cpu => (cpu.SP = (cpu.SP + 1) & 0xffff),
+  [OPCODES.INCSP]: (cpu) => { cpu.SP = (cpu.SP + 1) & 0xffff; cpu.M = 1; cpu.T = 4; },
   [OPCODES.INCHLm]: (cpu) => {
-    const val = (cpu.mmu.read8((cpu.H << 8) | cpu.L) + 1) & 0xff;
+    const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) + 1) & 0xff;
     cpu.mmu.write8((cpu.H << 8) | cpu.L);
     setFlags(cpu, val);
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.DECHLm]: (cpu) => {
-    const val = (cpu.mmu.read8((cpu.H << 8) | cpu.L) - 1) & 0xff;
+    const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) - 1) & 0xff;
     cpu.mmu.write8((cpu.H << 8) | cpu.L);
     setFlags(cpu, val, 1);
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDHLmn]: (cpu) => {
-    cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.mmu.read8(cpu.PC++));
+    cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.mmu.read8(cpu, cpu.PC++));
+    cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.SCF]: cpu => (cpu.F |= 0x10),
+  [OPCODES.SCF]: (cpu) => { cpu.F |= 0x10; cpu.M = 1; cpu.T = 4; },
   [OPCODES.JRZn]: (cpu) => {
+    cpu.M = 2; cpu.T = 8;
     const carry = cpu.F & 0x10;
-    let val = cpu.mmu.read8(cpu.PC++);
+    let val = cpu.mmu.read8(cpu, cpu.PC++);
     if (val > 127) val = -((~val + 1) & 0xff);
-    if (carry) cpu.PC += val;
+    if (carry) { cpu.PC += val; cpu.M++; cpu.T += 4; }
   },
   [OPCODES.ADDHLSP]: (cpu) => {
     let hl = (cpu.H << 8) + cpu.L;
@@ -591,188 +643,208 @@ const opcodes = {
     cpu.F &= ~0x40;
     cpu.H = (hl >>> 8) & 0xff;
     cpu.L = hl & 0xff;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDDAHLm]: (cpu) => {
     const address = (cpu.H << 8) + cpu.L;
-    cpu.A = cpu.mmu.read8(address);
+    cpu.A = cpu.mmu.read8(cpu, address);
     cpu.L = (cpu.L - 1) & 0xff;
     if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
+    cpu.M = 2; cpu.T = 8;
   },
-  [OPCODES.DECSP]: cpu => (cpu.SP = (cpu.SP - 1) & 0xffff),
+  [OPCODES.DECSP]: (cpu) => { cpu.SP = (cpu.SP - 1) & 0xffff; cpu.M = 2; cpu.T = 8; },
   [OPCODES.INCA]: (cpu) => {
     setFlags(cpu, cpu.A + 1);
     setHalfCarry(cpu, cpu.A, 1);
     cpu.A = ++cpu.A & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.DECA]: (cpu) => {
     cpu.A--;
     setFlags(cpu, cpu.A, 1);
     cpu.A &= 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
-  [OPCODES.LDAn]: cpu => cpu.A = cpu.mmu.read8(cpu.PC++),
-  [OPCODES.CFF]: cpu => cpu.F &= ~0x10,
+  [OPCODES.LDAn]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.PC++); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.CFF]: (cpu) => { cpu.F &= ~0x10; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0x4 ------------------------ */
-  [OPCODES.LDBB]: cpu => cpu.B = cpu.B,
-  [OPCODES.LDBC]: cpu => cpu.B = cpu.C,
-  [OPCODES.LDBD]: cpu => cpu.B = cpu.D,
-  [OPCODES.LDBE]: cpu => cpu.B = cpu.E,
-  [OPCODES.LDBH]: cpu => cpu.B = cpu.H,
-  [OPCODES.LDBL]: cpu => cpu.B = cpu.L,
-  [OPCODES.LDBHLm]: cpu => cpu.B = cpu.mmu.read8(((cpu.H << 8) | cpu.L)),
-  [OPCODES.LDBA]: cpu => cpu.B = cpu.A,
-  [OPCODES.LDCB]: cpu => cpu.C = cpu.B,
-  [OPCODES.LDCC]: cpu => cpu.C = cpu.C,
-  [OPCODES.LDCD]: cpu => cpu.C = cpu.D,
-  [OPCODES.LDCE]: cpu => cpu.C = cpu.E,
-  [OPCODES.LDCH]: cpu => cpu.C = cpu.H,
-  [OPCODES.LDCL]: cpu => cpu.C = cpu.L,
-  [OPCODES.LDCHLm]: cpu => cpu.C = cpu.mmu.read8((cpu.H << 8) | cpu.L),
-  [OPCODES.LDCA]: cpu => cpu.C = cpu.A,
+  [OPCODES.LDBB]: (cpu) => { cpu.B = cpu.B; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDBC]: (cpu) => { cpu.B = cpu.C; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDBD]: (cpu) => { cpu.B = cpu.D; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDBE]: (cpu) => { cpu.B = cpu.E; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDBH]: (cpu) => { cpu.B = cpu.H; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDBL]: (cpu) => { cpu.B = cpu.L; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDBHLm]: (cpu) => { cpu.B = cpu.mmu.read8(cpu, ((cpu.H << 8) | cpu.L)); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDBA]: (cpu) => { cpu.B = cpu.A; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDCB]: (cpu) => { cpu.C = cpu.B; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDCC]: (cpu) => { cpu.C = cpu.C; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDCD]: (cpu) => { cpu.C = cpu.D; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDCE]: (cpu) => { cpu.C = cpu.E; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDCH]: (cpu) => { cpu.C = cpu.H; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDCL]: (cpu) => { cpu.C = cpu.L; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDCHLm]: (cpu) => { cpu.C = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDCA]: (cpu) => { cpu.C = cpu.A; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0x5 ------------------------ */
-  [OPCODES.LDDB]: cpu => cpu.D = cpu.B,
-  [OPCODES.LDDC]: cpu => cpu.D = cpu.C,
-  [OPCODES.LDDD]: cpu => cpu.D = cpu.D,
-  [OPCODES.LDDE]: cpu => cpu.D = cpu.E,
-  [OPCODES.LDDH]: cpu => cpu.D = cpu.H,
-  [OPCODES.LDDL]: cpu => cpu.D = cpu.L,
-  [OPCODES.LDDHLm]: cpu => cpu.D = cpu.mmu.read8((cpu.H << 8) | cpu.L),
-  [OPCODES.LDDA]: cpu => cpu.D = cpu.A,
-  [OPCODES.LDEB]: cpu => cpu.E = cpu.B,
-  [OPCODES.LDEC]: cpu => cpu.E = cpu.C,
-  [OPCODES.LDED]: cpu => cpu.E = cpu.D,
-  [OPCODES.LDEE]: cpu => cpu.E = cpu.E,
-  [OPCODES.LDEH]: cpu => cpu.E = cpu.H,
-  [OPCODES.LDEL]: cpu => cpu.E = cpu.L,
-  [OPCODES.LDEHLm]: cpu => cpu.E = cpu.mmu.read8((cpu.H << 8) | cpu.L),
-  [OPCODES.LDEA]: cpu => cpu.E = cpu.A,
+  [OPCODES.LDDB]: (cpu) => { cpu.D = cpu.B; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDDC]: (cpu) => { cpu.D = cpu.C; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDDD]: (cpu) => { cpu.D = cpu.D; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDDE]: (cpu) => { cpu.D = cpu.E; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDDH]: (cpu) => { cpu.D = cpu.H; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDDL]: (cpu) => { cpu.D = cpu.L; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDDHLm]: (cpu) => { cpu.D = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDDA]: (cpu) => { cpu.D = cpu.A; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDEB]: (cpu) => { cpu.E = cpu.B; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDEC]: (cpu) => { cpu.E = cpu.C; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDED]: (cpu) => { cpu.E = cpu.D; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDEE]: (cpu) => { cpu.E = cpu.E; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDEH]: (cpu) => { cpu.E = cpu.H; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDEL]: (cpu) => { cpu.E = cpu.L; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDEHLm]: (cpu) => { cpu.E = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDEA]: (cpu) => { cpu.E = cpu.A; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0x6 ------------------------ */
-  [OPCODES.LDHB]: cpu => cpu.H = cpu.B,
-  [OPCODES.LDHC]: cpu => cpu.H = cpu.C,
-  [OPCODES.LDHD]: cpu => cpu.H = cpu.D,
-  [OPCODES.LDHE]: cpu => cpu.H = cpu.E,
-  [OPCODES.LDHH]: cpu => cpu.H = cpu.H,
-  [OPCODES.LDHL]: cpu => cpu.H = cpu.L,
-  [OPCODES.LDHHLm]: cpu => cpu.H = cpu.mmu.read8((cpu.H << 8) | cpu.L),
-  [OPCODES.LDHA]: cpu => cpu.H = cpu.A,
-  [OPCODES.LDLB]: cpu => cpu.L = cpu.B,
-  [OPCODES.LDLC]: cpu => cpu.L = cpu.C,
-  [OPCODES.LDLD]: cpu => cpu.L = cpu.D,
-  [OPCODES.LDLE]: cpu => cpu.L = cpu.E,
-  [OPCODES.LDLH]: cpu => cpu.L = cpu.H,
-  [OPCODES.LDLL]: cpu => cpu.L = cpu.L,
-  [OPCODES.LDLHLm]: cpu => cpu.L = cpu.mmu.read8((cpu.H << 8) | cpu.L),
-  [OPCODES.LDLA]: cpu => cpu.L = cpu.A,
+  [OPCODES.LDHB]: (cpu) => { cpu.H = cpu.B; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDHC]: (cpu) => { cpu.H = cpu.C; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDHD]: (cpu) => { cpu.H = cpu.D; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDHE]: (cpu) => { cpu.H = cpu.E; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDHH]: (cpu) => { cpu.H = cpu.H; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDHL]: (cpu) => { cpu.H = cpu.L; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDHHLm]: (cpu) => { cpu.H = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHA]: (cpu) => { cpu.H = cpu.A; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDLB]: (cpu) => { cpu.L = cpu.B; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDLC]: (cpu) => { cpu.L = cpu.C; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDLD]: (cpu) => { cpu.L = cpu.D; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDLE]: (cpu) => { cpu.L = cpu.E; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDLH]: (cpu) => { cpu.L = cpu.H; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDLL]: (cpu) => { cpu.L = cpu.L; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDLHLm]: (cpu) => { cpu.L = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDLA]: (cpu) => { cpu.L = cpu.A; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0x7 ------------------------ */
-  [OPCODES.LDHLmB]: cpu => cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.B),
-  [OPCODES.LDHLmC]: cpu => cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.C),
-  [OPCODES.LDHLmD]: cpu => cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.D),
-  [OPCODES.LDHLmE]: cpu => cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.E),
-  [OPCODES.LDHLmH]: cpu => cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.H),
-  [OPCODES.LDHLmL]: cpu => cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.L),
-  [OPCODES.HALT]: cpu => cpu.HALT = 1,
-  [OPCODES.LDHLmA]: cpu => cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.A),
-  [OPCODES.LDAB]: cpu => cpu.A = cpu.B,
-  [OPCODES.LDAC]: cpu => cpu.A = cpu.C,
-  [OPCODES.LDAD]: cpu => cpu.A = cpu.D,
-  [OPCODES.LDAE]: cpu => cpu.A = cpu.E,
-  [OPCODES.LDAH]: cpu => cpu.A = cpu.H,
-  [OPCODES.LDAL]: cpu => cpu.A = cpu.L,
-  [OPCODES.LDAHLm]: cpu => cpu.A = cpu.mmu.read8((cpu)),
-  [OPCODES.LDAA]: cpu => cpu.A = cpu.A,
+  [OPCODES.LDHLmB]: (cpu) => { cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.B); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmC]: (cpu) => { cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.C); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmD]: (cpu) => { cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.D); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmE]: (cpu) => { cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.E); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmH]: (cpu) => { cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.H); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmL]: (cpu) => { cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.L); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.HALT]: (cpu) => { cpu.HALT = 1; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDHLmA]: (cpu) => { cpu.mmu.write8((cpu.H << 8) | cpu.L, cpu.A); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDAB]: (cpu) => { cpu.A = cpu.B; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDAC]: (cpu) => { cpu.A = cpu.C; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDAD]: (cpu) => { cpu.A = cpu.D; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDAE]: (cpu) => { cpu.A = cpu.E; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDAH]: (cpu) => { cpu.A = cpu.H; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDAL]: (cpu) => { cpu.A = cpu.L; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDAHLm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, (cpu)); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDAA]: (cpu) => { cpu.A = cpu.A; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0x8 ------------------------ */
   [OPCODES.ADDAB]: (cpu) => {
     setFlags(cpu, cpu.A + cpu.B);
     setHalfCarry(cpu, cpu.A, cpu.B);
     cpu.A = (cpu.A + cpu.B) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADDAC]: (cpu) => {
     setFlags(cpu, cpu.A + cpu.C);
     setHalfCarry(cpu, cpu.A, cpu.C);
     cpu.A = (cpu.A + cpu.C) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADDAD]: (cpu) => {
     setFlags(cpu, cpu.A + cpu.D);
     setHalfCarry(cpu, cpu.A, cpu.D);
     cpu.A = (cpu.A + cpu.D) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADDAE]: (cpu) => {
     setFlags(cpu, cpu.A + cpu.E);
     setHalfCarry(cpu, cpu.A, cpu.E);
     cpu.A = (cpu.A + cpu.E) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADDAH]: (cpu) => {
     setFlags(cpu, cpu.A + cpu.H);
     setHalfCarry(cpu, cpu.A, cpu.H);
     cpu.A = (cpu.A + cpu.H) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADDAL]: (cpu) => {
     setFlags(cpu, cpu.A + cpu.L);
     setHalfCarry(cpu, cpu.A, cpu.L);
     cpu.A = (cpu.A + cpu.L) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADDAHLm]: (cpu) => {
-    const val = cpu.mmu.read8((cpu.H << 8) | cpu.L);
+    const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
     setFlags(cpu, cpu.A + val);
     setHalfCarry(cpu, cpu.A, val);
     cpu.A = (cpu.A + val) & 0xff;
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.ADDAA]: (cpu) => {
     setFlags(cpu, cpu.A + cpu.A);
     setHalfCarry(cpu, cpu.A, cpu.A);
     cpu.A = (cpu.A + cpu.A) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADCAB]: (cpu) => {
     setFlags(cpu, cpu.A + cpu.L);
     setHalfCarry(cpu, cpu.A, cpu.L);
     cpu.A = (cpu.A + cpu.L) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADCAC]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A + cpu.C + carry);
     setHalfCarry(cpu, cpu.A, cpu.C + carry);
     cpu.A = (cpu.A + cpu.C) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADCAD]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A + cpu.D + carry);
     setHalfCarry(cpu, cpu.A, cpu.D + carry);
     cpu.A = (cpu.A + cpu.D) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADCAE]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A + cpu.E + carry);
     setHalfCarry(cpu, cpu.A, cpu.E + carry);
     cpu.A = (cpu.A + cpu.E) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADCAH]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A + cpu.H + carry);
     setHalfCarry(cpu, cpu.A, cpu.H + carry);
     cpu.A = (cpu.A + cpu.H) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADCAL]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A + cpu.L + carry);
     setHalfCarry(cpu, cpu.A, cpu.L + carry);
     cpu.A = (cpu.A + cpu.L) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.ADCAHLm]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
-    const val = cpu.mmu.read8((cpu.H << 8) | cpu.L);
+    const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
     setFlags(cpu, cpu.A + val + carry);
     setHalfCarry(cpu, cpu.A, val + carry);
     cpu.A = (cpu.A + val) & 0xff;
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.ADCAA]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A + cpu.A + carry);
     setHalfCarry(cpu, cpu.A, cpu.A + carry);
     cpu.A = (cpu.A + cpu.A) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
 
   /* ------------------------ 0x9 ------------------------ */
@@ -780,146 +852,167 @@ const opcodes = {
     setFlags(cpu, cpu.A - cpu.B, 1);
     setHalfCarry(cpu, cpu.A, cpu.B, 1);
     cpu.A = (cpu.A - cpu.B) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBAC]: (cpu) => {
     setFlags(cpu, cpu.A - cpu.C, 1);
     setHalfCarry(cpu, cpu.A, cpu.C, 1);
     cpu.A = (cpu.A - cpu.C) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBAD]: (cpu) => {
     setFlags(cpu, cpu.A - cpu.D, 1);
     setHalfCarry(cpu, cpu.A, cpu.D, 1);
     cpu.A = (cpu.A - cpu.D) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBAE]: (cpu) => {
     setFlags(cpu, cpu.A - cpu.E, 1);
     setHalfCarry(cpu, cpu.A, cpu.E, 1);
     cpu.A = (cpu.A - cpu.E) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBAH]: (cpu) => {
     setFlags(cpu, cpu.A - cpu.H, 1);
     setHalfCarry(cpu, cpu.A, cpu.H, 1);
     cpu.A = (cpu.A - cpu.H) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBAL]: (cpu) => {
     setFlags(cpu, cpu.A - cpu.L, 1);
     setHalfCarry(cpu, cpu.A, cpu.L, 1);
     cpu.A = (cpu.A - cpu.L) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBAHLm]: (cpu) => {
-    const val = cpu.mmu.read8((cpu.H << 8) | cpu.L);
+    const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
     setFlags(cpu, cpu.A - val, 1);
     setHalfCarry(cpu, cpu.A, val, 1);
     cpu.A = (cpu.A - val) & 0xff;
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.SUBAA]: (cpu) => {
     cpu.A = 0;
     cpu.F = 0xc0;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBCAB]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A - cpu.B - carry, 1);
     setHalfCarry(cpu, cpu.A, cpu.B + carry, 1);
     cpu.A = (cpu.A - cpu.B - carry) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBCAC]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A - cpu.C - carry, 1);
     setHalfCarry(cpu, cpu.A, cpu.C + carry, 1);
     cpu.A = (cpu.A - cpu.C - carry) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBCAD]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A - cpu.D - carry, 1);
     setHalfCarry(cpu, cpu.A, cpu.D + carry, 1);
     cpu.A = (cpu.A - cpu.D - carry) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBCAE]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A - cpu.E - carry, 1);
     setHalfCarry(cpu, cpu.A, cpu.E + carry, 1);
     cpu.A = (cpu.A - cpu.E - carry) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBCAH]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A - cpu.H - carry, 1);
     setHalfCarry(cpu, cpu.A, cpu.H + carry, 1);
     cpu.A = (cpu.A - cpu.H - carry) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBCAL]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A - cpu.L - carry, 1);
     setHalfCarry(cpu, cpu.A, cpu.L + carry, 1);
     cpu.A = (cpu.A - cpu.L - carry) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.SUBCAHLm]: (cpu) => {
-    const val = cpu.mmu.read8((cpu.H << 8) | cpu.L);
+    const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A - val - carry, 1);
     setHalfCarry(cpu, cpu.A, val + carry, 1);
     cpu.A = (cpu.A - val - carry) & 0xff;
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.SUBCAA]: (cpu) => {
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A - cpu.B - carry, 1);
     setHalfCarry(cpu, cpu.A, cpu.B + carry, 1);
     cpu.A = (cpu.A - cpu.B - carry) & 0xff;
+    cpu.M = 1; cpu.T = 4;
   },
 
   /* ------------------------ 0xa ------------------------ */
-  [OPCODES.ANDB]: (cpu) => { cpu.A &= cpu.B; cpu.F = !cpu.A ? 0xa0 : 0x20; },
-  [OPCODES.ANDC]: (cpu) => { cpu.A &= cpu.C; cpu.F = !cpu.A ? 0xa0 : 0x20; },
-  [OPCODES.ANDD]: (cpu) => { cpu.A &= cpu.D; cpu.F = !cpu.A ? 0xa0 : 0x20; },
-  [OPCODES.ANDE]: (cpu) => { cpu.A &= cpu.E; cpu.F = !cpu.A ? 0xa0 : 0x20; },
-  [OPCODES.ANDH]: (cpu) => { cpu.A &= cpu.H; cpu.F = !cpu.A ? 0xa0 : 0x20; },
-  [OPCODES.ANDL]: (cpu) => { cpu.A &= cpu.L; cpu.F = !cpu.A ? 0xa0 : 0x20; },
-  [OPCODES.ANDHLm]: (cpu) => { cpu.A &= cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.F = !cpu.A ? 0xa0 : 0x20; },
-  [OPCODES.ANDA]: (cpu) => { cpu.F = !cpu.A ? 0xa0 : 0x20; },
-  [OPCODES.XORB]: (cpu) => { cpu.A ^= cpu.B; cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.XORC]: (cpu) => { cpu.A ^= cpu.C; cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.XORD]: (cpu) => { cpu.A ^= cpu.D; cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.XORE]: (cpu) => { cpu.A ^= cpu.E; cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.XORH]: (cpu) => { cpu.A ^= cpu.H; cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.XORL]: (cpu) => { cpu.A ^= cpu.L; cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.XORHLm]: (cpu) => { cpu.A ^= cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.XORA]: (cpu) => { cpu.A = 0; cpu.F = 0x80; },
+  [OPCODES.ANDB]: (cpu) => { cpu.A &= cpu.B; cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ANDC]: (cpu) => { cpu.A &= cpu.C; cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ANDD]: (cpu) => { cpu.A &= cpu.D; cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ANDE]: (cpu) => { cpu.A &= cpu.E; cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ANDH]: (cpu) => { cpu.A &= cpu.H; cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ANDL]: (cpu) => { cpu.A &= cpu.L; cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ANDHLm]: (cpu) => { cpu.A &= cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 2; cpu.T = 8; },
+  [OPCODES.ANDA]: (cpu) => { cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.XORB]: (cpu) => { cpu.A ^= cpu.B; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.XORC]: (cpu) => { cpu.A ^= cpu.C; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.XORD]: (cpu) => { cpu.A ^= cpu.D; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.XORE]: (cpu) => { cpu.A ^= cpu.E; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.XORH]: (cpu) => { cpu.A ^= cpu.H; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.XORL]: (cpu) => { cpu.A ^= cpu.L; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.XORHLm]: (cpu) => { cpu.A ^= cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
+  [OPCODES.XORA]: (cpu) => { cpu.A = 0; cpu.F = 0x80; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0xb ------------------------ */
-  [OPCODES.ORB]: (cpu) => { cpu.A |= cpu.B; cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.ORC]: (cpu) => { cpu.A |= cpu.C; cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.ORD]: (cpu) => { cpu.A |= cpu.D; cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.ORE]: (cpu) => { cpu.A |= cpu.E; cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.ORH]: (cpu) => { cpu.A |= cpu.H; cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.ORL]: (cpu) => { cpu.A |= cpu.L; cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.ORHLm]: (cpu) => { cpu.A |= cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.ORA]: (cpu) => { cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.CPB]: (cpu) => { setFlags(cpu, cpu.A - cpu.B, 1); setHalfCarry(cpu, cpu.A, cpu.B, 1); },
-  [OPCODES.CPC]: (cpu) => { setFlags(cpu, cpu.A - cpu.C, 1); setHalfCarry(cpu, cpu.A, cpu.C, 1); },
-  [OPCODES.CPD]: (cpu) => { setFlags(cpu, cpu.A - cpu.D, 1); setHalfCarry(cpu, cpu.A, cpu.D, 1); },
-  [OPCODES.CPE]: (cpu) => { setFlags(cpu, cpu.A - cpu.E, 1); setHalfCarry(cpu, cpu.A, cpu.E, 1); },
-  [OPCODES.CPH]: (cpu) => { setFlags(cpu, cpu.A - cpu.L, 1); setHalfCarry(cpu, cpu.A, cpu.H, 1); },
-  [OPCODES.CPL]: (cpu) => { setFlags(cpu, cpu.A - cpu.B, 1); setHalfCarry(cpu, cpu.A, cpu.L, 1); },
-  [OPCODES.CPHLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); setFlags(cpu, cpu.A - val, 1); setHalfCarry(cpu, cpu.A, val, 1); },
-  [OPCODES.CPA]: (cpu) => { cpu.F = 0xc0; },
+  [OPCODES.ORB]: (cpu) => { cpu.A |= cpu.B; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ORC]: (cpu) => { cpu.A |= cpu.C; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ORD]: (cpu) => { cpu.A |= cpu.D; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ORE]: (cpu) => { cpu.A |= cpu.E; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ORH]: (cpu) => { cpu.A |= cpu.H; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ORL]: (cpu) => { cpu.A |= cpu.L; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ORHLm]: (cpu) => { cpu.A |= cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
+  [OPCODES.ORA]: (cpu) => { cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.CPB]: (cpu) => { setFlags(cpu, cpu.A - cpu.B, 1); setHalfCarry(cpu, cpu.A, cpu.B, 1); cpu.M = 1; cpu.T = 4; },
+  [OPCODES.CPC]: (cpu) => { setFlags(cpu, cpu.A - cpu.C, 1); setHalfCarry(cpu, cpu.A, cpu.C, 1); cpu.M = 1; cpu.T = 4; },
+  [OPCODES.CPD]: (cpu) => { setFlags(cpu, cpu.A - cpu.D, 1); setHalfCarry(cpu, cpu.A, cpu.D, 1); cpu.M = 1; cpu.T = 4; },
+  [OPCODES.CPE]: (cpu) => { setFlags(cpu, cpu.A - cpu.E, 1); setHalfCarry(cpu, cpu.A, cpu.E, 1); cpu.M = 1; cpu.T = 4; },
+  [OPCODES.CPH]: (cpu) => { setFlags(cpu, cpu.A - cpu.L, 1); setHalfCarry(cpu, cpu.A, cpu.H, 1); cpu.M = 1; cpu.T = 4; },
+  [OPCODES.CPL]: (cpu) => { setFlags(cpu, cpu.A - cpu.B, 1); setHalfCarry(cpu, cpu.A, cpu.L, 1); cpu.M = 1; cpu.T = 4; },
+  [OPCODES.CPHLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); setFlags(cpu, cpu.A - val, 1); setHalfCarry(cpu, cpu.A, val, 1); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.CPA]: (cpu) => { cpu.F = 0xc0; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0xc ------------------------ */
   [OPCODES.RETNZ]: (cpu) => {
+    cpu.M = 1; cpu.T = 4;
     if (!(cpu.F & 0x80)) {
       cpu.PC = cpu.mmu.read16(cpu.SP);
       cpu.SP += 2;
+      cpu.M += 2; cpu.T += 8;
     }
   },
   [OPCODES.POPBC]: (cpu) => {
-    cpu.C = cpu.mmu.read8(cpu.SP++);
-    cpu.B = cpu.mmu.read8(cpu.SP++);
+    cpu.C = cpu.mmu.read8(cpu, cpu.SP++);
+    cpu.B = cpu.mmu.read8(cpu, cpu.SP++);
+    cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.JPNZnn]: (cpu) => { !(cpu.F & 0x80) ? cpu.PC = cpu.mmu.read16(cpu.PC) : cpu.PC += 2; },
-  [OPCODES.JPnn]: (cpu) => { cpu.PC = cpu.mmu.read16(cpu.PC); },
+  [OPCODES.JPNZnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (!(cpu.F & 0x80)) { cpu.PC = cpu.mmu.read16(cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
+  [OPCODES.JPnn]: (cpu) => { cpu.PC = cpu.mmu.read16(cpu.PC); cpu.M = 3; cpu.T = 12; },
   [OPCODES.CALLNZnn]: (cpu) => {
+    cpu.M = 3; cpu.T = 12;
     if (!(cpu.F & 0x80)) {
       cpu.SP -= 2;
       cpu.mmu.write16(cpu.SP, cpu.PC + 2);
       cpu.PC = cpu.mmu.read16(cpu.PC);
+      cpu.M += 2; cpu.T += 8;
     } else {
       cpu.PC += 2;
     }
@@ -927,35 +1020,43 @@ const opcodes = {
   [OPCODES.PUSHBC]: (cpu) => {
     cpu.SP -= 2;
     cpu.mmu.write16(cpu.SP, (cpu.B << 8) | cpu.C);
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.ADDAn]: (cpu) => {
-    const val = cpu.mmu.read8(cpu.PC++);
+    const val = cpu.mmu.read8(cpu, cpu.PC++);
     setFlags(cpu, cpu.A + val);
     setHalfCarry(cpu, cpu.A, val);
     cpu.A = (cpu.A + val) & 0xff;
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.RST00]: (cpu) => {
     cpu.SP -= 2;
     cpu.mmu.write16(cpu.SP, cpu.PC);
     cpu.PC = 0x00;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.RETZ]: (cpu) => {
+    cpu.M = 1; cpu.T = 4;
     if (cpu.F & 0x80) {
       cpu.PC = cpu.mmu.read16(cpu.SP);
       cpu.SP += 2;
+      cpu.M += 2; cpu.T += 8;
     }
   },
   [OPCODES.RET]: (cpu) => {
     cpu.PC = cpu.mmu.read16(cpu.SP);
     cpu.SP += 2;
+    cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.JPZnn]: (cpu) => { cpu.F & 0x80 ? cpu.PC = cpu.mmu.read16(cpu.PC) : cpu.PC += 2; },
+  [OPCODES.JPZnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (cpu.F & 0x80) { cpu.PC = cpu.mmu.read16(cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
   [OPCODES.EXTops]: (cpu) => { cpu; },
   [OPCODES.CALLZnn]: (cpu) => {
+    cpu.M = 3; cpu.T = 12;
     if (cpu.F & 0x80) {
       cpu.SP -= 2;
       cpu.mmu.write16(cpu.SP, cpu.PC + 2);
       cpu.PC = cpu.mmu.read16(cpu.PC);
+      cpu.M += 2; cpu.T += 8;
     } else {
       cpu.PC += 2;
     }
@@ -964,37 +1065,45 @@ const opcodes = {
     cpu.SP -= 2;
     cpu.mmu.write16(cpu.SP, cpu.PC + 2);
     cpu.PC = cpu.mmu.read16(cpu.PC);
+    cpu.M = 5; cpu.T = 20;
   },
   [OPCODES.ADCAn]: (cpu) => {
-    const val = cpu.mmu.read8(cpu.PC++);
+    const val = cpu.mmu.read8(cpu, cpu.PC++);
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A + val + carry);
     setHalfCarry(cpu, cpu.A, val + carry);
     cpu.A = (cpu.A + val + carry) & 0xff;
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.RST08]: (cpu) => {
     cpu.SP -= 2;
     cpu.mmu.write16(cpu.SP, cpu.PC);
     cpu.PC = 0x08;
+    cpu.M = 3; cpu.T = 12;
   },
 
   /* ------------------------ 0xd ------------------------ */
   [OPCODES.RETNC]: (cpu) => {
+    cpu.M = 1; cpu.T = 4;
     if (!(cpu.F & 0x10)) {
       cpu.PC = cpu.mmu.read16(cpu.SP);
       cpu.SP += 2;
+      cpu.M += 2; cpu.T += 8;
     }
   },
   [OPCODES.POPDE]: (cpu) => {
-    cpu.E = cpu.mmu.read8(cpu.SP++);
-    cpu.D = cpu.mmu.read8(cpu.SP++);
+    cpu.E = cpu.mmu.read8(cpu, cpu.SP++);
+    cpu.D = cpu.mmu.read8(cpu, cpu.SP++);
+    cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.JPNCnn]: (cpu) => { !(cpu.F & 0x10) ? cpu.PC = cpu.mmu.read16(cpu.PC) : cpu.PC += 2; },
+  [OPCODES.JPNCnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (!(cpu.F & 0x10)) { cpu.PC = cpu.mmu.read16(cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
   [OPCODES.CALLNCnn]: (cpu) => {
+    cpu.M = 3; cpu.T = 12;
     if (!(cpu.F & 0x81)) {
       cpu.SP -= 2;
       cpu.mmu.write16(cpu.SP, cpu.PC + 2);
       cpu.PC = cpu.mmu.read16(cpu.PC);
+      cpu.M += 2; cpu.T += 8;
     } else {
       cpu.PC += 2;
     }
@@ -1002,127 +1111,105 @@ const opcodes = {
   [OPCODES.PUSHDE]: (cpu) => {
     cpu.SP -= 2;
     cpu.mmu.write16(cpu.SP, (cpu.D << 8) | cpu.E);
+    cpu.M = 3; cpu.T = 21;
   },
   [OPCODES.SUBAn]: (cpu) => {
-    const val = cpu.mmu.read8(cpu.PC++);
+    const val = cpu.mmu.read8(cpu, cpu.PC++);
     setFlags(cpu, cpu.A - val, 1);
     setHalfCarry(cpu, cpu.A, val, 1);
     cpu.A = (cpu.A - val) & 0xff;
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.RST10]: (cpu) => {
     cpu.SP -= 2;
     cpu.mmu.write16(cpu.SP, cpu.PC);
     cpu.PC = 0x10;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.RETC]: (cpu) => {
+    cpu.M = 1; cpu.T = 4;
     if (cpu.F & 0x10) {
       cpu.PC = cpu.mmu.read16(cpu.SP);
       cpu.SP += 2;
+      cpu.M += 2; cpu.T += 8;
     }
   },
   [OPCODES.RETI]: (cpu) => {
     cpu.PC = cpu.mmu.read16(cpu.SP);
     cpu.SP += 2;
+    cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.JPCnn]: (cpu) => { cpu.F & 0x10 ? cpu.PC = cpu.mmu.read16(cpu.PC) : cpu.PC += 2; },
+  [OPCODES.JPCnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (cpu.F & 0x10) { cpu.PC = cpu.mmu.read16(cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
   [OPCODES.CALLCnn]: (cpu) => {
+    cpu.M = 3; cpu.T = 12;
     if (cpu.F & 0x10) {
       cpu.SP -= 2;
       cpu.mmu.write16(cpu.SP, cpu.PC + 2);
       cpu.PC = cpu.mmu.read16(cpu.PC);
+      cpu.M += 2; cpu.T += 8;
     } else {
       cpu.PC += 2;
     }
   },
   [OPCODES.SBCAn]: (cpu) => {
-    const val = cpu.mmu.read8(cpu.PC++);
+    const val = cpu.mmu.read8(cpu, cpu.PC++);
     const carry = (cpu.F & 0x10) ? 1 : 0;
     setFlags(cpu, cpu.A - val - carry, 1);
     setHalfCarry(cpu, cpu.A, val + carry, 1);
     cpu.A = (cpu.A - val - carry) & 0xff;
+    cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.RST18]: (cpu) => {
     cpu.SP -= 2;
     cpu.mmu.write16(cpu.SP, cpu.PC);
     cpu.PC = 0x18;
+    cpu.M = 3; cpu.T = 12;
   },
 
   /* ------------------------ 0xe ------------------------ */
-  [OPCODES.LDHnmA]: (cpu) => { cpu.mmu.write8(0xff00 | cpu.mmu.read8(cpu.PC++), cpu.A); },
-  [OPCODES.POPHL]: (cpu) => {
-    cpu.L = cpu.mmu.read8(cpu.SP++);
-    cpu.H = cpu.mmu.read8(cpu.SP++);
-  },
-  [OPCODES.LDHCmA]: (cpu) => { cpu.mmu.write8(0xff00 | cpu.C, cpu.A); },
-  [OPCODES.PUSHHL]: (cpu) => {
-    cpu.SP -= 2;
-    cpu.mmu.write16(cpu.SP, (cpu.H << 8) | cpu.L);
-  },
-  [OPCODES.ANDn]: (cpu) => { cpu.A &= cpu.mmu.read8(cpu.PC++); cpu.F = !cpu.A ? 0xa0 : 0x20; },
+  [OPCODES.LDHnmA]: (cpu) => { cpu.mmu.write8(0xff00 | cpu.mmu.read8(cpu, cpu.PC++), cpu.A); cpu.M = 3; cpu.T = 12; },
+  [OPCODES.POPHL]: (cpu) => { cpu.L = cpu.mmu.read8(cpu, cpu.SP++); cpu.H = cpu.mmu.read8(cpu, cpu.SP++); cpu.M = 3; cpu.T = 12; },
+  [OPCODES.LDHCmA]: (cpu) => { cpu.mmu.write8(0xff00 | cpu.C, cpu.A); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.PUSHHL]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu.SP, (cpu.H << 8) | cpu.L); cpu.M = 3; cpu.T = 12; },
+  [OPCODES.ANDn]: (cpu) => { cpu.A &= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 2; cpu.T = 8; },
   [OPCODES.RST20]: (cpu) => {
     cpu.SP -= 2;
     cpu.mmu.write16(cpu.SP, cpu.PC);
     cpu.PC = 0x20;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.ADDSPd]: (cpu) => {
-    let i = cpu.mmu.read8(cpu.PC++);
+    let i = cpu.mmu.read8(cpu, cpu.PC++);
     if (i > 127) i = -((~i + 1) & 0xff);
     cpu.SP += i;
     cpu.F &= 0x30; // TODO set carry/half carry
+    cpu.M = 4; cpu.T = 16;
   },
-  [OPCODES.JPHLm]: (cpu) => { cpu.PC = (cpu.H << 8) | cpu.L; },
-  [OPCODES.LDnnmA]: (cpu) => {
-    cpu.mmu.write8(cpu.mmu.read16(cpu.PC), cpu.A);
-    cpu.PC += 2;
-  },
-  [OPCODES.XORn]: (cpu) => { cpu.A ^= cpu.mmu.read8(cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.RST28]: (cpu) => {
-    cpu.SP -= 2;
-    cpu.mmu.write16(cpu.SP, cpu.PC);
-    cpu.PC = 0x28;
-  },
+  [OPCODES.JPHLm]: (cpu) => { cpu.PC = (cpu.H << 8) | cpu.L; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDnnmA]: (cpu) => { cpu.mmu.write8(cpu.mmu.read16(cpu.PC), cpu.A); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
+  [OPCODES.XORn]: (cpu) => { cpu.A ^= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
+  [OPCODES.RST28]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu.SP, cpu.PC); cpu.PC = 0x28; cpu.M = 3; cpu.T = 12; },
 
   /* ------------------------ 0xf ------------------------ */
-  [OPCODES.LDHAnm]: (cpu) => { cpu.A = cpu.mmu.read8(0xff00 | cpu.mmu.read8(cpu.PC++)); },
-  [OPCODES.POPAF]: (cpu) => {
-    cpu.F = cpu.mmu.read8(cpu.SP++) & 0xf0;
-    cpu.A = cpu.mmu.read8(cpu.SP++);
-  },
-  [OPCODES.DI]: (cpu) => { cpu; },
-  [OPCODES.PUSHAF]: (cpu) => {
-    cpu.SP -= 2;
-    cpu.mmu.write16(cpu.SP, (cpu.A << 8) | cpu.F);
-  },
-  [OPCODES.ORn]: (cpu) => { cpu.A |= cpu.mmu.read8(cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; },
-  [OPCODES.RST30]: (cpu) => {
-    cpu.SP -= 2;
-    cpu.mmu.write16(cpu.SP, cpu.PC);
-    cpu.PC = 0x30;
-  },
+  [OPCODES.LDHAnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; },
+  [OPCODES.POPAF]: (cpu) => { cpu.F = cpu.mmu.read8(cpu, cpu.SP++) & 0xf0; cpu.A = cpu.mmu.read8(cpu, cpu.SP++); cpu.M = 3; cpu.T = 12; },
+  [OPCODES.DI]: (cpu) => { cpu; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.PUSHAF]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu.SP, (cpu.A << 8) | cpu.F); cpu.M = 3; cpu.T = 12; },
+  [OPCODES.ORn]: (cpu) => { cpu.A |= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
+  [OPCODES.RST30]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu.SP, cpu.PC); cpu.PC = 0x30; cpu.M = 3; cpu.T = 12; },
   [OPCODES.LDHLSPd]: (cpu) => {
-    let i = cpu.mmu.read8(cpu.PC++);
+    let i = cpu.mmu.read8(cpu, cpu.PC++);
     if (i > 127) i = -((~i + 1) & 0xff);
     i += cpu.SP; // TODO check arry flags
     cpu.H = (i >> 8) & 0xff;
     cpu.L = i & 0xff;
+    cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDSPHL]: (cpu) => { cpu.SP = (cpu.H << 8) | cpu.L; },
-  [OPCODES.LDAnnm]: (cpu) => {
-    const addr = cpu.mmu.read16(cpu.PC);
-    cpu.A = cpu.mmu.read8(addr);
-    cpu.PC += 2;
-  },
-  [OPCODES.EI]: (cpu) => { cpu; },
-  [OPCODES.CPn]: (cpu) => {
-    const val = cpu.mmu.read8(cpu.PC++);
-    setFlags(cpu, cpu.A - val, 1);
-    setHalfCarry(cpu, cpu.A, val, 1);
-  },
-  [OPCODES.RST38]: (cpu) => {
-    cpu.SP -= 2;
-    cpu.mmu.write16(cpu.SP, cpu.PC);
-    cpu.PC = 0x38;
-  },
+  [OPCODES.LDAnnm]: (cpu) => { const addr = cpu.mmu.read16(cpu.PC); cpu.A = cpu.mmu.read8(cpu, addr); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
+  [OPCODES.EI]: (cpu) => { cpu; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.CPn]: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); setFlags(cpu, cpu.A - val, 1); setHalfCarry(cpu, cpu.A, val, 1); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.RST38]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu.SP, cpu.PC); cpu.PC = 0x38; cpu.M = 3; cpu.T = 12; },
 };
 
 

@@ -19,7 +19,7 @@ class MMU {
       0x21, 0x04, 0x01, 0x11, 0xA8, 0x00, 0x1A, 0x13, 0xBE, 0x20, 0xFE, 0x23, 0x7D, 0xFE, 0x34, 0x20,
       0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50,
     ];
-    this.rom = [];
+    this.rom = '';
     this.eram = [];
     this.oam = [];
     this.vram = [];
@@ -28,7 +28,7 @@ class MMU {
   }
 
 
-  read8(addr, cpu) {
+  read8(cpu, addr) {
     addr &= 0xffff;
 
     switch (addr & 0xf00) {
@@ -38,20 +38,20 @@ class MMU {
           if (addr < 0x100) return this.bios[addr];
           if (cpu.PC === 0x0100) this.biosExecuted = true;
         }
-        return this.rom[addr];
+        return this.rom.charCodeAt(addr);
 
       // ROM0
       case 0x1000:
       case 0x2000:
       case 0x3000:
-        return this.rom[addr];
+        return this.rom.charCodeAt(addr);
 
       // ROM1 (16K)
       case 0x4000:
       case 0x5000:
       case 0x6000:
       case 0x7000:
-        return this.rom[addr];
+        return this.rom.charCodeAt(addr);
 
       // VRAM (Graphics 8K)
       case 0x8000:
@@ -160,6 +160,10 @@ class MMU {
 
     this.write8(leastSigByte, addr);
     this.write8(mostSigByte, addr + 1);
+  }
+
+  loadRom(data) {
+    this.rom = data;
   }
 }
 
