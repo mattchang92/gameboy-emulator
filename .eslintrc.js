@@ -13,6 +13,7 @@ module.exports = {
     "no-continue": 'off',
     "max-len": "off",
     "no-return-assign": "off",
+    "no-tabs": "off",
     "no-unused-expressions": "off"
   }
 };

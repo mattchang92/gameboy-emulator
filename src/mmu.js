@@ -69,7 +69,7 @@ class MMU {
         return this.wram[addr & 0x1fff];
 
       // 0xf000:
-      default:
+      case 0xf000c:
         switch (addr & 0x0f00) {
           // Working RAM shadow
           case 0x000: case 0x100: case 0x200: case 0x300: case 0x400: case 0x500: case 0x600:
@@ -82,10 +82,17 @@ class MMU {
             return 0;
 
           // 0xf00 Zero Page RAM (128 B)
-          default:
+          case 0xf00:
             if (addr >= 0xff80) return this.zram[addr & 0x7f];
             return 0; // I/O control
+
+          default:
+            break;
         }
+        break;
+
+      default:
+        break;
     }
   }
 
@@ -133,7 +140,7 @@ class MMU {
         this.wram[addr & 0x1fff] = val; break;
 
       // 0xf000:
-      default:
+      case 0xf000:
         switch (addr & 0x0f00) {
           // Working RAM shadow
           case 0x000: case 0x100: case 0x200: case 0x300: case 0x400: case 0x500: case 0x600:
@@ -145,10 +152,17 @@ class MMU {
             if (addr < 0xfea0) this.oam[addr & 0xff] = val; break;
 
           // 0xf00 Zero Page RAM (128 B)
-          default:
+          case 0xf00:
             if (addr >= 0xff80) this.zram[addr & 0x7f] = val; break;
             // return 0; // I/O control
+
+          default:
+            break;
         }
+        break;
+
+      default:
+        break;
     }
   }
 
