@@ -1,7 +1,7 @@
 class MMU {
-  constructor(cpuMemory) {
-    this.ram = cpuMemory.ram;
-    this._bios = [
+  constructor() {
+    this.biosExecuted = false;
+    this.bios = [
       0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0x20, 0xFB, 0x21, 0x26, 0xFF, 0x0E,
       0x11, 0x3E, 0x80, 0x32, 0xE2, 0x0C, 0x3E, 0xF3, 0xE2, 0x32, 0x3E, 0x77, 0x77, 0x3E, 0xFC, 0xE0,
       0x47, 0x11, 0x04, 0x01, 0x21, 0x10, 0x80, 0x1A, 0xCD, 0x95, 0x00, 0xCD, 0x96, 0x00, 0x13, 0x7B,
@@ -19,40 +19,137 @@ class MMU {
       0x21, 0x04, 0x01, 0x11, 0xA8, 0x00, 0x1A, 0x13, 0xBE, 0x20, 0xFE, 0x23, 0x7D, 0xFE, 0x34, 0x20,
       0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50,
     ];
-
-    this.loadBios();
+    this.rom = [];
+    this.eram = [];
+    this.oam = [];
+    this.vram = [];
+    this.wram = [];
+    this.zram = [];
   }
 
-  loadBios() {
-    this._bios.forEach((byte, i) => {
-      this.ram[i] = byte;
-    });
-  }
 
-  read8(addr) {
+  read8(addr, cpu) {
     addr &= 0xffff;
 
-    console.log(`Reading byte from address ${addr}`);
+    switch (addr & 0xf00) {
+      // Bios (256 B) /ROM0 (16K)
+      case 0x0000:
+        if (!this.biosExecuted) {
+          if (addr < 0x100) return this.bios[addr];
+          if (cpu.PC === 0x0100) this.biosExecuted = true;
+        }
+        return this.rom[addr];
 
-    return this.ram[addr];
+      // ROM0
+      case 0x1000:
+      case 0x2000:
+      case 0x3000:
+        return this.rom[addr];
+
+      // ROM1 (16K)
+      case 0x4000:
+      case 0x5000:
+      case 0x6000:
+      case 0x7000:
+        return this.rom[addr];
+
+      // VRAM (Graphics 8K)
+      case 0x8000:
+      case 0x9000:
+        return this.vram[addr & 0x1fff];
+
+      // External RAM (8K)
+      case 0xa000:
+      case 0xb000:
+        return this.eram[addr & 0x1fff];
+
+      // Working RAM (8K)
+      case 0xc000:
+      case 0xd000:
+        return this.wram[addr & 0x1fff];
+
+      // 0xf000:
+      default:
+        switch (addr & 0x0f00) {
+          // Working RAM shadow
+          case 0x000: case 0x100: case 0x200: case 0x300: case 0x400: case 0x500: case 0x600:
+          case 0x700: case 0x800: case 0x900: case 0xa00: case 0xb00: case 0xc00: case 0xd00:
+            return this.wram[addr & 0x1fff];
+
+          // Object Attribute Memory (OAM 160B)
+          case 0xe00:
+            if (addr < 0xfea0) return this.oam[addr & 0xff];
+            return 0;
+
+          // 0xf00 Zero Page RAM (128 B)
+          default:
+            if (addr >= 0xff80) return this.zram[addr & 0x7f];
+            return 0; // I/O control
+        }
+    }
   }
 
   read16(addr) {
     addr &= 0xffff;
 
-    const leastSigByte = this.ram[addr];
-    const mostSigByte = this.ram[(addr + 1) & 0xffff];
-    console.log(`Reading word from address ${addr}`);
-
-    return (mostSigByte << 8) | leastSigByte;
+    return this.read8(addr) + (this.read8(addr + 1) << 8);
   }
 
   write8(addr, val) {
     addr &= 0xffff;
 
-    console.log(`Writing byte to address ${addr} with value ${val}`);
+    switch (addr & 0xf00) {
+      // Bios (256 B) /ROM0 (16K)
+      case 0x0000:
+        if (!this.biosExecuted && addr < 0x100) return;
+        this.rom[addr] = val; break;
 
-    this.ram[addr] = val;
+      // ROM0
+      case 0x1000:
+      case 0x2000:
+      case 0x3000:
+        this.rom[addr] = val; break;
+
+      // ROM1 (16K)
+      case 0x4000:
+      case 0x5000:
+      case 0x6000:
+      case 0x7000:
+        this.rom[addr] = val; break;
+
+      // VRAM (Graphics 8K)
+      case 0x8000:
+      case 0x9000:
+        this.vram[addr & 0x1fff] = val; break;
+
+      // External RAM (8K)
+      case 0xa000:
+      case 0xb000:
+        this.eram[addr & 0x1fff] = val; break;
+
+      // Working RAM (8K)
+      case 0xc000:
+      case 0xd000:
+        this.wram[addr & 0x1fff] = val; break;
+
+      // 0xf000:
+      default:
+        switch (addr & 0x0f00) {
+          // Working RAM shadow
+          case 0x000: case 0x100: case 0x200: case 0x300: case 0x400: case 0x500: case 0x600:
+          case 0x700: case 0x800: case 0x900: case 0xa00: case 0xb00: case 0xc00: case 0xd00:
+            this.wram[addr & 0x1fff] = val; break;
+
+          // Object Attribute Memory (OAM 160B)
+          case 0xe00:
+            if (addr < 0xfea0) this.oam[addr & 0xff] = val; break;
+
+          // 0xf00 Zero Page RAM (128 B)
+          default:
+            if (addr >= 0xff80) this.zram[addr & 0x7f] = val; break;
+            // return 0; // I/O control
+        }
+    }
   }
 
   write16(addr, val) {
@@ -61,10 +158,8 @@ class MMU {
     const leastSigByte = val & 0xff;
     const mostSigByte = (val >>> 8) & 0xff;
 
-    console.log(`Writing word to address ${addr} with value ${val}`);
-
-    this.ram[addr] = leastSigByte;
-    this.ram[(addr + 1) & 0xffff] = mostSigByte;
+    this.write8(leastSigByte, addr);
+    this.write8(mostSigByte, addr + 1);
   }
 }
 
