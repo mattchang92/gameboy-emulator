@@ -102,7 +102,7 @@ class MMU {
     return this.read8(addr) + (this.read8(addr + 1) << 8);
   }
 
-  write8(addr, val) {
+  write8(gpu, addr, val) {
     addr &= 0xffff;
 
     switch (addr & 0xf00) {
@@ -127,7 +127,9 @@ class MMU {
       // VRAM (Graphics 8K)
       case 0x8000:
       case 0x9000:
-        this.vram[addr & 0x1fff] = val; break;
+        this.vram[addr & 0x1fff] = val;
+        gpu.updateTileBasedOnMemory(addr, val);
+        break;
 
       // External RAM (8K)
       case 0xa000:
@@ -166,7 +168,7 @@ class MMU {
     }
   }
 
-  write16(addr, val) {
+  write16(gpu, addr, val) {
     addr &= 0xffff;
 
     const leastSigByte = val & 0xff;

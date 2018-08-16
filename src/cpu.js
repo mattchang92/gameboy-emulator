@@ -1,4 +1,5 @@
 const CPUMemory = require('./cpuMemory');
+const GPU = require('./gpu');
 const MMU = require('./mmu');
 const { opcodes } = require('./opcodes');
 
@@ -39,6 +40,7 @@ class CPU {
     // components
     this.ram = new CPUMemory();
     this.mmu = new MMU(this.ram);
+    this.gpu = new GPU(this.mmu);
   }
 
   reset() {
@@ -64,6 +66,8 @@ class CPU {
 
       this.clock.m += this.M;
       this.clock.t += this.T;
+
+      this.gpu.step(this);
     }
   }
 }
