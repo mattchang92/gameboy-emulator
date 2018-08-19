@@ -65,7 +65,7 @@ class CPU {
   dispatch() {
     while (this.RUN) {
       const op = this.mmu.read8(this, this.PC++);
-      console.log(this.PC - 1, op.toString(16));
+      // console.log(this.PC - 1, op.toString(16));
       // console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), opcodes[op].toString());
       opcodes[op](this);
       this.PC &= 0xffff;

@@ -42,7 +42,7 @@ class GPU {
       [0, 0, 0, 255],
     ];
 
-    // this.reset();
+    this.reset();
   }
 
   step(cpu) {
@@ -149,7 +149,7 @@ class GPU {
 
     for (let i = 0; i < 160; i++) {
       colour = this.palette[this.tileset[tile][y][x]];
-
+      // console.log("what is ist", colour);
       this.screen.data[canvasOffs + 0] = colour[0];
       this.screen.data[canvasOffs + 1] = colour[1];
       this.screen.data[canvasOffs + 2] = colour[2];

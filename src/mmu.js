@@ -112,7 +112,7 @@ class MMU {
     // return one + two;
   }
 
-  write8(gpu, addr, val) {
+  write8(cpu, addr, val) {
     if (addr === 0xff50 && !this.printed) {
       this.printed = true;
       console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
@@ -144,7 +144,7 @@ class MMU {
       case 0x9000:
         console.log('writing to vram');
         this.vram[addr & 0x1fff] = val;
-        gpu.updateTileBasedOnMemory(addr, val);
+        cpu.gpu.updateTileBasedOnMemory(addr, val);
         break;
 
       // External RAM (8K)
@@ -184,15 +184,15 @@ class MMU {
     }
   }
 
-  write16(gpu, addr, val) {
+  write16(cpu, addr, val) {
     if (addr === 0xff50) console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     addr &= 0xffff;
 
     const leastSigByte = val & 0xff;
     const mostSigByte = (val >>> 8) & 0xff;
 
-    this.write8(leastSigByte, addr);
-    this.write8(mostSigByte, addr + 1);
+    this.write8(cpu, addr, leastSigByte);
+    this.write8(cpu, addr + 1, mostSigByte);
   }
 
   loadRom(data) {
