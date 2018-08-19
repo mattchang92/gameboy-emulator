@@ -1,263 +1,263 @@
 const OPCODES = {
   NOP: 0x00,
-  LDBCnn: 0x01,
-  LDBCmA: 0x02,
-  INCBC: 0x03,
-  INCB: 0x04,
-  DECB: 0x05,
-  LDBn: 0x06,
-  RLCA: 0x07,
-  LDnnSP: 0x08,
-  ADDHLBC: 0x09,
-  LDABCm: 0x0a,
-  DECBC: 0x0b,
-  INCC: 0x0c,
-  DECC: 0x0d,
-  LDCn: 0x0e,
-  RRCA: 0x0f,
+  // LDBCnn: 0x01,
+  // LDBCmA: 0x02,
+  // INCBC: 0x03,
+  // INCB: 0x04,
+  // DECB: 0x05,
+  // LDBn: 0x06,
+  // RLCA: 0x07,
+  // LDnnSP: 0x08,
+  // ADDHLBC: 0x09,
+  // LDABCm: 0x0a,
+  // DECBC: 0x0b,
+  // INCC: 0x0c,
+  // DECC: 0x0d,
+  // LDCn: 0x0e,
+  // RRCA: 0x0f,
 
-  STOP: 0x10,
-  LDDEnn: 0x11,
-  LDDEmA: 0x12,
-  INCDE: 0x13,
-  INCD: 0x14,
-  DECD: 0x15,
-  LDDn: 0x16,
-  RLA: 0x17,
-  JRn: 0x18,
-  ADDHLDE: 0x19,
-  LDADEm: 0x1a,
-  DECDE: 0x1b,
-  INCE: 0x1c,
-  DECE: 0x1d,
-  LDEn: 0x1e,
-  RRA: 0x1f,
+  // STOP: 0x10,
+  // LDDEnn: 0x11,
+  // LDDEmA: 0x12,
+  // INCDE: 0x13,
+  // INCD: 0x14,
+  // DECD: 0x15,
+  // LDDn: 0x16,
+  // RLA: 0x17,
+  // JRn: 0x18,
+  // ADDHLDE: 0x19,
+  // LDADEm: 0x1a,
+  // DECDE: 0x1b,
+  // INCE: 0x1c,
+  // DECE: 0x1d,
+  // LDEn: 0x1e,
+  // RRA: 0x1f,
 
   JRNZn: 0x20,
   LDHLnn: 0x21,
-  LDIHLmA: 0x22,
-  INCHL: 0x23,
-  INCH: 0x24,
-  DECH: 0x25,
-  LDHn: 0x26,
-  DAA: 0x27, // ??????
-  JRZn: 0x28,
-  ADDHLHL: 0x29,
-  LDIAHLm: 0x2a,
-  DECHL: 0x2b,
-  INCL: 0x2c,
-  DECL: 0x2d,
-  LDLn: 0x2e,
-  CMPL: 0x2f,
+  // LDIHLmA: 0x22,
+  // INCHL: 0x23,
+  // INCH: 0x24,
+  // DECH: 0x25,
+  // LDHn: 0x26,
+  // DAA: 0x27, // ??????
+  // JRZn: 0x28,
+  // ADDHLHL: 0x29,
+  // LDIAHLm: 0x2a,
+  // DECHL: 0x2b,
+  // INCL: 0x2c,
+  // DECL: 0x2d,
+  // LDLn: 0x2e,
+  // CMPL: 0x2f,
 
-  JRNCn: 0x30,
+  // JRNCn: 0x30,
   LDSPnn: 0x31,
   LDDHLmA: 0x32,
-  INCSP: 0x33,
-  INCHLm: 0x34,
-  DECHLm: 0x35,
-  LDHLmn: 0x36,
-  SCF: 0x37,
-  JRCn: 0x38,
-  ADDHLSP: 0x39,
-  LDDAHLm: 0x3a,
-  DECSP: 0x3b,
-  INCA: 0x3c,
-  DECA: 0x3d,
-  LDAn: 0x3e,
-  CFF: 0x3f,
+  // INCSP: 0x33,
+  // INCHLm: 0x34,
+  // DECHLm: 0x35,
+  // LDHLmn: 0x36,
+  // SCF: 0x37,
+  // JRCn: 0x38,
+  // ADDHLSP: 0x39,
+  // LDDAHLm: 0x3a,
+  // DECSP: 0x3b,
+  // INCA: 0x3c,
+  // DECA: 0x3d,
+  // LDAn: 0x3e,
+  // CFF: 0x3f,
 
-  LDBB: 0x40,
-  LDBC: 0x41,
-  LDBD: 0x42,
-  LDBE: 0x43,
-  LDBH: 0x44,
-  LDBL: 0x45,
-  LDBHLm: 0x46,
-  LDBA: 0x47,
-  LDCB: 0x48,
-  LDCC: 0x49,
-  LDCD: 0x4a,
-  LDCE: 0x4b,
-  LDCH: 0x4c,
-  LDCL: 0x4d,
-  LDCHLm: 0x4e,
-  LDCA: 0x4f,
+  // LDBB: 0x40,
+  // LDBC: 0x41,
+  // LDBD: 0x42,
+  // LDBE: 0x43,
+  // LDBH: 0x44,
+  // LDBL: 0x45,
+  // LDBHLm: 0x46,
+  // LDBA: 0x47,
+  // LDCB: 0x48,
+  // LDCC: 0x49,
+  // LDCD: 0x4a,
+  // LDCE: 0x4b,
+  // LDCH: 0x4c,
+  // LDCL: 0x4d,
+  // LDCHLm: 0x4e,
+  // LDCA: 0x4f,
 
-  LDDB: 0x50,
-  LDDC: 0x51,
-  LDDD: 0x52,
-  LDDE: 0x53,
-  LDDH: 0x54,
-  LDDL: 0x55,
-  LDDHLm: 0x56,
-  LDDA: 0x57,
-  LDEB: 0x58,
-  LDEC: 0x59,
-  LDED: 0x5a,
-  LDEE: 0x5b,
-  LDEH: 0x5c,
-  LDEL: 0x5d,
-  LDEHLm: 0x5e,
-  LDEA: 0x5f,
+  // LDDB: 0x50,
+  // LDDC: 0x51,
+  // LDDD: 0x52,
+  // LDDE: 0x53,
+  // LDDH: 0x54,
+  // LDDL: 0x55,
+  // LDDHLm: 0x56,
+  // LDDA: 0x57,
+  // LDEB: 0x58,
+  // LDEC: 0x59,
+  // LDED: 0x5a,
+  // LDEE: 0x5b,
+  // LDEH: 0x5c,
+  // LDEL: 0x5d,
+  // LDEHLm: 0x5e,
+  // LDEA: 0x5f,
 
-  LDHB: 0x60,
-  LDHC: 0x61,
-  LDHD: 0x62,
-  LDHE: 0x63,
-  LDHH: 0x64,
-  LDHL: 0x65,
-  LDHHLm: 0x66,
-  LDHA: 0x67,
-  LDLB: 0x68,
-  LDLC: 0x69,
-  LDLD: 0x6a,
-  LDLE: 0x6b,
-  LDLH: 0x6c,
-  LDLL: 0x6d,
-  LDLHLm: 0x6e,
-  LDLA: 0x6f,
+  // LDHB: 0x60,
+  // LDHC: 0x61,
+  // LDHD: 0x62,
+  // LDHE: 0x63,
+  // LDHH: 0x64,
+  // LDHL: 0x65,
+  // LDHHLm: 0x66,
+  // LDHA: 0x67,
+  // LDLB: 0x68,
+  // LDLC: 0x69,
+  // LDLD: 0x6a,
+  // LDLE: 0x6b,
+  // LDLH: 0x6c,
+  // LDLL: 0x6d,
+  // LDLHLm: 0x6e,
+  // LDLA: 0x6f,
 
-  LDHLmB: 0x70,
-  LDHLmC: 0x71,
-  LDHLmD: 0x72,
-  LDHLmE: 0x73,
-  LDHLmH: 0x74,
-  LDHLmL: 0x75,
-  HALT: 0x76,
-  LDHLmA: 0x77,
-  LDAB: 0x78,
-  LDAC: 0x79,
-  LDAD: 0x7a,
-  LDAE: 0x7b,
-  LDAH: 0x7c,
-  LDAL: 0x7d,
-  LDAHLm: 0x7e,
-  LDAA: 0x7f,
+  // LDHLmB: 0x70,
+  // LDHLmC: 0x71,
+  // LDHLmD: 0x72,
+  // LDHLmE: 0x73,
+  // LDHLmH: 0x74,
+  // LDHLmL: 0x75,
+  // HALT: 0x76,
+  // LDHLmA: 0x77,
+  // LDAB: 0x78,
+  // LDAC: 0x79,
+  // LDAD: 0x7a,
+  // LDAE: 0x7b,
+  // LDAH: 0x7c,
+  // LDAL: 0x7d,
+  // LDAHLm: 0x7e,
+  // LDAA: 0x7f,
 
-  ADDAB: 0x80,
-  ADDAC: 0x81,
-  ADDAD: 0x82,
-  ADDAE: 0x83,
-  ADDAH: 0x84,
-  ADDAL: 0x85,
-  ADDAHLm: 0x86,
-  ADDAA: 0x87,
-  ADCAB: 0x88,
-  ADCAC: 0x89,
-  ADCAD: 0x8a,
-  ADCAE: 0x8b,
-  ADCAH: 0x8c,
-  ADCAL: 0x8d,
-  ADCAHLm: 0x8e,
-  ADCAA: 0x8f,
+  // ADDAB: 0x80,
+  // ADDAC: 0x81,
+  // ADDAD: 0x82,
+  // ADDAE: 0x83,
+  // ADDAH: 0x84,
+  // ADDAL: 0x85,
+  // ADDAHLm: 0x86,
+  // ADDAA: 0x87,
+  // ADCAB: 0x88,
+  // ADCAC: 0x89,
+  // ADCAD: 0x8a,
+  // ADCAE: 0x8b,
+  // ADCAH: 0x8c,
+  // ADCAL: 0x8d,
+  // ADCAHLm: 0x8e,
+  // ADCAA: 0x8f,
 
-  SUBAB: 0x90,
-  SUBAC: 0x91,
-  SUBAD: 0x92,
-  SUBAE: 0x93,
-  SUBAH: 0x94,
-  SUBAL: 0x95,
-  SUBAHLm: 0x96,
-  SUBAA: 0x97,
-  SUBCAB: 0x98,
-  SUBCAC: 0x99,
-  SUBCAD: 0x9a,
-  SUBCAE: 0x9b,
-  SUBCAH: 0x9c,
-  SUBCAL: 0x9d,
-  SUBCAHLm: 0x9e,
-  SUBCAA: 0x9f,
+  // SUBAB: 0x90,
+  // SUBAC: 0x91,
+  // SUBAD: 0x92,
+  // SUBAE: 0x93,
+  // SUBAH: 0x94,
+  // SUBAL: 0x95,
+  // SUBAHLm: 0x96,
+  // SUBAA: 0x97,
+  // SUBCAB: 0x98,
+  // SUBCAC: 0x99,
+  // SUBCAD: 0x9a,
+  // SUBCAE: 0x9b,
+  // SUBCAH: 0x9c,
+  // SUBCAL: 0x9d,
+  // SUBCAHLm: 0x9e,
+  // SUBCAA: 0x9f,
 
-  ANDB: 0xa0,
-  ANDC: 0xa1,
-  ANDD: 0xa2,
-  ANDE: 0xa3,
-  ANDH: 0xa4,
-  ANDL: 0xa5,
-  ANDHLm: 0xa6,
-  ANDA: 0xa7,
-  XORB: 0xa8,
-  XORC: 0xa9,
-  XORD: 0xaa,
-  XORE: 0xab,
-  XORH: 0xac,
-  XORL: 0xad,
-  XORHLm: 0xae,
+  // ANDB: 0xa0,
+  // ANDC: 0xa1,
+  // ANDD: 0xa2,
+  // ANDE: 0xa3,
+  // ANDH: 0xa4,
+  // ANDL: 0xa5,
+  // ANDHLm: 0xa6,
+  // ANDA: 0xa7,
+  // XORB: 0xa8,
+  // XORC: 0xa9,
+  // XORD: 0xaa,
+  // XORE: 0xab,
+  // XORH: 0xac,
+  // XORL: 0xad,
+  // XORHLm: 0xae,
   XORA: 0xaf,
 
-  ORB: 0xb0,
-  ORC: 0xb1,
-  ORD: 0xb2,
-  ORE: 0xb3,
-  ORH: 0xb4,
-  ORL: 0xb5,
-  ORHLm: 0xb6,
-  ORA: 0xb7,
-  CPB: 0xb8,
-  CPC: 0xb9,
-  CPD: 0xba,
-  CPE: 0xbb,
-  CPH: 0xbc,
-  CPL: 0xbd,
-  CPHLm: 0xbe,
-  CPA: 0xbf,
+  // ORB: 0xb0,
+  // ORC: 0xb1,
+  // ORD: 0xb2,
+  // ORE: 0xb3,
+  // ORH: 0xb4,
+  // ORL: 0xb5,
+  // ORHLm: 0xb6,
+  // ORA: 0xb7,
+  // CPB: 0xb8,
+  // CPC: 0xb9,
+  // CPD: 0xba,
+  // CPE: 0xbb,
+  // CPH: 0xbc,
+  // CPL: 0xbd,
+  // CPHLm: 0xbe,
+  // CPA: 0xbf,
 
-  RETNZ: 0xc0,
-  POPBC: 0xc1,
-  JPNZnn: 0xc2,
-  JPnn: 0xc3,
-  CALLNZnn: 0xc4,
-  PUSHBC: 0xc5,
-  ADDAn: 0xc6,
-  RST00: 0xc7,
-  RETZ: 0xc8,
-  RET: 0xc9,
-  JPZnn: 0xca,
+  // RETNZ: 0xc0,
+  // POPBC: 0xc1,
+  // JPNZnn: 0xc2,
+  // JPnn: 0xc3,
+  // CALLNZnn: 0xc4,
+  // PUSHBC: 0xc5,
+  // ADDAn: 0xc6,
+  // RST00: 0xc7,
+  // RETZ: 0xc8,
+  // RET: 0xc9,
+  // JPZnn: 0xca,
   EXTops: 0xcb, // ???? secondary opcode table?
-  CALLZnn: 0xcc,
-  CALLnn: 0xcd,
-  ADCAn: 0xce,
-  RST08: 0xcf,
+  // CALLZnn: 0xcc,
+  // CALLnn: 0xcd,
+  // ADCAn: 0xce,
+  // RST08: 0xcf,
 
-  RETNC: 0xd0,
-  POPDE: 0xd1,
-  JPNCnn: 0xd2,
-  CALLNCnn: 0xd4,
-  PUSHDE: 0xd5,
-  SUBAn: 0xd6,
-  RST10: 0xd7,
-  RETC: 0xd8,
-  RETI: 0xd9, // set interupts?
-  JPCnn: 0xda,
-  CALLCnn: 0xdc,
-  SBCAn: 0xde,
-  RST18: 0xdf,
+  // RETNC: 0xd0,
+  // POPDE: 0xd1,
+  // JPNCnn: 0xd2,
+  // CALLNCnn: 0xd4,
+  // PUSHDE: 0xd5,
+  // SUBAn: 0xd6,
+  // RST10: 0xd7,
+  // RETC: 0xd8,
+  // RETI: 0xd9, // set interupts?
+  // JPCnn: 0xda,
+  // CALLCnn: 0xdc,
+  // SBCAn: 0xde,
+  // RST18: 0xdf,
 
-  LDHnmA: 0xe0,
-  POPHL: 0xe1,
-  LDHCmA: 0xe2,
-  PUSHHL: 0xe5,
-  ANDn: 0xe6,
-  RST20: 0xe7,
-  ADDSPd: 0xe8,
-  JPHLm: 0xe9,
-  LDnnmA: 0xea,
-  XORn: 0xee,
-  RST28: 0xef,
+  // LDHnmA: 0xe0,
+  // POPHL: 0xe1,
+  // LDHCmA: 0xe2,
+  // PUSHHL: 0xe5,
+  // ANDn: 0xe6,
+  // RST20: 0xe7,
+  // ADDSPd: 0xe8,
+  // JPHLm: 0xe9,
+  // LDnnmA: 0xea,
+  // XORn: 0xee,
+  // RST28: 0xef,
 
-  LDHAnm: 0xf0,
-  POPAF: 0xf1,
-  DI: 0xf3, // disable interupts. no interupts yet
-  PUSHAF: 0xf5,
-  ORn: 0xf6,
-  RST30: 0xf7,
-  LDHLSPd: 0xf8,
-  LDSPHL: 0xf9,
-  LDAnnm: 0xfa,
-  EI: 0xfb, // enable interupts. no interupts yet
-  CPn: 0xfe,
-  RST38: 0xff,
+  // LDHAnm: 0xf0,
+  // POPAF: 0xf1,
+  // DI: 0xf3, // disable interupts. no interupts yet
+  // PUSHAF: 0xf5,
+  // ORn: 0xf6,
+  // RST30: 0xf7,
+  // LDHLSPd: 0xf8,
+  // LDSPHL: 0xf9,
+  // LDAnnm: 0xfa,
+  // EI: 0xfb, // enable interupts. no interupts yet
+  // CPn: 0xfe,
+  // RST38: 0xff,
 };
 
 // Zero (0x80): Set if the last operation produced a result of 0;
@@ -326,7 +326,7 @@ const opcodes = {
     cpu.F = bit ? 0x10 : 0;
   },
   [OPCODES.LDnnSP]: (cpu) => {
-    const address = cpu.mmu.read16(cpu.PC);
+    const address = cpu.mmu.read16(cpu, cpu.PC);
     cpu.mmu.write16(cpu.gpu, address, cpu.SP);
     cpu.PC += 2;
     cpu.M = 1; cpu.T = 4;
@@ -472,7 +472,7 @@ const opcodes = {
     cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.JRNZn]: (cpu) => {
-    const zero = (cpu.F >> 7) & 0xff;
+    const zero = cpu.F & 0x80;
     let val = cpu.mmu.read8(cpu, cpu.PC++);
     if (val > 127) val = -((~val + 1) & 0xff);
     if (!zero) cpu.PC += val;
@@ -597,7 +597,7 @@ const opcodes = {
     if (!carry) { cpu.PC += val; cpu.M++; cpu.T += 4; }
   },
   [OPCODES.LDSPnn]: (cpu) => {
-    cpu.SP = cpu.mmu.read16(cpu.PC);
+    cpu.SP = cpu.mmu.read16(cpu, cpu.PC);
     cpu.PC += 2;
     cpu.M = 3; cpu.T = 12;
   },
@@ -994,7 +994,7 @@ const opcodes = {
   [OPCODES.RETNZ]: (cpu) => {
     cpu.M = 1; cpu.T = 4;
     if (!(cpu.F & 0x80)) {
-      cpu.PC = cpu.mmu.read16(cpu.SP);
+      cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
       cpu.SP += 2;
       cpu.M += 2; cpu.T += 8;
     }
@@ -1004,14 +1004,14 @@ const opcodes = {
     cpu.B = cpu.mmu.read8(cpu, cpu.SP++);
     cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.JPNZnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (!(cpu.F & 0x80)) { cpu.PC = cpu.mmu.read16(cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
-  [OPCODES.JPnn]: (cpu) => { cpu.PC = cpu.mmu.read16(cpu.PC); cpu.M = 3; cpu.T = 12; },
+  [OPCODES.JPNZnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (!(cpu.F & 0x80)) { cpu.PC = cpu.mmu.read16(cpu, cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
+  [OPCODES.JPnn]: (cpu) => { cpu.PC = cpu.mmu.read16(cpu, cpu.PC); cpu.M = 3; cpu.T = 12; },
   [OPCODES.CALLNZnn]: (cpu) => {
     cpu.M = 3; cpu.T = 12;
     if (!(cpu.F & 0x80)) {
       cpu.SP -= 2;
       cpu.mmu.write16(cpu.gpu, cpu.SP, cpu.PC + 2);
-      cpu.PC = cpu.mmu.read16(cpu.PC);
+      cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
       cpu.M += 2; cpu.T += 8;
     } else {
       cpu.PC += 2;
@@ -1038,24 +1038,24 @@ const opcodes = {
   [OPCODES.RETZ]: (cpu) => {
     cpu.M = 1; cpu.T = 4;
     if (cpu.F & 0x80) {
-      cpu.PC = cpu.mmu.read16(cpu.SP);
+      cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
       cpu.SP += 2;
       cpu.M += 2; cpu.T += 8;
     }
   },
   [OPCODES.RET]: (cpu) => {
-    cpu.PC = cpu.mmu.read16(cpu.SP);
+    cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
     cpu.SP += 2;
     cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.JPZnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (cpu.F & 0x80) { cpu.PC = cpu.mmu.read16(cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
-  [OPCODES.EXTops]: (cpu) => { cpu; },
+  [OPCODES.JPZnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (cpu.F & 0x80) { cpu.PC = cpu.mmu.read16(cpu, cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
+  [OPCODES.EXTops]: (cpu) => { cpu.F = 0; cpu.PC++; },
   [OPCODES.CALLZnn]: (cpu) => {
     cpu.M = 3; cpu.T = 12;
     if (cpu.F & 0x80) {
       cpu.SP -= 2;
       cpu.mmu.write16(cpu.gpu, cpu.SP, cpu.PC + 2);
-      cpu.PC = cpu.mmu.read16(cpu.PC);
+      cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
       cpu.M += 2; cpu.T += 8;
     } else {
       cpu.PC += 2;
@@ -1064,7 +1064,7 @@ const opcodes = {
   [OPCODES.CALLnn]: (cpu) => {
     cpu.SP -= 2;
     cpu.mmu.write16(cpu.gpu, cpu.SP, cpu.PC + 2);
-    cpu.PC = cpu.mmu.read16(cpu.PC);
+    cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
     cpu.M = 5; cpu.T = 20;
   },
   [OPCODES.ADCAn]: (cpu) => {
@@ -1086,7 +1086,7 @@ const opcodes = {
   [OPCODES.RETNC]: (cpu) => {
     cpu.M = 1; cpu.T = 4;
     if (!(cpu.F & 0x10)) {
-      cpu.PC = cpu.mmu.read16(cpu.SP);
+      cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
       cpu.SP += 2;
       cpu.M += 2; cpu.T += 8;
     }
@@ -1096,13 +1096,13 @@ const opcodes = {
     cpu.D = cpu.mmu.read8(cpu, cpu.SP++);
     cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.JPNCnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (!(cpu.F & 0x10)) { cpu.PC = cpu.mmu.read16(cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
+  [OPCODES.JPNCnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (!(cpu.F & 0x10)) { cpu.PC = cpu.mmu.read16(cpu, cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
   [OPCODES.CALLNCnn]: (cpu) => {
     cpu.M = 3; cpu.T = 12;
     if (!(cpu.F & 0x81)) {
       cpu.SP -= 2;
       cpu.mmu.write16(cpu.gpu, cpu.SP, cpu.PC + 2);
-      cpu.PC = cpu.mmu.read16(cpu.PC);
+      cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
       cpu.M += 2; cpu.T += 8;
     } else {
       cpu.PC += 2;
@@ -1129,23 +1129,23 @@ const opcodes = {
   [OPCODES.RETC]: (cpu) => {
     cpu.M = 1; cpu.T = 4;
     if (cpu.F & 0x10) {
-      cpu.PC = cpu.mmu.read16(cpu.SP);
+      cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
       cpu.SP += 2;
       cpu.M += 2; cpu.T += 8;
     }
   },
   [OPCODES.RETI]: (cpu) => {
-    cpu.PC = cpu.mmu.read16(cpu.SP);
+    cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
     cpu.SP += 2;
     cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.JPCnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (cpu.F & 0x10) { cpu.PC = cpu.mmu.read16(cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
+  [OPCODES.JPCnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (cpu.F & 0x10) { cpu.PC = cpu.mmu.read16(cpu, cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
   [OPCODES.CALLCnn]: (cpu) => {
     cpu.M = 3; cpu.T = 12;
     if (cpu.F & 0x10) {
       cpu.SP -= 2;
       cpu.mmu.write16(cpu.gpu, cpu.SP, cpu.PC + 2);
-      cpu.PC = cpu.mmu.read16(cpu.PC);
+      cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
       cpu.M += 2; cpu.T += 8;
     } else {
       cpu.PC += 2;
@@ -1186,7 +1186,7 @@ const opcodes = {
     cpu.M = 4; cpu.T = 16;
   },
   [OPCODES.JPHLm]: (cpu) => { cpu.PC = (cpu.H << 8) | cpu.L; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDnnmA]: (cpu) => { cpu.mmu.write8(cpu.gpu, cpu.mmu.read16(cpu.PC), cpu.A); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
+  [OPCODES.LDnnmA]: (cpu) => { cpu.mmu.write8(cpu.gpu, cpu.mmu.read16(cpu, cpu.PC), cpu.A); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
   [OPCODES.XORn]: (cpu) => { cpu.A ^= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
   [OPCODES.RST28]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu.gpu, cpu.SP, cpu.PC); cpu.PC = 0x28; cpu.M = 3; cpu.T = 12; },
 
@@ -1206,7 +1206,7 @@ const opcodes = {
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDSPHL]: (cpu) => { cpu.SP = (cpu.H << 8) | cpu.L; },
-  [OPCODES.LDAnnm]: (cpu) => { const addr = cpu.mmu.read16(cpu.PC); cpu.A = cpu.mmu.read8(cpu, addr); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
+  [OPCODES.LDAnnm]: (cpu) => { const addr = cpu.mmu.read16(cpu, cpu.PC); cpu.A = cpu.mmu.read8(cpu, addr); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
   [OPCODES.EI]: (cpu) => { cpu; cpu.M = 1; cpu.T = 4; },
   [OPCODES.CPn]: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); setFlags(cpu, cpu.A - val, 1); setHalfCarry(cpu, cpu.A, val, 1); cpu.M = 2; cpu.T = 8; },
   [OPCODES.RST38]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu.gpu, cpu.SP, cpu.PC); cpu.PC = 0x38; cpu.M = 3; cpu.T = 12; },

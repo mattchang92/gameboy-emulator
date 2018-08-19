@@ -64,3 +64,6 @@ typings/
 test.js
 
 /dist/main.js
+test.html
+
+roms/*

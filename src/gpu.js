@@ -26,7 +26,7 @@ const {
 
 class GPU {
   constructor(mmu) {
-    this.MODE = 0;
+    this.MODE = 2;
     this.MODECLOCK = 0;
     this.backgroundOffsetX = 0;
     this.backgroundOffsetY = 0;
@@ -36,11 +36,13 @@ class GPU {
     this.screen = {};
     this.vram = mmu.vram;
     this.palette = [
-      [255, 255, 255],
-      [192, 192, 192],
-      [96, 96, 96],
-      [0, 0, 0],
+      [255, 255, 255, 255],
+      [192, 192, 192, 255],
+      [96, 96, 96, 255],
+      [0, 0, 0, 255],
     ];
+
+    // this.reset();
   }
 
   step(cpu) {
@@ -63,13 +65,14 @@ class GPU {
         break;
 
       case 0:
-        if (GPU.MODECLOCK >= 204) {
+        if (this.MODECLOCK >= 204) {
           this.MODECLOCK = 0;
           this.line++;
 
+
           if (this.line === 143) {
             this.MODE = 1;
-            this.canvas.putImageData(this.screen, 0, 0);
+            this.ctx.putImageData(this.screen, 0, 0);
           } else {
             this.MODE = 2;
           }
@@ -96,28 +99,19 @@ class GPU {
   reset() {
     /* eslint-disable-next-line */
     const canvas = document.getElementById('game-screen');
-
+    // console.log(canvas);
     this.tileset = new Array(NUM_TILES).fill(null)
       .map(() => new Array(ROWS_IN_TILE).fill([])
         .map(() => new Array(COLS_IN_TILE).fill(0)));
 
     if (canvas) {
-      this.canvas = canvas.getContext('2d');
+      this.ctx = canvas.getContext('2d');
+      this.screen = this.ctx.createImageData(160, 144);
+      const data = new Array(160 * 144 * 4).fill(0xff);
 
-      if (this.canvas.createImageData) {
-        this.screen = this.canvas.createImageData(160, 144);
-      } else if (this.canvas.getImageData) {
-        this.screen = this.canvas.getImageData(0, 0, 160, 144);
-      } else {
-        this.screen = {
-          width: 160,
-          height: 144,
-        };
-      }
+      this.screen.data.set(data);
 
-      this.screen.data = new Array(160 * 144 * 4).fill(0xff);
-
-      this.canvas.putImageData(this.screen, 0, 0);
+      this.ctx.putImageData(this.screen, 0, 0);
     }
   }
 
@@ -125,7 +119,7 @@ class GPU {
     /* Get the address of the least significant
      byte in the tile row that was updated */
     addr &= 0x1ffe;
-
+    console.log('updating tile based on memory');
     const tile = (addr >> 4) & 0x1ff;
     const y = (addr >> 1) & 0xf;
     let bitIndex;
@@ -141,15 +135,17 @@ class GPU {
 
   renderScan() {
     let mapOffs = this.bgMap ? 0x1c00 : 0x1800;
-    mapOffs += ((this.LINE + this.backgroundOffsetY) & 0xff) >> 3;
+    mapOffs += ((this.line + this.backgroundOffsetY) & 0xff) >> 3;
 
     let lineOffs = this.backgroundOffsetX >> 3;
 
-    const y = (this.LINE + this.backgroundOffsetY) & 0x7;
+    const y = (this.line + this.backgroundOffsetY) & 0x7;
     let x = this.backgroundOffsetX & 0x7;
-    const canvasOffs = this.LINE * 160 * 4;
+    const canvasOffs = this.line * 160 * 4;
     let colour;
     let tile = this.vram[mapOffs + lineOffs];
+    // console.log('render scan sbeing triggered', this.line);
+    // console.log(JSON.stringify(this.tileset[tile]));
 
     for (let i = 0; i < 160; i++) {
       colour = this.palette[this.tileset[tile][y][x]];
@@ -167,6 +163,8 @@ class GPU {
         if (this.bgTile === 1 && tile < 128) tile += 256;
       }
     }
+    // console.log('------------------', this.screen.data.find(el => el !== 255));
+    this.ctx.putImageData(this.screen, 0, 0);
   }
 }
 

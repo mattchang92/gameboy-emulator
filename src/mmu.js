@@ -19,24 +19,28 @@ class MMU {
       0x21, 0x04, 0x01, 0x11, 0xA8, 0x00, 0x1A, 0x13, 0xBE, 0x20, 0xFE, 0x23, 0x7D, 0xFE, 0x34, 0x20,
       0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50,
     ];
-    this.rom = '';
+    this.rom = require('../roms/test');
     this.eram = [];
     this.oam = [];
-    this.vram = [];
+    this.vram = new Array(0x2000).fill(0);
     this.wram = [];
     this.zram = [];
+    this.printed = false;
   }
 
 
   read8(cpu, addr) {
     addr &= 0xffff;
-
     switch (addr & 0xf00) {
       // Bios (256 B) /ROM0 (16K)
       case 0x0000:
         if (!this.biosExecuted) {
+          // console.log('reading from bios at addrss ', addr);
           if (addr < 0x100) return this.bios[addr];
-          if (cpu.PC === 0x0100) this.biosExecuted = true;
+          if (cpu.PC === 0x0100) {
+            this.biosExecuted = true;
+            console.log('--------------------BIOS FULLY EXECUTED--------------------');
+          }
         }
         return this.rom.charCodeAt(addr);
 
@@ -96,13 +100,24 @@ class MMU {
     }
   }
 
-  read16(addr) {
+  read16(cpu, addr) {
     addr &= 0xffff;
 
-    return this.read8(addr) + (this.read8(addr + 1) << 8);
+    // const one = this.read8(cpu, addr);
+    // const two = (this.read8(cpu, addr + 1) << 8);
+
+    return this.read8(cpu, addr) + (this.read8(cpu, addr + 1) << 8);
+    // console.log('reading form addr ', addr, 'what are the vals', one, '  ', two);
+    // console.log('reading 16 bit val from memory', one + two, ' from address ', addr);
+    // return one + two;
   }
 
   write8(gpu, addr, val) {
+    if (addr === 0xff50 && !this.printed) {
+      this.printed = true;
+      console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    }
+    // console.log('writing to address: ', addr);
     addr &= 0xffff;
 
     switch (addr & 0xf00) {
@@ -127,6 +142,7 @@ class MMU {
       // VRAM (Graphics 8K)
       case 0x8000:
       case 0x9000:
+        console.log('writing to vram');
         this.vram[addr & 0x1fff] = val;
         gpu.updateTileBasedOnMemory(addr, val);
         break;
@@ -169,6 +185,7 @@ class MMU {
   }
 
   write16(gpu, addr, val) {
+    if (addr === 0xff50) console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     addr &= 0xffff;
 
     const leastSigByte = val & 0xff;
