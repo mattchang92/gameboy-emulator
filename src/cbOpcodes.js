@@ -66,6 +66,74 @@ const CBOPCODES = {
   SRLL: 0x3d,
   SRLHLm: 0x3e,
   SRLA: 0x3f,
+
+  BIT0B: 0x40,
+  BIT0C: 0x41,
+  BIT0D: 0x42,
+  BIT0E: 0x43,
+  BIT0H: 0x44,
+  BIT0L: 0x45,
+  BIT0HLm: 0x46,
+  BIT0A: 0x47,
+  BIT1B: 0x48,
+  BIT1C: 0x49,
+  BIT1D: 0x4a,
+  BIT1E: 0x4b,
+  BIT1H: 0x4c,
+  BIT1L: 0x4d,
+  BIT1HLm: 0x4e,
+  BIT1A: 0x4f,
+
+  BIT2B: 0x50,
+  BIT2C: 0x51,
+  BIT2D: 0x52,
+  BIT2E: 0x53,
+  BIT2H: 0x54,
+  BIT2L: 0x55,
+  BIT2HLm: 0x56,
+  BIT2A: 0x57,
+  BIT3B: 0x58,
+  BIT3C: 0x59,
+  BIT3D: 0x5a,
+  BIT3E: 0x5b,
+  BIT3H: 0x5c,
+  BIT3L: 0x5d,
+  BIT3HLm: 0x5e,
+  BIT3A: 0x5f,
+
+  BIT4B: 0x60,
+  BIT4C: 0x61,
+  BIT4D: 0x62,
+  BIT4E: 0x63,
+  BIT4H: 0x64,
+  BIT4L: 0x65,
+  BIT4HLm: 0x66,
+  BIT4A: 0x67,
+  BIT5B: 0x68,
+  BIT5C: 0x69,
+  BIT5D: 0x6a,
+  BIT5E: 0x6b,
+  BIT5H: 0x6c,
+  BIT5L: 0x6d,
+  BIT5HLm: 0x6e,
+  BIT5A: 0x6f,
+
+  BIT6B: 0x70,
+  BIT6C: 0x71,
+  BIT6D: 0x72,
+  BIT6E: 0x73,
+  BIT6H: 0x74,
+  BIT6L: 0x75,
+  BIT6HLm: 0x76,
+  BIT6A: 0x77,
+  BIT7B: 0x78,
+  BIT7C: 0x79,
+  BIT7D: 0x7a,
+  BIT7E: 0x7b,
+  BIT7H: 0x7c,
+  BIT7L: 0x7d,
+  BIT7HLm: 0x7e,
+  BIT7A: 0x7f,
 };
 
 
@@ -74,6 +142,16 @@ const setFlags = (cpu, val, isSub) => {
   if (!(val & 0xff)) cpu.F |= 0x80;
   if (val > 0xff || val < 0) cpu.F |= 0x10;
   if (isSub) cpu.F |= 0x40;
+};
+
+const testBit = (cpu, val) => {
+  cpu.F &= !0x40;
+  cpu.F |= 0x20;
+  if (val) {
+    cpu.F &= ~0x80;
+  } else {
+    cpu.F |= 0x80;
+  }
 };
 
 // const setHalfCarry = (cpu, a, b, isSub) => {
@@ -540,6 +618,80 @@ const cbopcodes = {
     cpu.F = (cpu.F & 0xef) | overflow;
     cpu.M = 2; cpu.T = 8;
   },
+
+  /* ------------------------ 0x4------------------------ */
+  [CBOPCODES.BIT0B]: (cpu) => { testBit(cpu, cpu.B & 0x01); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT0C]: (cpu) => { testBit(cpu, cpu.C & 0x01); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT0D]: (cpu) => { testBit(cpu, cpu.D & 0x01); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT0E]: (cpu) => { testBit(cpu, cpu.E & 0x01); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT0H]: (cpu) => { testBit(cpu, cpu.H & 0x01); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT0L]: (cpu) => { testBit(cpu, cpu.L & 0x01); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT0HLm]: (cpu) => { testBit(cpu, cpu.read8(cpu, (cpu.H << 8) | cpu.L) & 0x01); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.BIT0A]: (cpu) => { testBit(cpu, cpu.A & 0x01); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT1B]: (cpu) => { testBit(cpu, cpu.B & 0x02); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT1C]: (cpu) => { testBit(cpu, cpu.C & 0x02); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT1D]: (cpu) => { testBit(cpu, cpu.D & 0x02); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT1E]: (cpu) => { testBit(cpu, cpu.E & 0x02); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT1H]: (cpu) => { testBit(cpu, cpu.H & 0x02); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT1L]: (cpu) => { testBit(cpu, cpu.L & 0x02); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT1HLm]: (cpu) => { testBit(cpu, cpu.read8(cpu, (cpu.H << 8) | cpu.L) & 0x02); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.BIT1A]: (cpu) => { testBit(cpu, cpu.A & 0x02); cpu.M = 2; cpu.T = 8; },
+
+  /* ------------------------ 0x5------------------------ */
+  [CBOPCODES.BIT2B]: (cpu) => { testBit(cpu, cpu.B & 0x04); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT2C]: (cpu) => { testBit(cpu, cpu.C & 0x04); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT2D]: (cpu) => { testBit(cpu, cpu.D & 0x04); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT2E]: (cpu) => { testBit(cpu, cpu.E & 0x04); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT2H]: (cpu) => { testBit(cpu, cpu.H & 0x04); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT2L]: (cpu) => { testBit(cpu, cpu.L & 0x04); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT2HLm]: (cpu) => { testBit(cpu, cpu.read8(cpu, (cpu.H << 8) | cpu.L) & 0x04); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.BIT2A]: (cpu) => { testBit(cpu, cpu.A & 0x04); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT3B]: (cpu) => { testBit(cpu, cpu.B & 0x08); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT3C]: (cpu) => { testBit(cpu, cpu.C & 0x08); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT3D]: (cpu) => { testBit(cpu, cpu.D & 0x08); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT3E]: (cpu) => { testBit(cpu, cpu.E & 0x08); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT3H]: (cpu) => { testBit(cpu, cpu.H & 0x08); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT3L]: (cpu) => { testBit(cpu, cpu.L & 0x08); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT3HLm]: (cpu) => { testBit(cpu, cpu.read8(cpu, (cpu.H << 8) | cpu.L) & 0x08); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.BIT3A]: (cpu) => { testBit(cpu, cpu.A & 0x08); cpu.M = 2; cpu.T = 8; },
+
+  /* ------------------------ 0x6------------------------ */
+  [CBOPCODES.BIT4B]: (cpu) => { testBit(cpu, cpu.B & 0x10); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT4C]: (cpu) => { testBit(cpu, cpu.C & 0x10); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT4D]: (cpu) => { testBit(cpu, cpu.D & 0x10); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT4E]: (cpu) => { testBit(cpu, cpu.E & 0x10); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT4H]: (cpu) => { testBit(cpu, cpu.H & 0x10); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT4L]: (cpu) => { testBit(cpu, cpu.L & 0x10); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT4HLm]: (cpu) => { testBit(cpu, cpu.read8(cpu, (cpu.H << 8) | cpu.L) & 0x10); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.BIT4A]: (cpu) => { testBit(cpu, cpu.A & 0x10); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT5B]: (cpu) => { testBit(cpu, cpu.B & 0x20); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT5C]: (cpu) => { testBit(cpu, cpu.C & 0x20); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT5D]: (cpu) => { testBit(cpu, cpu.D & 0x20); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT5E]: (cpu) => { testBit(cpu, cpu.E & 0x20); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT5H]: (cpu) => { testBit(cpu, cpu.H & 0x20); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT5L]: (cpu) => { testBit(cpu, cpu.L & 0x20); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT5HLm]: (cpu) => { testBit(cpu, cpu.read8(cpu, (cpu.H << 8) | cpu.L) & 0x20); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.BIT5A]: (cpu) => { testBit(cpu, cpu.A & 0x20); cpu.M = 2; cpu.T = 8; },
+
+  /* ------------------------ 0x7------------------------ */
+  [CBOPCODES.BIT6B]: (cpu) => { testBit(cpu, cpu.B & 0x40); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT6C]: (cpu) => { testBit(cpu, cpu.C & 0x40); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT6D]: (cpu) => { testBit(cpu, cpu.D & 0x40); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT6E]: (cpu) => { testBit(cpu, cpu.E & 0x40); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT6H]: (cpu) => { testBit(cpu, cpu.H & 0x40); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT6L]: (cpu) => { testBit(cpu, cpu.L & 0x40); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT6HLm]: (cpu) => { testBit(cpu, cpu.read8(cpu, (cpu.H << 8) | cpu.L) & 0x40); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.BIT6A]: (cpu) => { testBit(cpu, cpu.A & 0x40); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT7B]: (cpu) => { testBit(cpu, cpu.B & 0x80); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT7C]: (cpu) => { testBit(cpu, cpu.C & 0x80); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT7D]: (cpu) => { testBit(cpu, cpu.D & 0x80); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT7E]: (cpu) => { testBit(cpu, cpu.E & 0x80); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT7H]: (cpu) => { testBit(cpu, cpu.H & 0x80); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT7L]: (cpu) => { testBit(cpu, cpu.L & 0x80); cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.BIT7HLm]: (cpu) => { testBit(cpu, cpu.read8(cpu, (cpu.H << 8) | cpu.L) & 0x80); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.BIT7A]: (cpu) => { testBit(cpu, cpu.A & 0x80); cpu.M = 2; cpu.T = 8; },
+
+
 };
 
 module.exports = {
