@@ -1,3 +1,5 @@
+const { cbopcodes } = require('./cbOpcodes');
+
 const OPCODES = {
   NOP: 0x00,
   // LDBCnn: 0x01,
@@ -1049,7 +1051,15 @@ const opcodes = {
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.JPZnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (cpu.F & 0x80) { cpu.PC = cpu.mmu.read16(cpu, cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
-  [OPCODES.EXTops]: (cpu) => { cpu.F = 0; cpu.PC++; },
+  [OPCODES.EXTops]: (cpu) => {
+    // cpu.F = 0; cpu.PC++;
+    const op = cpu.mmu.read8(cpu.PC++);
+    if (cbopcodes[op]) {
+      cbopcodes[op](cpu);
+    } else {
+      console.log('No CB opcode instruction found');
+    }
+  },
   [OPCODES.CALLZnn]: (cpu) => {
     cpu.M = 3; cpu.T = 12;
     if (cpu.F & 0x80) {
