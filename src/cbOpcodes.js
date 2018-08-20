@@ -202,7 +202,74 @@ const CBOPCODES = {
   RES8L: 0xbd,
   RES8HLm: 0xbe,
   RES8A: 0xbf,
-  
+
+  SET0B: 0xc0,
+  SET0C: 0xc1,
+  SET0D: 0xc2,
+  SET0E: 0xc3,
+  SET0H: 0xc4,
+  SET0L: 0xc5,
+  SET0HLm: 0xc6,
+  SET0A: 0xc7,
+  SET1B: 0xc8,
+  SET1C: 0xc9,
+  SET1D: 0xca,
+  SET1E: 0xcb,
+  SET1H: 0xcc,
+  SET1L: 0xcd,
+  SET1HLm: 0xce,
+  SET1A: 0xcf,
+
+  SET2B: 0xd0,
+  SET2C: 0xd1,
+  SET2D: 0xd2,
+  SET2E: 0xd3,
+  SET2H: 0xd4,
+  SET2L: 0xd5,
+  SET2HLm: 0xd6,
+  SET2A: 0xd7,
+  SET3B: 0xd8,
+  SET3C: 0xd9,
+  SET3D: 0xda,
+  SET3E: 0xdb,
+  SET3H: 0xdc,
+  SET3L: 0xdd,
+  SET3HLm: 0xde,
+  SET3A: 0xdf,
+
+  SET4B: 0xe0,
+  SET4C: 0xe1,
+  SET4D: 0xe2,
+  SET4E: 0xe3,
+  SET4H: 0xe4,
+  SET4L: 0xe5,
+  SET4HLm: 0xe6,
+  SET4A: 0xe7,
+  SET5B: 0xe8,
+  SET5C: 0xe9,
+  SET5D: 0xea,
+  SET5E: 0xeb,
+  SET5H: 0xec,
+  SET5L: 0xed,
+  SET5HLm: 0xee,
+  SET5A: 0xef,
+
+  SET6B: 0xf0,
+  SET6C: 0xf1,
+  SET6D: 0xf2,
+  SET6E: 0xf3,
+  SET6H: 0xf4,
+  SET6L: 0xf5,
+  SET6HLm: 0xf6,
+  SET6A: 0xf7,
+  SET7B: 0xf8,
+  SET7C: 0xf9,
+  SET7D: 0xfa,
+  SET7E: 0xfb,
+  SET7H: 0xfc,
+  SET7L: 0xfd,
+  SET7HLm: 0xfe,
+  SET7A: 0xff,
 };
 
 
@@ -222,21 +289,6 @@ const testBit = (cpu, val) => {
     cpu.F |= 0x80;
   }
 };
-
-// const setHalfCarry = (cpu, a, b, isSub) => {
-//   if (isSub) {
-//     if ((a & 0xf) < (b & 0xf)) {
-//       cpu.F |= 0x20;
-//     } else {
-//       cpu.F &= ~0x20;
-//     }
-//   } else if (((a & 0xf) + (b & 0xf)) & 0x10) {
-//     cpu.F |= 0x20;
-//   } else {
-//     cpu.F &= ~0x20;
-//   }
-// };
-
 
 const cbopcodes = {
   /* ------------------------ 0x0------------------------ */
@@ -831,6 +883,78 @@ const cbopcodes = {
   [CBOPCODES.RES7L]: (cpu) => { cpu.L &= ~0x80; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES7HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x80); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.RES7A]: (cpu) => { cpu.A &= ~0x80; cpu.M = 2; cpu.T = 8; },
+
+  /* ------------------------ 0xc------------------------ */
+  [CBOPCODES.SET0B]: (cpu) => { cpu.B |= 0x01; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0C]: (cpu) => { cpu.C |= 0x01; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0D]: (cpu) => { cpu.D |= 0x01; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0E]: (cpu) => { cpu.E |= 0x01; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0H]: (cpu) => { cpu.H |= 0x01; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0L]: (cpu) => { cpu.L |= 0x01; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x01); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET0A]: (cpu) => { cpu.A |= 0x01; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1B]: (cpu) => { cpu.B |= 0x02; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1C]: (cpu) => { cpu.C |= 0x02; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1D]: (cpu) => { cpu.D |= 0x02; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1E]: (cpu) => { cpu.E |= 0x02; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1H]: (cpu) => { cpu.H |= 0x02; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1L]: (cpu) => { cpu.L |= 0x02; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x02); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET1A]: (cpu) => { cpu.A |= 0x02; cpu.M = 2; cpu.T = 8; },
+
+  /* ------------------------ 0xd------------------------ */
+  [CBOPCODES.SET0B]: (cpu) => { cpu.B |= 0x04; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0C]: (cpu) => { cpu.C |= 0x04; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0D]: (cpu) => { cpu.D |= 0x04; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0E]: (cpu) => { cpu.E |= 0x04; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0H]: (cpu) => { cpu.H |= 0x04; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0L]: (cpu) => { cpu.L |= 0x04; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x04); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET0A]: (cpu) => { cpu.A |= 0x04; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1B]: (cpu) => { cpu.B |= 0x08; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1C]: (cpu) => { cpu.C |= 0x08; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1D]: (cpu) => { cpu.D |= 0x08; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1E]: (cpu) => { cpu.E |= 0x08; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1H]: (cpu) => { cpu.H |= 0x08; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1L]: (cpu) => { cpu.L |= 0x08; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x08); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET1A]: (cpu) => { cpu.A |= 0x08; cpu.M = 2; cpu.T = 8; },
+
+  /* ------------------------ 0xe------------------------ */
+  [CBOPCODES.SET0B]: (cpu) => { cpu.B |= 0x10; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0C]: (cpu) => { cpu.C |= 0x10; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0D]: (cpu) => { cpu.D |= 0x10; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0E]: (cpu) => { cpu.E |= 0x10; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0H]: (cpu) => { cpu.H |= 0x10; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0L]: (cpu) => { cpu.L |= 0x10; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x10); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET0A]: (cpu) => { cpu.A |= 0x10; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1B]: (cpu) => { cpu.B |= 0x20; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1C]: (cpu) => { cpu.C |= 0x20; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1D]: (cpu) => { cpu.D |= 0x20; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1E]: (cpu) => { cpu.E |= 0x20; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1H]: (cpu) => { cpu.H |= 0x20; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1L]: (cpu) => { cpu.L |= 0x20; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x20); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET1A]: (cpu) => { cpu.A |= 0x20; cpu.M = 2; cpu.T = 8; },
+
+  /* ------------------------ 0xf------------------------ */
+  [CBOPCODES.SET0B]: (cpu) => { cpu.B |= 0x40; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0C]: (cpu) => { cpu.C |= 0x40; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0D]: (cpu) => { cpu.D |= 0x40; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0E]: (cpu) => { cpu.E |= 0x40; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0H]: (cpu) => { cpu.H |= 0x40; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0L]: (cpu) => { cpu.L |= 0x40; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET0HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x40); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET0A]: (cpu) => { cpu.A |= 0x40; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1B]: (cpu) => { cpu.B |= 0x80; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1C]: (cpu) => { cpu.C |= 0x80; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1D]: (cpu) => { cpu.D |= 0x80; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1E]: (cpu) => { cpu.E |= 0x80; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1H]: (cpu) => { cpu.H |= 0x80; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1L]: (cpu) => { cpu.L |= 0x80; cpu.M = 2; cpu.T = 8; },
+  [CBOPCODES.SET1HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x80); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET1A]: (cpu) => { cpu.A |= 0x80; cpu.M = 2; cpu.T = 8; },
 };
 
 module.exports = {
