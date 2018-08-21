@@ -72,6 +72,7 @@ class GPU {
 
           if (this.line === 143) {
             this.MODE = 1;
+            console.log('WRITING TO CANVAS');
             this.ctx.putImageData(this.screen, 0, 0);
           } else {
             this.MODE = 2;
@@ -107,7 +108,7 @@ class GPU {
     if (canvas) {
       this.ctx = canvas.getContext('2d');
       this.screen = this.ctx.createImageData(160, 144);
-      const data = new Array(160 * 144 * 4).fill(0xff);
+      const data = new Array(160 * 144 * 4).fill(144);
 
       this.screen.data.set(data);
 
@@ -118,22 +119,30 @@ class GPU {
   updateTileBasedOnMemory(addr) {
     /* Get the address of the least significant
      byte in the tile row that was updated */
-    addr &= 0x1ffe;
-    console.log('updating tile based on memory');
+    addr &= 0x1fff;
+    // console.log('updating tile based on memory', addr, addr.toString(16));
     const tile = (addr >> 4) & 0x1ff;
-    const y = (addr >> 1) & 0xf;
+    const y = (addr >> 1) & 0x7;
     let bitIndex;
-
+    // console.log('tile is ', tile, y);
     for (let i = 0; i < 8; i++) {
       bitIndex = 1 << (7 - i);
       const leastSigBit = (this.vram[addr] & bitIndex) ? 1 : 0;
       const mostSigBit = (this.vram[addr + 1] & bitIndex) ? 2 : 0;
+      // console.log(leastSigBit, mostSigBit);
+      // console.log(tile, this.tileset[tile]);
 
       this.tileset[tile][y][i] = leastSigBit + mostSigBit;
+      // console.log('tile is', JSON.stringify(this.tileset[tile]));
     }
   }
 
   renderScan() {
+    // for (let i = 0; i < 10000; i++) {
+    //   this.screen.data[i] = 255;
+    // }
+    // this.ctx.putImageData(this.screen, 0, 0);
+
     let mapOffs = this.bgMap ? 0x1c00 : 0x1800;
     mapOffs += ((this.line + this.backgroundOffsetY) & 0xff) >> 3;
 
@@ -141,7 +150,7 @@ class GPU {
 
     const y = (this.line + this.backgroundOffsetY) & 0x7;
     let x = this.backgroundOffsetX & 0x7;
-    const canvasOffs = this.line * 160 * 4;
+    const canvasOffs = (this.line * 160 * 4) % (160 * 144 * 4);
     let colour;
     let tile = this.vram[mapOffs + lineOffs];
     // console.log('render scan sbeing triggered', this.line);
@@ -150,10 +159,14 @@ class GPU {
     for (let i = 0; i < 160; i++) {
       colour = this.palette[this.tileset[tile][y][x]];
       // console.log("what is ist", colour);
+      // console.log('rendering scan', canvasOffs);
+      // console.log(this.screen.data.slice(canvasOffs, canvasOffs + 5))
+      // console.log(canvasOffs, colour)
       this.screen.data[canvasOffs + 0] = colour[0];
       this.screen.data[canvasOffs + 1] = colour[1];
       this.screen.data[canvasOffs + 2] = colour[2];
       this.screen.data[canvasOffs + 3] = colour[3];
+      // console.log(this.screen.data.slice(canvasOffs, canvasOffs + 5))
 
       x++;
       if (x === 8) {
@@ -164,6 +177,7 @@ class GPU {
       }
     }
     // console.log('------------------', this.screen.data.find(el => el !== 255));
+    console.log('writing to canvas');
     this.ctx.putImageData(this.screen, 0, 0);
   }
 }

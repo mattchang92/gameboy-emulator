@@ -31,7 +31,7 @@ class MMU {
 
   read8(cpu, addr) {
     addr &= 0xffff;
-    switch (addr & 0xf00) {
+    switch (addr & 0xf000) {
       // Bios (256 B) /ROM0 (16K)
       case 0x0000:
         if (!this.biosExecuted) {
@@ -42,20 +42,20 @@ class MMU {
             console.log('--------------------BIOS FULLY EXECUTED--------------------');
           }
         }
-        return this.rom.charCodeAt(addr);
+        return this.rom[addr];
 
       // ROM0
       case 0x1000:
       case 0x2000:
       case 0x3000:
-        return this.rom.charCodeAt(addr);
+        return this.rom[addr];
 
       // ROM1 (16K)
       case 0x4000:
       case 0x5000:
       case 0x6000:
       case 0x7000:
-        return this.rom.charCodeAt(addr);
+        return this.rom[addr];
 
       // VRAM (Graphics 8K)
       case 0x8000:
@@ -117,10 +117,10 @@ class MMU {
       this.printed = true;
       console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     }
-    // console.log('writing to address: ', addr);
+    // console.log(`Writing byte to address ${addr} with value ${val}`);
     addr &= 0xffff;
 
-    switch (addr & 0xf00) {
+    switch (addr & 0xf000) {
       // Bios (256 B) /ROM0 (16K)
       case 0x0000:
         if (!this.biosExecuted && addr < 0x100) return;
@@ -142,7 +142,7 @@ class MMU {
       // VRAM (Graphics 8K)
       case 0x8000:
       case 0x9000:
-        console.log('writing to vram');
+        // console.log('writing to vram');
         this.vram[addr & 0x1fff] = val;
         cpu.gpu.updateTileBasedOnMemory(addr, val);
         break;

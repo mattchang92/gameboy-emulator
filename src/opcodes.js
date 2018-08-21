@@ -6,29 +6,29 @@ const OPCODES = {
   // LDBCmA: 0x02,
   // INCBC: 0x03,
   // INCB: 0x04,
-  // DECB: 0x05,
-  // LDBn: 0x06,
+  DECB: 0x05,
+  LDBn: 0x06,
   // RLCA: 0x07,
   // LDnnSP: 0x08,
   // ADDHLBC: 0x09,
   // LDABCm: 0x0a,
   // DECBC: 0x0b,
-  // INCC: 0x0c,
+  INCC: 0x0c,
   // DECC: 0x0d,
-  // LDCn: 0x0e,
+  LDCn: 0x0e,
   // RRCA: 0x0f,
 
   // STOP: 0x10,
-  // LDDEnn: 0x11,
+  LDDEnn: 0x11,
   // LDDEmA: 0x12,
   // INCDE: 0x13,
   // INCD: 0x14,
   // DECD: 0x15,
   // LDDn: 0x16,
-  // RLA: 0x17,
+  RLA: 0x17,
   // JRn: 0x18,
   // ADDHLDE: 0x19,
-  // LDADEm: 0x1a,
+  LDADEm: 0x1a,
   // DECDE: 0x1b,
   // INCE: 0x1c,
   // DECE: 0x1d,
@@ -37,8 +37,8 @@ const OPCODES = {
 
   JRNZn: 0x20,
   LDHLnn: 0x21,
-  // LDIHLmA: 0x22,
-  // INCHL: 0x23,
+  LDIHLmA: 0x22,
+  INCHL: 0x23,
   // INCH: 0x24,
   // DECH: 0x25,
   // LDHn: 0x26,
@@ -66,7 +66,7 @@ const OPCODES = {
   // DECSP: 0x3b,
   // INCA: 0x3c,
   // DECA: 0x3d,
-  // LDAn: 0x3e,
+  LDAn: 0x3e,
   // CFF: 0x3f,
 
   // LDBB: 0x40,
@@ -84,7 +84,7 @@ const OPCODES = {
   // LDCH: 0x4c,
   // LDCL: 0x4d,
   // LDCHLm: 0x4e,
-  // LDCA: 0x4f,
+  LDCA: 0x4f,
 
   // LDDB: 0x50,
   // LDDC: 0x51,
@@ -127,7 +127,7 @@ const OPCODES = {
   // LDHLmH: 0x74,
   // LDHLmL: 0x75,
   // HALT: 0x76,
-  // LDHLmA: 0x77,
+  LDHLmA: 0x77,
   // LDAB: 0x78,
   // LDAC: 0x79,
   // LDAD: 0x7a,
@@ -206,11 +206,11 @@ const OPCODES = {
   // CPA: 0xbf,
 
   // RETNZ: 0xc0,
-  // POPBC: 0xc1,
+  POPBC: 0xc1,
   // JPNZnn: 0xc2,
   // JPnn: 0xc3,
   // CALLNZnn: 0xc4,
-  // PUSHBC: 0xc5,
+  PUSHBC: 0xc5,
   // ADDAn: 0xc6,
   // RST00: 0xc7,
   // RETZ: 0xc8,
@@ -218,7 +218,7 @@ const OPCODES = {
   // JPZnn: 0xca,
   EXTops: 0xcb, // ???? secondary opcode table?
   // CALLZnn: 0xcc,
-  // CALLnn: 0xcd,
+  CALLnn: 0xcd,
   // ADCAn: 0xce,
   // RST08: 0xcf,
 
@@ -236,9 +236,9 @@ const OPCODES = {
   // SBCAn: 0xde,
   // RST18: 0xdf,
 
-  // LDHnmA: 0xe0,
+  LDHnmA: 0xe0,
   // POPHL: 0xe1,
-  // LDHCmA: 0xe2,
+  LDHCmA: 0xe2,
   // PUSHHL: 0xe5,
   // ANDn: 0xe6,
   // RST20: 0xe7,
@@ -298,7 +298,7 @@ const opcodes = {
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDBCmA]: (cpu) => {
-    cpu.mmu.write8(cpu.gpu, cpu.B << 8 | cpu.C, cpu.A);
+    cpu.mmu.write8(cpu, cpu.B << 8 | cpu.C, cpu.A);
     cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.INCBC]: (cpu) => {
@@ -390,7 +390,7 @@ const opcodes = {
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDDEmA]: (cpu) => {
-    cpu.mmu.write8(cpu.gpu, cpu.D << 8 | cpu.E, cpu.A);
+    cpu.mmu.write8(cpu, cpu.D << 8 | cpu.E, cpu.A);
     cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.INCDE]: (cpu) => {
@@ -487,7 +487,7 @@ const opcodes = {
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDIHLmA]: (cpu) => {
-    cpu.mmu.write8(cpu.gpu, cpu.H << 8 | cpu.L, cpu.A);
+    cpu.mmu.write8(cpu, cpu.H << 8 | cpu.L, cpu.A);
     cpu.L = (cpu.L + 1) & 0xff;
     if (!cpu.L) cpu.H = (cpu.H + 1) & 0xff;
     cpu.M = 2; cpu.T = 8;
@@ -604,7 +604,8 @@ const opcodes = {
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDDHLmA]: (cpu) => {
-    cpu.mmu.write8(cpu.gpu, cpu.H << 8 | cpu.L, cpu.A);
+    // console.log('should be loading to memory', (cpu.H << 8 | cpu.L).toString(16), cpu.A);
+    cpu.mmu.write8(cpu, cpu.H << 8 | cpu.L, cpu.A);
     cpu.L = (cpu.L - 1) & 0xff;
     if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
     cpu.M = 2; cpu.T = 8;
@@ -612,18 +613,18 @@ const opcodes = {
   [OPCODES.INCSP]: (cpu) => { cpu.SP = (cpu.SP + 1) & 0xffff; cpu.M = 1; cpu.T = 4; },
   [OPCODES.INCHLm]: (cpu) => {
     const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) + 1) & 0xff;
-    cpu.mmu.write8(cpu.gpu, (cpu.H << 8) | cpu.L);
+    cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L);
     setFlags(cpu, val);
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.DECHLm]: (cpu) => {
     const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) - 1) & 0xff;
-    cpu.mmu.write8(cpu.gpu, (cpu.H << 8) | cpu.L);
+    cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L);
     setFlags(cpu, val, 1);
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDHLmn]: (cpu) => {
-    cpu.mmu.write8(cpu.gpu, (cpu.H << 8) | cpu.L, cpu.mmu.read8(cpu, cpu.PC++));
+    cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.mmu.read8(cpu, cpu.PC++));
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.SCF]: (cpu) => { cpu.F |= 0x10; cpu.M = 1; cpu.T = 4; },
@@ -725,14 +726,14 @@ const opcodes = {
   [OPCODES.LDLA]: (cpu) => { cpu.L = cpu.A; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0x7 ------------------------ */
-  [OPCODES.LDHLmB]: (cpu) => { cpu.mmu.write8(cpu.gpu, (cpu.H << 8) | cpu.L, cpu.B); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDHLmC]: (cpu) => { cpu.mmu.write8(cpu.gpu, (cpu.H << 8) | cpu.L, cpu.C); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDHLmD]: (cpu) => { cpu.mmu.write8(cpu.gpu, (cpu.H << 8) | cpu.L, cpu.D); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDHLmE]: (cpu) => { cpu.mmu.write8(cpu.gpu, (cpu.H << 8) | cpu.L, cpu.E); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDHLmH]: (cpu) => { cpu.mmu.write8(cpu.gpu, (cpu.H << 8) | cpu.L, cpu.H); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDHLmL]: (cpu) => { cpu.mmu.write8(cpu.gpu, (cpu.H << 8) | cpu.L, cpu.L); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmB]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.B); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmC]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.C); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmD]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.D); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmE]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.E); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmH]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.H); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmL]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.L); cpu.M = 2; cpu.T = 8; },
   [OPCODES.HALT]: (cpu) => { cpu.HALT = 1; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDHLmA]: (cpu) => { cpu.mmu.write8(cpu.gpu, (cpu.H << 8) | cpu.L, cpu.A); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmA]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.A); cpu.M = 2; cpu.T = 8; },
   [OPCODES.LDAB]: (cpu) => { cpu.A = cpu.B; cpu.M = 1; cpu.T = 4; },
   [OPCODES.LDAC]: (cpu) => { cpu.A = cpu.C; cpu.M = 1; cpu.T = 4; },
   [OPCODES.LDAD]: (cpu) => { cpu.A = cpu.D; cpu.M = 1; cpu.T = 4; },
@@ -1053,8 +1054,11 @@ const opcodes = {
   [OPCODES.JPZnn]: (cpu) => { cpu.M = 3; cpu.T = 12; if (cpu.F & 0x80) { cpu.PC = cpu.mmu.read16(cpu, cpu.PC); cpu.M++; cpu.T += 4; } else { cpu.PC += 2; } },
   [OPCODES.EXTops]: (cpu) => {
     // cpu.F = 0; cpu.PC++;
-    const op = cpu.mmu.read8(cpu.PC++);
+    // console.log(cpu.mmu.biosExecuted);
+    // console.log('startin extops', cpu.PC);
+    const op = cpu.mmu.read8(cpu, cpu.PC++);
     if (cbopcodes[op]) {
+      // console.log("inside extops", cpu.PC, op, cbopcodes[op]);
       cbopcodes[op](cpu);
     } else {
       console.log('No CB opcode instruction found');
@@ -1177,9 +1181,9 @@ const opcodes = {
   },
 
   /* ------------------------ 0xe ------------------------ */
-  [OPCODES.LDHnmA]: (cpu) => { cpu.mmu.write8(cpu.gpu, 0xff00 | cpu.mmu.read8(cpu, cpu.PC++), cpu.A); cpu.M = 3; cpu.T = 12; },
+  [OPCODES.LDHnmA]: (cpu) => { cpu.mmu.write8(cpu, 0xff00 | cpu.mmu.read8(cpu, cpu.PC++), cpu.A); cpu.M = 3; cpu.T = 12; },
   [OPCODES.POPHL]: (cpu) => { cpu.L = cpu.mmu.read8(cpu, cpu.SP++); cpu.H = cpu.mmu.read8(cpu, cpu.SP++); cpu.M = 3; cpu.T = 12; },
-  [OPCODES.LDHCmA]: (cpu) => { cpu.mmu.write8(cpu.gpu, 0xff00 | cpu.C, cpu.A); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHCmA]: (cpu) => { cpu.mmu.write8(cpu, 0xff00 | cpu.C, cpu.A); cpu.M = 2; cpu.T = 8; },
   [OPCODES.PUSHHL]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu.gpu, cpu.SP, (cpu.H << 8) | cpu.L); cpu.M = 3; cpu.T = 12; },
   [OPCODES.ANDn]: (cpu) => { cpu.A &= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 2; cpu.T = 8; },
   [OPCODES.RST20]: (cpu) => {
@@ -1196,7 +1200,7 @@ const opcodes = {
     cpu.M = 4; cpu.T = 16;
   },
   [OPCODES.JPHLm]: (cpu) => { cpu.PC = (cpu.H << 8) | cpu.L; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDnnmA]: (cpu) => { cpu.mmu.write8(cpu.gpu, cpu.mmu.read16(cpu, cpu.PC), cpu.A); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
+  [OPCODES.LDnnmA]: (cpu) => { cpu.mmu.write8(cpu, cpu.mmu.read16(cpu, cpu.PC), cpu.A); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
   [OPCODES.XORn]: (cpu) => { cpu.A ^= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
   [OPCODES.RST28]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu.gpu, cpu.SP, cpu.PC); cpu.PC = 0x28; cpu.M = 3; cpu.T = 12; },
 

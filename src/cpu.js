@@ -30,7 +30,7 @@ class CPU {
     // halt
     this.HALT = 0;
 
-    this.RUN = 1;
+    this.RUN = 0;
 
     this.clock = {
       m: 0,
@@ -64,18 +64,27 @@ class CPU {
 
   dispatch() {
     while (this.RUN) {
-      const op = this.mmu.read8(this, this.PC++);
-      // console.log(this.PC - 1, op.toString(16));
-      // console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), opcodes[op].toString());
-      opcodes[op](this);
-      this.PC &= 0xffff;
-
-
-      this.clock.m += this.M;
-      this.clock.t += this.T;
-
-      this.gpu.step(this);
+      this.step();
     }
+  }
+
+  step() {
+    const op = this.mmu.read8(this, this.PC++);
+    // console.log('test')
+    // console.log(this.PC - 1, op.toString(16), opcodes[op]);
+    // console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), opcodes[op].toString());
+
+    if (typeof opcodes[op] !== 'function') {
+      console.log('not a function!!!', op, op.toString(16), opcodes[op]);
+    } 
+    opcodes[op](this);
+    this.PC &= 0xffff;
+
+
+    this.clock.m += this.M;
+    this.clock.t += this.T;
+
+    this.gpu.step(this);
   }
 }
 

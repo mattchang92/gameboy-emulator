@@ -281,10 +281,10 @@ const setFlags = (cpu, val, isSub) => {
 };
 
 const testBit = (cpu, val) => {
-  cpu.F &= !0x40;
+  cpu.F &= 0x1f;
   cpu.F |= 0x20;
   if (val) {
-    cpu.F &= ~0x80;
+    cpu.F &= 0x7f;
   } else {
     cpu.F |= 0x80;
   }

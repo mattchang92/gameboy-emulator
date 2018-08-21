@@ -63,7 +63,7 @@ typings/
 
 test.js
 
-/dist/main.js
+/dist/*
 test.html
 
 roms/*
