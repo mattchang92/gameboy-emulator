@@ -6,6 +6,12 @@ const { opcodes } = require('./opcodes');
 class CPU {
   constructor() {
     // general use registers
+    this.counter = 0;
+    this.initialCounter = 0;
+    this.logsEnabled = false;
+    this.offset = 0;
+    this.limit = 30000;
+
     this.A = 0;
     this.B = 0;
     this.C = 0;
@@ -73,10 +79,19 @@ class CPU {
     // console.log('test')
     // console.log(this.PC - 1, op.toString(16), opcodes[op]);
     // console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), opcodes[op].toString());
+    this.initialCounter++;
+    if (this.initialCounter > this.offset) {
+      // this.logsEnabled = true;
+      this.counter++;
+    }
+
+    if (this.counter < this.limit && this.logsEnabled) {
+      console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), this.SP, this.B, this.C, this.D, this.E, this.H, this.L, this.A);
+    }
 
     if (typeof opcodes[op] !== 'function') {
       console.log('not a function!!!', op, op.toString(16), opcodes[op]);
-    } 
+    }
     opcodes[op](this);
     this.PC &= 0xffff;
 

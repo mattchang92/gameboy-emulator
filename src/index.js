@@ -14,4 +14,9 @@ document.getElementById('step').onclick = () => {
   cpu.step();
 };
 
+document.getElementById('stop').onclick = () => {
+  console.log('stopping!!!');
+  cpu.RUN = false;
+};
+
 // cpu.dispatch();

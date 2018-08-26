@@ -1,55 +1,58 @@
 const { cbopcodes } = require('./cbOpcodes');
 
+let counter = 0;
+const flag = false;
+
 const OPCODES = {
   NOP: 0x00,
   // LDBCnn: 0x01,
   // LDBCmA: 0x02,
-  // INCBC: 0x03,
-  // INCB: 0x04,
+  INCBC: 0x03,
+  INCB: 0x04,
   DECB: 0x05,
   LDBn: 0x06,
   // RLCA: 0x07,
-  // LDnnSP: 0x08,
+  LDnnSP: 0x08,
   // ADDHLBC: 0x09,
   // LDABCm: 0x0a,
-  // DECBC: 0x0b,
+  DECBC: 0x0b,
   INCC: 0x0c,
-  // DECC: 0x0d,
+  DECC: 0x0d,
   LDCn: 0x0e,
   // RRCA: 0x0f,
 
   // STOP: 0x10,
   LDDEnn: 0x11,
   // LDDEmA: 0x12,
-  // INCDE: 0x13,
+  INCDE: 0x13,
   // INCD: 0x14,
-  // DECD: 0x15,
-  // LDDn: 0x16,
+  DECD: 0x15,
+  LDDn: 0x16,
   RLA: 0x17,
-  // JRn: 0x18,
+  JRn: 0x18,
   // ADDHLDE: 0x19,
   LDADEm: 0x1a,
   // DECDE: 0x1b,
   // INCE: 0x1c,
-  // DECE: 0x1d,
-  // LDEn: 0x1e,
+  DECE: 0x1d,
+  LDEn: 0x1e,
   // RRA: 0x1f,
 
   JRNZn: 0x20,
   LDHLnn: 0x21,
   LDIHLmA: 0x22,
   INCHL: 0x23,
-  // INCH: 0x24,
+  INCH: 0x24,
   // DECH: 0x25,
   // LDHn: 0x26,
   // DAA: 0x27, // ??????
-  // JRZn: 0x28,
+  JRZn: 0x28,
   // ADDHLHL: 0x29,
   // LDIAHLm: 0x2a,
   // DECHL: 0x2b,
   // INCL: 0x2c,
   // DECL: 0x2d,
-  // LDLn: 0x2e,
+  LDLn: 0x2e,
   // CMPL: 0x2f,
 
   // JRNCn: 0x30,
@@ -65,7 +68,7 @@ const OPCODES = {
   // LDDAHLm: 0x3a,
   // DECSP: 0x3b,
   // INCA: 0x3c,
-  // DECA: 0x3d,
+  DECA: 0x3d,
   LDAn: 0x3e,
   // CFF: 0x3f,
 
@@ -93,7 +96,7 @@ const OPCODES = {
   // LDDH: 0x54,
   // LDDL: 0x55,
   // LDDHLm: 0x56,
-  // LDDA: 0x57,
+  LDDA: 0x57,
   // LDEB: 0x58,
   // LDEC: 0x59,
   // LDED: 0x5a,
@@ -109,8 +112,8 @@ const OPCODES = {
   // LDHE: 0x63,
   // LDHH: 0x64,
   // LDHL: 0x65,
-  // LDHHLm: 0x66,
-  // LDHA: 0x67,
+  LDHHLm: 0x66,
+  LDHA: 0x67,
   // LDLB: 0x68,
   // LDLC: 0x69,
   // LDLD: 0x6a,
@@ -123,30 +126,30 @@ const OPCODES = {
   // LDHLmB: 0x70,
   // LDHLmC: 0x71,
   // LDHLmD: 0x72,
-  // LDHLmE: 0x73,
+  LDHLmE: 0x73,
   // LDHLmH: 0x74,
   // LDHLmL: 0x75,
   // HALT: 0x76,
   LDHLmA: 0x77,
-  // LDAB: 0x78,
+  LDAB: 0x78,
   // LDAC: 0x79,
   // LDAD: 0x7a,
-  // LDAE: 0x7b,
-  // LDAH: 0x7c,
-  // LDAL: 0x7d,
+  LDAE: 0x7b,
+  LDAH: 0x7c,
+  LDAL: 0x7d,
   // LDAHLm: 0x7e,
   // LDAA: 0x7f,
 
   // ADDAB: 0x80,
   // ADDAC: 0x81,
   // ADDAD: 0x82,
-  // ADDAE: 0x83,
+  ADDAE: 0x83,
   // ADDAH: 0x84,
   // ADDAL: 0x85,
-  // ADDAHLm: 0x86,
+  ADDAHLm: 0x86,
   // ADDAA: 0x87,
-  // ADCAB: 0x88,
-  // ADCAC: 0x89,
+  ADCAB: 0x88,
+  ADCAC: 0x89,
   // ADCAD: 0x8a,
   // ADCAE: 0x8b,
   // ADCAH: 0x8c,
@@ -154,7 +157,7 @@ const OPCODES = {
   // ADCAHLm: 0x8e,
   // ADCAA: 0x8f,
 
-  // SUBAB: 0x90,
+  SUBAB: 0x90,
   // SUBAC: 0x91,
   // SUBAD: 0x92,
   // SUBAE: 0x93,
@@ -202,7 +205,7 @@ const OPCODES = {
   // CPE: 0xbb,
   // CPH: 0xbc,
   // CPL: 0xbd,
-  // CPHLm: 0xbe,
+  CPHLm: 0xbe,
   // CPA: 0xbf,
 
   // RETNZ: 0xc0,
@@ -214,12 +217,12 @@ const OPCODES = {
   // ADDAn: 0xc6,
   // RST00: 0xc7,
   // RETZ: 0xc8,
-  // RET: 0xc9,
+  RET: 0xc9,
   // JPZnn: 0xca,
   EXTops: 0xcb, // ???? secondary opcode table?
-  // CALLZnn: 0xcc,
+  CALLZnn: 0xcc,
   CALLnn: 0xcd,
-  // ADCAn: 0xce,
+  ADCAn: 0xce,
   // RST08: 0xcf,
 
   // RETNC: 0xd0,
@@ -230,7 +233,7 @@ const OPCODES = {
   // SUBAn: 0xd6,
   // RST10: 0xd7,
   // RETC: 0xd8,
-  // RETI: 0xd9, // set interupts?
+  RETI: 0xd9, // set interupts?
   // JPCnn: 0xda,
   // CALLCnn: 0xdc,
   // SBCAn: 0xde,
@@ -244,12 +247,13 @@ const OPCODES = {
   // RST20: 0xe7,
   // ADDSPd: 0xe8,
   // JPHLm: 0xe9,
-  // LDnnmA: 0xea,
+  LDnnmA: 0xea,
   // XORn: 0xee,
   // RST28: 0xef,
 
-  // LDHAnm: 0xf0,
+  LDHAnm: 0xf0,
   // POPAF: 0xf1,
+  LDAIOC: 0xf2, // NOTE copy pasted from other repo. docs say is invalid
   // DI: 0xf3, // disable interupts. no interupts yet
   // PUSHAF: 0xf5,
   // ORn: 0xf6,
@@ -258,7 +262,7 @@ const OPCODES = {
   // LDSPHL: 0xf9,
   // LDAnnm: 0xfa,
   // EI: 0xfb, // enable interupts. no interupts yet
-  // CPn: 0xfe,
+  CPn: 0xfe,
   // RST38: 0xff,
 };
 
@@ -323,9 +327,10 @@ const opcodes = {
     cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.RLCA]: (cpu) => {
-    const bit = cpu.A >>> 7;
-    cpu.A = ((cpu.A << 1) + bit) & 0xff;
-    cpu.F = bit ? 0x10 : 0;
+    const carry = cpu.A & 0x80 ? 1 : 0;
+    const overflow = cpu.A & 0x80 ? 0x10 : 0;
+    cpu.A = ((cpu.A << 1) | carry) & 0xff;
+    cpu.F = overflow;
   },
   [OPCODES.LDnnSP]: (cpu) => {
     const address = cpu.mmu.read16(cpu, cpu.PC);
@@ -373,9 +378,10 @@ const opcodes = {
     cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.RRCA]: (cpu) => {
-    const bit = cpu.A & 1;
-    cpu.A = ((cpu.A >>> 1) + (bit * 0x80)) & 0xff;
-    cpu.F = bit ? 0x10 : 0;
+    const carry = cpu.A & 1 ? 0x80 : 0;
+    const overflow = cpu.A & 1 ? 0x10 : 0;
+    cpu.A = ((cpu.A >>> 1) | carry) & 0xff;
+    cpu.F = overflow;
     cpu.M = 1; cpu.T = 4;
   },
 
@@ -415,10 +421,10 @@ const opcodes = {
     cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.RLA]: (cpu) => {
-    const bit = cpu.A >>> 7;
-    const carry = (cpu.F >>> 4) && 0xff;
-    cpu.F = bit ? 0x10 : 0;
-    cpu.A = ((cpu.A << 1) + carry) & 0xff;
+    const carry = cpu.F & 0x10 ? 1 : 0;
+    const overflow = cpu.A & 0x80 ? 0x10 : 0;
+    cpu.A = ((cpu.A << 1) | carry) & 0xff;
+    cpu.F = overflow;
     cpu.M = 1; cpu.T = 4;
   },
   [OPCODES.JRn]: (cpu) => {
@@ -441,7 +447,7 @@ const opcodes = {
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDADEm]: (cpu) => {
-    const address = (cpu.D << 8) + cpu.E;
+    const address = (cpu.D << 8) | cpu.E;
     cpu.A = cpu.mmu.read8(cpu, address);
     cpu.M = 2; cpu.T = 8;
   },
@@ -467,12 +473,14 @@ const opcodes = {
     cpu.M = 2; cpu.T = 48;
   },
   [OPCODES.RRA]: (cpu) => {
-    const bit = cpu.A & 1;
-    const carry = (cpu.F >>> 4) && 0xff;
-    cpu.F = bit ? 0x10 : 0;
-    cpu.A = ((cpu.A >>> 1) + (carry * 0x80)) & 0xff;
+    const carry = cpu.F & 0x10 ? 0x80 : 0;
+    const overflow = cpu.A & 1 ? 0x10 : 0;
+    cpu.A = ((cpu.A >>> 1) | carry) & 0xff;
+    cpu.F = overflow;
     cpu.M = 1; cpu.T = 4;
   },
+
+  /* ------------------------ 0x2------------------------ */
   [OPCODES.JRNZn]: (cpu) => {
     const zero = cpu.F & 0x80;
     let val = cpu.mmu.read8(cpu, cpu.PC++);
@@ -534,8 +542,6 @@ const opcodes = {
     if (cpu.A === 0) cpu.F |= 0x80;
     if (c) cpu.F |= 0x10;
   },
-
-  /* ------------------------ 0x2------------------------ */
   [OPCODES.JRZn]: (cpu) => {
     const zero = (cpu.F >> 7) & 0xff;
     let val = cpu.mmu.read8(cpu, cpu.PC++);
@@ -604,7 +610,18 @@ const opcodes = {
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDDHLmA]: (cpu) => {
-    // console.log('should be loading to memory', (cpu.H << 8 | cpu.L).toString(16), cpu.A);
+    // if ((cpu.H << 8 | cpu.L).toString(16) === '8001') {
+    //   cpu.logsEnabled = true;
+    // }
+    if (cpu.counter < cpu.limit && cpu.logsEnabled) {
+      console.log('should be loading to memory', (cpu.H << 8 | cpu.L).toString(16), cpu.A, cpu.PC, cpu.SP);
+    }
+
+    // if (counter < 8300) {
+    //   console.log('should be loading to memory', (cpu.H << 8 | cpu.L).toString(16), cpu.A, cpu.PC, cpu.SP);
+    // }
+    // if ((cpu.H << 8 | cpu.L).toString() == '8000') flag = true;
+    counter++;
     cpu.mmu.write8(cpu, cpu.H << 8 | cpu.L, cpu.A);
     cpu.L = (cpu.L - 1) & 0xff;
     if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
@@ -1056,9 +1073,12 @@ const opcodes = {
     // cpu.F = 0; cpu.PC++;
     // console.log(cpu.mmu.biosExecuted);
     // console.log('startin extops', cpu.PC);
+    cpu.F = 0;
     const op = cpu.mmu.read8(cpu, cpu.PC++);
     if (cbopcodes[op]) {
-      // console.log("inside extops", cpu.PC, op, cbopcodes[op]);
+      if (cpu.logsEnabled && cpu.counter < cpu.limit) {
+        console.log('inside extops', cpu.PC, op.toString(16));
+      }
       cbopcodes[op](cpu);
     } else {
       console.log('No CB opcode instruction found');
@@ -1165,6 +1185,7 @@ const opcodes = {
       cpu.PC += 2;
     }
   },
+  0xdd: (cpu) => { console.log('unmapped opcode'); },
   [OPCODES.SBCAn]: (cpu) => {
     const val = cpu.mmu.read8(cpu, cpu.PC++);
     const carry = (cpu.F & 0x10) ? 1 : 0;
@@ -1207,6 +1228,7 @@ const opcodes = {
   /* ------------------------ 0xf ------------------------ */
   [OPCODES.LDHAnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; },
   [OPCODES.POPAF]: (cpu) => { cpu.F = cpu.mmu.read8(cpu, cpu.SP++) & 0xf0; cpu.A = cpu.mmu.read8(cpu, cpu.SP++); cpu.M = 3; cpu.T = 12; },
+  [OPCODES.LDAIOC]: (cpu) => { cpu.A = cpu.mmu.read8(0xff00 + cpu.C); cpu.M = 2; cpu.T = 8; },
   [OPCODES.DI]: (cpu) => { cpu; cpu.M = 1; cpu.T = 4; },
   [OPCODES.PUSHAF]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu.gpu, cpu.SP, (cpu.A << 8) | cpu.F); cpu.M = 3; cpu.T = 12; },
   [OPCODES.ORn]: (cpu) => { cpu.A |= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },

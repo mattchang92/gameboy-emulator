@@ -31,11 +31,27 @@ class MMU {
 
   read8(cpu, addr) {
     addr &= 0xffff;
+    if (cpu.counter < cpu.limit && cpu.logsEnabled) {
+      console.log(`Reading byte from address ${addr}`);
+    }
     switch (addr & 0xf000) {
       // Bios (256 B) /ROM0 (16K)
+      // 0x0104-0x0133
+
+      // 0x00A8-0x00D7
+
       case 0x0000:
         if (!this.biosExecuted) {
           // console.log('reading from bios at addrss ', addr);
+          if (addr <= 0x0133 && addr >= 0x0104) {
+            const testAddr = addr - 0x0104;
+            return this.bios[0x00a8 + testAddr];
+          }
+
+          if (addr <= 0x014D && addr >= 0x0134) {
+            return addr === 0x0134 ? 0xe7 : 0;
+          }
+
           if (addr < 0x100) return this.bios[addr];
           if (cpu.PC === 0x0100) {
             this.biosExecuted = true;
@@ -73,7 +89,9 @@ class MMU {
         return this.wram[addr & 0x1fff];
 
       // 0xf000:
-      case 0xf000c:
+      case 0xf000: {
+        if (addr === 0xff44) return 144;
+
         switch (addr & 0x0f00) {
           // Working RAM shadow
           case 0x000: case 0x100: case 0x200: case 0x300: case 0x400: case 0x500: case 0x600:
@@ -94,6 +112,7 @@ class MMU {
             break;
         }
         break;
+      }
 
       default:
         break;
@@ -102,6 +121,9 @@ class MMU {
 
   read16(cpu, addr) {
     addr &= 0xffff;
+    if (cpu.counter < cpu.limit && cpu.logsEnabled) {
+      console.log(`Reading word from address ${addr}`);
+    }
 
     // const one = this.read8(cpu, addr);
     // const two = (this.read8(cpu, addr + 1) << 8);
@@ -117,7 +139,9 @@ class MMU {
       this.printed = true;
       console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     }
-    // console.log(`Writing byte to address ${addr} with value ${val}`);
+    if (cpu.counter < cpu.limit && cpu.logsEnabled) {
+      console.log(`Writing byte to address ${addr} with value ${val}`);
+    }
     addr &= 0xffff;
 
     switch (addr & 0xf000) {
@@ -185,7 +209,11 @@ class MMU {
   }
 
   write16(cpu, addr, val) {
-    if (addr === 0xff50) console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    if (cpu.counter < cpu.limit && cpu.logsEnabled) {
+      console.log(`Writing word to address ${addr} with value ${val}`);
+    }
+
+    // if (addr === 0xff50) console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     addr &= 0xffff;
 
     const leastSigByte = val & 0xff;

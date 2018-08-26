@@ -46,33 +46,22 @@ class GPU {
   }
 
   step(cpu) {
-    this.MODECLOCK += cpu.T;
+    this.MODECLOCK += cpu.M;
 
     switch (this.MODE) {
-      case 2:
-        if (this.MODECLOCK >= 80) {
-          this.MODECLOCK = 0;
-          this.MODE = 3;
-        }
-        break;
-
-      case 3:
-        if (this.MODECLOCK >= 172) {
-          this.MODECLOCK = 0;
-          this.MODE = 0;
-          this.renderScan();
-        }
-        break;
-
       case 0:
-        if (this.MODECLOCK >= 204) {
+        if (this.MODECLOCK >= 51) {
           this.MODECLOCK = 0;
           this.line++;
 
 
           if (this.line === 143) {
             this.MODE = 1;
-            console.log('WRITING TO CANVAS');
+            // console.log('WRITING TO CANVAS');
+            // for (let i = 0; i < this.screen.data.length; i++) {
+            //   this.screen.data[i] = Math.floor(255 * Math.random());
+            // }
+            // this.screen.data = this.screen.data.map(() => Math.floor(255 * Math.random()));
             this.ctx.putImageData(this.screen, 0, 0);
           } else {
             this.MODE = 2;
@@ -81,7 +70,7 @@ class GPU {
         break;
 
       case 1:
-        if (this.MODECLOCK >= 456) {
+        if (this.MODECLOCK >= 114) {
           this.MODECLOCK = 0;
           this.line++;
 
@@ -89,6 +78,21 @@ class GPU {
             this.MODE = 2;
             this.line = 0;
           }
+        }
+        break;
+
+      case 2:
+        if (this.MODECLOCK >= 20) {
+          this.MODECLOCK = 0;
+          this.MODE = 3;
+        }
+        break;
+
+      case 3:
+        if (this.MODECLOCK >= 43) {
+          this.MODECLOCK = 0;
+          this.MODE = 0;
+          this.renderScan();
         }
         break;
 
@@ -177,7 +181,10 @@ class GPU {
       }
     }
     // console.log('------------------', this.screen.data.find(el => el !== 255));
-    console.log('writing to canvas');
+    // console.log('writing to canvas');
+    for (let i = 0; i < this.screen.data.length; i++) {
+      this.screen.data[i] = Math.floor(255 * Math.random());
+    }
     this.ctx.putImageData(this.screen, 0, 0);
   }
 }
