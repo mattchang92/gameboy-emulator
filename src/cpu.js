@@ -90,6 +90,56 @@ class CPU {
     }
 
     if (typeof opcodes[op] !== 'function') {
+      // console.log(this.gpu.tileset[64]);
+      const palette = [
+        [255, 255, 255, 255],
+        [192, 192, 192, 255],
+        [96, 96, 96, 255],
+        [0, 0, 0, 255],
+      ];
+      // const palette = [
+      //   255,
+      //   192,
+      //   96,
+      //   0,
+      // ];
+
+      // const tile = this.gpu.tileset[1];
+      // const tile = this.gpu.tileset[1].map(line => line.map(pixel => palette[pixel]));
+      const start = 1;
+      let id = 0;
+
+      for (let i = start; i < start + 26; i++) {
+        let mappedTile = [];
+        this.gpu.tileset[i].forEach((line) => {
+          line.forEach((pixel) => {
+            mappedTile = [...mappedTile, ...palette[pixel]];
+          });
+        });
+        // console.log(mappedTile);
+
+        console.log(this.mmu.vram.slice(0x1800, 0x1800 + 32));
+
+        const canvas = document.getElementById(`test${id++}`);
+        const ctx = canvas.getContext('2d');
+        const screen = ctx.createImageData(8, 8);
+
+        screen.data.set(mappedTile);
+        ctx.putImageData(screen, 0, 0);
+      }
+
+
+      // if (canvas) {
+      //   this.ctx = canvas.getContext('2d');
+      //   this.screen = this.ctx.createImageData(256, 256);
+      //   const data = new Array(256 * 256 * 4).fill(144);
+
+      //   this.screen.data.set(data);
+
+      //   this.ctx.putImageData(this.screen, 0, 0);
+      // }
+
+
       console.log('not a function!!!', op, op.toString(16), opcodes[op]);
     }
     opcodes[op](this);

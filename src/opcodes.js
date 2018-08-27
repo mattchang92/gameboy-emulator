@@ -1185,7 +1185,7 @@ const opcodes = {
       cpu.PC += 2;
     }
   },
-  0xdd: (cpu) => { console.log('unmapped opcode'); },
+  // 0xdd: (cpu) => { console.log('unmapped opcode'); },
   [OPCODES.SBCAn]: (cpu) => {
     const val = cpu.mmu.read8(cpu, cpu.PC++);
     const carry = (cpu.F & 0x10) ? 1 : 0;

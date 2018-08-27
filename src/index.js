@@ -4,10 +4,13 @@ const cpu = new CPU();
 
 cpu.dispatch();
 
+let gameLoop;
+
 document.getElementById('run').onclick = () => {
   // console.log("being click")
   cpu.RUN = !cpu.RUN;
   cpu.dispatch();
+  // gameLoop = setInterval(cpu.step.bind(cpu), 0.1);
 };
 
 document.getElementById('step').onclick = () => {
@@ -16,7 +19,7 @@ document.getElementById('step').onclick = () => {
 
 document.getElementById('stop').onclick = () => {
   console.log('stopping!!!');
-  cpu.RUN = false;
+  clearInterval(gameLoop);
 };
 
 // cpu.dispatch();
