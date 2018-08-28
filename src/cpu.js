@@ -107,38 +107,33 @@ class CPU {
       // const tile = this.gpu.tileset[1];
       // const tile = this.gpu.tileset[1].map(line => line.map(pixel => palette[pixel]));
       const start = 1;
-      let id = 0;
+      const id = 0;
+      // console.log(this.mmu.vram.slice(0x1c00, 0x1c00 + 32));
 
-      for (let i = start; i < start + 26; i++) {
-        let mappedTile = [];
-        this.gpu.tileset[i].forEach((line) => {
-          line.forEach((pixel) => {
-            mappedTile = [...mappedTile, ...palette[pixel]];
-          });
-        });
-        // console.log(mappedTile);
-
-        console.log(this.mmu.vram.slice(0x1800, 0x1800 + 32));
-
-        const canvas = document.getElementById(`test${id++}`);
-        const ctx = canvas.getContext('2d');
-        const screen = ctx.createImageData(8, 8);
-
-        screen.data.set(mappedTile);
-        ctx.putImageData(screen, 0, 0);
-      }
-
-
-      // if (canvas) {
-      //   this.ctx = canvas.getContext('2d');
-      //   this.screen = this.ctx.createImageData(256, 256);
-      //   const data = new Array(256 * 256 * 4).fill(144);
-
-      //   this.screen.data.set(data);
-
-      //   this.ctx.putImageData(this.screen, 0, 0);
+      // for (let i = 0x9800; i < 0x9fff; i++) {
+      //   console.log(this.mmu.vram[i - 0x8000]);
       // }
 
+      // console.log(this.gpu.tileset[1]);
+
+      // for (let i = start; i < start + 25; i++) {
+      //   let mappedTile = [];
+      //   this.gpu.tileset[i].forEach((line) => {
+      //     line.forEach((pixel) => {
+      //       mappedTile = [...mappedTile, ...palette[pixel]];
+      //     });
+      //   });
+
+      //   const canvas = document.getElementById(`test${id++}`);
+      //   const ctx = canvas.getContext('2d');
+      //   const screen = ctx.createImageData(8, 8);
+
+      //   screen.data.set(mappedTile);
+      //   ctx.putImageData(screen, 0, 0);
+      // }
+
+      // this.gpu.tileMapToScreen();
+      // this.gpu.ctx.putImageData(this.gpu.screen, 0, 0);
 
       console.log('not a function!!!', op, op.toString(16), opcodes[op]);
     }

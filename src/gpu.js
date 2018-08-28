@@ -42,7 +42,36 @@ class GPU {
       [0, 0, 0, 255],
     ];
 
+    this.mapCounter = 0;
+
     this.reset();
+  }
+
+  tileMapToScreen() {
+    if (this.mapCounter === 5) {
+      console.log('inside tle map');
+      for (let i = 0x1800; i < 0x1c00; i++) {
+        const tileId = this.vram[i];
+        const tile = this.tileset[tileId];
+        const screenCol = i % 32;
+        const screenRow = Math.floor((i - 0x1800) / 32);
+        const baseIndex = (screenRow * 32 * 8 * 8 * 4) + (screenCol * 8 * 4);
+
+
+        tile.forEach((rowData, tileRow) => {
+          rowData.forEach((colorId, tileCol) => {
+            const colorArr = this.palette[colorId];
+            const indicesInRow = (32 * 8 * 4);
+            const pixelIndex = baseIndex + (tileRow * indicesInRow) + (tileCol * 4);
+            for (let index = 0; index < 4; index++) {
+              this.screen.data[pixelIndex + index] = colorArr[index];
+            }
+          });
+        });
+      }
+    } else {
+      this.mapCounter++;
+    }
   }
 
   step(cpu) {
@@ -61,6 +90,7 @@ class GPU {
             //   this.screen.data[i] = Math.floor(255 * Math.random());
             // }
             // this.screen.data = this.screen.data.map(() => Math.floor(255 * Math.random()));
+            this.tileMapToScreen();
             this.ctx.putImageData(this.screen, 0, 0);
           } else {
             this.MODE = 2;
@@ -111,7 +141,15 @@ class GPU {
     if (canvas) {
       this.ctx = canvas.getContext('2d');
       this.screen = this.ctx.createImageData(256, 256);
-      const data = new Array(256 * 256 * 4).fill(144);
+      const color = 0;
+      const data = new Array(256 * 256).fill(null)
+        .map(() => [color, color, color, 255])
+        .join()
+        .split(',')
+        .map(num => parseInt(num, 10));
+
+
+      // const data = new Array(256 * 256 * 4).fill(255);
 
       this.screen.data.set(data);
 
@@ -144,52 +182,41 @@ class GPU {
   }
 
   renderScan() {
-    // for (let i = 0; i < 10000; i++) {
-    //   this.screen.data[i] = 255;
+    // // let mapOffs = this.bgMap ? 0x1c00 : 0x1800;
+    // let mapOffs = 0x1800;
+    // mapOffs += ((this.line + this.backgroundOffsetY) & 0xff) >> 3;
+
+    // let lineOffs = this.backgroundOffsetX >> 3;
+
+    // const y = (this.line + this.backgroundOffsetY) & 0x7;
+    // let x = this.backgroundOffsetX & 0x7;
+    // const canvasOffs = (this.line * 256 * 4) % (256 * 256 * 4);
+    // let colour;
+    // let tile = this.vram[mapOffs + lineOffs];
+    // // console.log('render scan sbeing triggered', this.line);
+    // // console.log(JSON.stringify(this.tileset[tile]));
+
+    // for (let i = 0; i < 256; i++) {
+    //   colour = this.palette[this.tileset[tile][y][x]];
+    //   // console.log('what is the color', y, x, this.tileset[tile]);
+    //   // console.log("what is ist", colour);
+    //   // console.log('rendering scan', canvasOffs);
+    //   // console.log(this.screen.data.slice(canvasOffs, canvasOffs + 5))
+    //   // console.log(canvasOffs, colour)
+    //   this.screen.data[canvasOffs + 0] = colour[0];
+    //   this.screen.data[canvasOffs + 1] = colour[1];
+    //   this.screen.data[canvasOffs + 2] = colour[2];
+    //   this.screen.data[canvasOffs + 3] = colour[3];
+    //   // console.log(this.screen.data.slice(canvasOffs, canvasOffs + 5));
+
+    //   x++;
+    //   if (x === 8) {
+    //     x = 0;
+    //     lineOffs = (lineOffs + 1) & 31;
+    //     tile = this.vram[mapOffs + lineOffs];
+    //     if (this.bgTile === 1 && tile < 128) tile += 256;
+    //   }
     // }
-    // this.ctx.putImageData(this.screen, 0, 0);
-
-    // let mapOffs = this.bgMap ? 0x1c00 : 0x1800;
-    let mapOffs = 0x1800;
-    mapOffs += ((this.line + this.backgroundOffsetY) & 0xff) >> 3;
-
-    let lineOffs = this.backgroundOffsetX >> 3;
-
-    const y = (this.line + this.backgroundOffsetY) & 0x7;
-    let x = this.backgroundOffsetX & 0x7;
-    const canvasOffs = (this.line * 256 * 4) % (256 * 256 * 4);
-    let colour;
-    let tile = this.vram[mapOffs + lineOffs];
-    // console.log('render scan sbeing triggered', this.line);
-    // console.log(JSON.stringify(this.tileset[tile]));
-
-    for (let i = 0; i < 256; i++) {
-      colour = this.palette[this.tileset[tile][y][x]];
-      // console.log('what is the color', y, x, this.tileset[tile]);
-      // console.log("what is ist", colour);
-      // console.log('rendering scan', canvasOffs);
-      // console.log(this.screen.data.slice(canvasOffs, canvasOffs + 5))
-      // console.log(canvasOffs, colour)
-      this.screen.data[canvasOffs + 0] = colour[0];
-      this.screen.data[canvasOffs + 1] = colour[1];
-      this.screen.data[canvasOffs + 2] = colour[2];
-      this.screen.data[canvasOffs + 3] = colour[3];
-      // console.log(this.screen.data.slice(canvasOffs, canvasOffs + 5));
-
-      x++;
-      if (x === 8) {
-        x = 0;
-        lineOffs = (lineOffs + 1) & 31;
-        tile = this.vram[mapOffs + lineOffs];
-        if (this.bgTile === 1 && tile < 128) tile += 256;
-      }
-    }
-    // console.log('------------------', this.screen.data.find(el => el !== 144));
-    // console.log('rendering scan');
-    // for (let i = 0; i < this.screen.data.length; i++) {
-    //   this.screen.data[i] = Math.floor(255 * Math.random());
-    // }
-    // this.ctx.putImageData(this.screen, 0, 0);
   }
 }
 
