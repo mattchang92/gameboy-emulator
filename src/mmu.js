@@ -155,10 +155,10 @@ class MMU {
   }
 
   write8(cpu, addr, val) {
-    if (addr === 0xff50 && !this.printed) {
-      this.printed = true;
-      console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-    }
+    // if (addr === 0xff50 && !this.printed) {
+    //   this.printed = true;
+    //   console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    // }
     if (cpu.counter < cpu.limit && cpu.logsEnabled) {
       console.log(`Writing byte to address ${addr} with value ${val}`);
     }
