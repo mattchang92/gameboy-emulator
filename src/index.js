@@ -10,7 +10,7 @@ document.getElementById('run').onclick = () => {
   // console.log("being click")
   // cpu.RUN = !cpu.RUN;
   // cpu.dispatch();
-  gameLoop = setInterval(cpu.frame.bind(cpu), 50);
+  gameLoop = setInterval(cpu.frame.bind(cpu), 1);
 };
 
 document.getElementById('step').onclick = () => {

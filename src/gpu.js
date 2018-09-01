@@ -22,6 +22,8 @@ const {
   NUM_TILES,
   ROWS_IN_TILE,
   COLS_IN_TILE,
+  SCREEN_WIDTH,
+  SCREEN_HEIGHT,
 } = require('./constants');
 
 class GPU {
@@ -152,29 +154,27 @@ class GPU {
   }
 
   tileMapToScreen() {
-    if (this.mapCounter === 5) {
-      console.log('inside tle map');
-      for (let i = 0x1800; i < 0x1c00; i++) {
-        const tileId = this.vram[i];
+    for (let row = 0; row < 144; row++) {
+      for (let col = 0; col < 160; col++) {
+        const actualRow = row + this.SCY;
+        const actualCol = col + this.SCX;
+        const tileIdRow = Math.floor(actualRow / 8);
+        const tileIdCol = Math.floor(actualCol / 8);
+        const tileIndex = (tileIdRow * 32) + tileIdCol;
+        const tileId = this.vram[0x1800 + tileIndex];
         const tile = this.tileset[tileId];
-        const screenCol = i % 32;
-        const screenRow = Math.floor((i - 0x1800) / 32);
-        const baseIndex = (screenRow * 32 * 8 * 8 * 4) + (screenCol * 8 * 4);
+        if (tile) {
+          const colorId = tile[actualRow % 8][actualCol % 8];
+          const colorArr = this.palette[colorId];
 
-
-        tile.forEach((rowData, tileRow) => {
-          rowData.forEach((colorId, tileCol) => {
-            const colorArr = this.palette[colorId];
-            const indicesInRow = (32 * 8 * 4);
-            const pixelIndex = baseIndex + (tileRow * indicesInRow) + (tileCol * 4);
-            for (let index = 0; index < 4; index++) {
-              this.screen.data[pixelIndex + index] = colorArr[index];
-            }
-          });
-        });
+          const baseIndex = (row * 160 * 4) + (col * 4);
+          for (let i = 0; i < 4; i++) {
+            this.screen.data[baseIndex + i] = colorArr[i];
+          }
+        } else {
+          console.log('tile not found', row, this.SCY, col, this.SCX);
+        }
       }
-    } else {
-      this.mapCounter++;
     }
   }
 
@@ -244,9 +244,9 @@ class GPU {
 
     if (canvas) {
       this.ctx = canvas.getContext('2d');
-      this.screen = this.ctx.createImageData(256, 256);
+      this.screen = this.ctx.createImageData(SCREEN_WIDTH, SCREEN_HEIGHT);
       const color = 0;
-      const data = new Array(256 * 256).fill(null)
+      const data = new Array(SCREEN_WIDTH * SCREEN_HEIGHT).fill(null)
         .map(() => [color, color, color, 255])
         .join()
         .split(',')
