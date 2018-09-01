@@ -19,7 +19,8 @@ class MMU {
       0x21, 0x04, 0x01, 0x11, 0xA8, 0x00, 0x1A, 0x13, 0xBE, 0x20, 0xFE, 0x23, 0x7D, 0xFE, 0x34, 0x20,
       0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50,
     ];
-    this.rom = require('../roms/test/06-ld r,r');
+    this.rom = require('../roms/tetris');
+    // this.rom = require('../roms/test/06-ld r,r');
     this.eram = new Array(0x2000).fill(0);
     this.oam = [];
     this.vram = new Array(0x2000).fill(0);
@@ -43,16 +44,16 @@ class MMU {
       case 0x0000:
         if (!this.biosExecuted) {
           // console.log('reading from bios at addrss ', addr);
-          if (addr <= 0x0133 && addr >= 0x0104) {
-            const testAddr = addr - 0x0104;
-            // console.log('logo hack inbound', this.bios[0x00a8 + testAddr], this.rom[addr]);
-            // return this.rom[addr];
-            return this.bios[0x00a8 + testAddr];
-          }
+          // if (addr <= 0x0133 && addr >= 0x0104) {
+          //   const testAddr = addr - 0x0104;
+          //   // console.log('logo hack inbound', this.bios[0x00a8 + testAddr], this.rom[addr]);
+          //   // return this.rom[addr];
+          //   return this.bios[0x00a8 + testAddr];
+          // }
 
-          if (addr <= 0x014D && addr >= 0x0134) {
-            return addr === 0x0134 ? 0xe7 : 0;
-          }
+          // if (addr <= 0x014D && addr >= 0x0134) {
+          //   return addr === 0x0134 ? 0xe7 : 0;
+          // }
 
           if (addr < 0x100) return this.bios[addr];
           if (cpu.PC === 0x0100) {

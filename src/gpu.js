@@ -155,16 +155,37 @@ class GPU {
 
   tileMapToScreen() {
     const tileMapAddress = this.bgTileMapAddress ? 0x1c00 : 0x1800;
+    const tileSet = this.bgAndWindowTileData ? 1 : 2;
+    let printed = false;
 
     for (let row = 0; row < 144; row++) {
       for (let col = 0; col < 160; col++) {
+        let tile;
         const actualRow = row + this.SCY;
         const actualCol = col + this.SCX;
         const tileIdRow = Math.floor(actualRow / 8);
         const tileIdCol = Math.floor(actualCol / 8);
         const tileIndex = (tileIdRow * 32) + tileIdCol;
         const tileId = this.vram[tileMapAddress + tileIndex];
-        const tile = this.tileset[tileId];
+
+        if (tileSet === 1) {
+          if (!printed) {
+            printed = true;
+            console.log('writing tile map to screen tileset 1', this.SCX, this.SCY, this.gpuRam[0].toString(2));
+          }
+          tile = this.tileset[tileId];
+        } else if (tileSet === 2) {
+          if (!printed) {
+            printed = true;
+            console.log('writing tile map to screen tileset 2', this.SCX, this.SCY, this.gpuRam[0].toString(2));
+          }
+          if (tileId > 127) {
+            tile = this.tileset[tileId];
+          } else {
+            tile = this.tileset[256 + tileId];
+          }
+          // if (val > 127) val = -((~val + 1) & 0xff);
+        }
         if (tile) {
           const colorId = tile[actualRow % 8][actualCol % 8];
           const colorArr = this.palette[colorId];
@@ -268,6 +289,8 @@ class GPU {
     /* Get the address of the least significant
      byte in the tile row that was updated */
     // console.log('updating tile based on memory', addr, addr.toString(16));
+    if (addr >= 0x17ff) return;
+
     const tile = (addr >> 4) & 0x1ff;
     const y = (addr >> 1) & 0x7;
     let bitIndex;
