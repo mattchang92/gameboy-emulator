@@ -1,7 +1,7 @@
 const { cbopcodes } = require('./cbOpcodes');
 
-let counter = 0;
-const flag = false;
+// let counter = 0;
+// const flag = false;
 
 const OPCODES = {
   NOP: 0x00,
@@ -621,7 +621,7 @@ const opcodes = {
     //   console.log('should be loading to memory', (cpu.H << 8 | cpu.L).toString(16), cpu.A, cpu.PC, cpu.SP);
     // }
     // if ((cpu.H << 8 | cpu.L).toString() == '8000') flag = true;
-    counter++;
+    // counter++;
     cpu.mmu.write8(cpu, cpu.H << 8 | cpu.L, cpu.A);
     cpu.L = (cpu.L - 1) & 0xff;
     if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;

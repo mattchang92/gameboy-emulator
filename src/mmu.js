@@ -92,8 +92,6 @@ class MMU {
 
       // 0xf000:
       case 0xf000: {
-        if (addr === 0xff44) return 144;
-
         switch (addr & 0x0f00) {
           // Working RAM shadow
           case 0x000: case 0x100: case 0x200: case 0x300: case 0x400: case 0x500: case 0x600:
@@ -107,7 +105,27 @@ class MMU {
 
           // 0xf00 Zero Page RAM (128 B)
           case 0xf00:
-            if (addr >= 0xff80) return this.zram[addr & 0x7f];
+            if (addr >= 0xff80) {
+              return this.zram[addr & 0x7f];
+            }
+            switch (addr & 0xf0) {
+              case 0x00:
+                return 0; // implement later
+
+              case 0x10:
+              case 0x20:
+              case 0x30:
+                return 0;
+
+              case 0x40:
+              case 0x50:
+              case 0x60:
+              case 0x70:
+                return cpu.gpu.read8(addr);
+              default:
+                break;
+            }
+
             return 0; // I/O control
 
           default:
@@ -197,9 +215,28 @@ class MMU {
 
           // 0xf00 Zero Page RAM (128 B)
           case 0xf00:
-            if (addr >= 0xff80) this.zram[addr & 0x7f] = val; break;
-            // return 0; // I/O control
+            if (addr >= 0xff80) {
+              this.zram[addr & 0x7f] = val; break;
+            } else {
+              switch (addr & 0xf0) {
+                case 0x00:
+                  break; // implement later
 
+                case 0x10:
+                case 0x20:
+                case 0x30:
+                  break;
+
+                case 0x40:
+                case 0x50:
+                case 0x60:
+                case 0x70:
+                  cpu.gpu.write8(addr, val);
+                  break;
+                default:
+                  break;
+              }
+            }
           default:
             break;
         }

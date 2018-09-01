@@ -30,7 +30,8 @@ class GPU {
     this.MODECLOCK = 0;
     this.backgroundOffsetX = 0;
     this.backgroundOffsetY = 0;
-    this.line = 0;
+    this.LY = 0;
+    this.gpuRam = new Array(0xff80 - 0xff40).fill(0);
     this.tileset = [];
     this.canvas = {};
     this.screen = {};
@@ -42,9 +43,112 @@ class GPU {
       [0, 0, 0, 255],
     ];
 
-    this.mapCounter = 0;
+    // 0xff42 - 0xff4b
+    this.SCY = 0; // scroll Y (R/W)
+    this.SCX = 0; // scroll X (R/W)
+    this.LY = 0; // LCDC y-coordinate (R)
+    this.LYC = 0; // LY Compare (R/W)
+    this.DMA = 0; // DMA Transfer and Start
+    this.BGP = 0; // BG Palette (R/W)
+    this.OBP0 = 0; // Object Palette 0 (R/W)
+    this.OBP1 = 0; // Object Palette 1 (R/W)
+    this.WY = 0; // Window Y Position (R/W)
+    this.WX = 0; // Window X Position (R/W)
+
+    // 0xff40 LCDC
+    this.LCDEnable = 0;
+    this.windowTileAddress = 0;
+    this.windowEnable = 0;
+    this.bgAndWindowTileData = 0;
+    this.bgTileMapAddress = 0;
+    this.objSize = 0;
+    this.objEnable = 0;
+    this.bgEnable = 0;
+
+    // 0xff41 STAT
+    this.lyInterrupt = 0;
+    this.oamInterrupt = 0;
+    this.vBLankInterrupt = 0;
+    this.hBlankInterrupt = 0;
+    this.lyFlag = 0;
+    this.mode = 0;
+
+    this.mapCounter = 0; // test variable
 
     this.reset();
+  }
+
+  setLCDControl(val) {
+    this.LCDEnable = val & 0x80;
+    this.windowTileAddress = val & 0x40;
+    this.windowEnable = val & 0x20;
+    this.bgAndWindowTileData = val & 0x10;
+    this.bgTileMapAddress = val & 0x08;
+    this.objSize = val & 0x04;
+    this.objEnable = val & 0x02;
+    this.bgEnable = val & 0x01;
+  }
+
+  setLCDCStatus(val) {
+    this.lyInterrupt = val & 0x40;
+    this.oamInterrupt = val & 0x20;
+    this.vBLankInterrupt = val & 0x10;
+    this.hBlankInterrupt = val & 0x08;
+    this.lyFlag = val & 0x04;
+    this.mode = (val & 0x01) + (val & 0x02);
+  }
+
+  read8(addr) {
+    addr -= 0xff40;
+    switch (addr) {
+      case 0x0: return this.gpuRam[addr];
+      case 0x1: return this.gpuRam[addr];
+      case 0x2: return this.SCY;
+      case 0x3: return this.SCX;
+      case 0x4: return this.LY;
+      case 0x5: return this.LYC;
+      case 0x6: return this.DMA;
+      case 0x7: return this.BGP;
+      case 0x8: return this.OBP0;
+      case 0x9: return this.OBP1;
+      case 0xa: return this.WY;
+      case 0xb: return this.WX;
+      default: return this.gpuRam[addr];
+    }
+  }
+
+  write8(addr, val) {
+    addr -= 0xff40;
+    val &= 0xff;
+    this.gpuRam[addr] = val;
+    switch (addr) {
+      case 0x0:
+        this.setLCDControl(val); break;
+      case 0x1:
+        this.setLCDCStatus(val); break;
+      case 0x2:
+        this.SCY = val; break;
+      case 0x3:
+        this.SCX = val; break;
+      case 0x4:
+        this.LY = val; break;
+      case 0x5:
+        this.LYC = val; break;
+      case 0x6:
+        this.DMA = val; break;
+      case 0x7:
+        this.BGP = val; break;
+      case 0x8:
+        this.OBP0 = val; break;
+      case 0x9:
+        this.OBP1 = val; break;
+      case 0xa:
+        this.WY = val; break;
+      case 0xb:
+        this.WX = val; break;
+      default:
+        break;
+    }
   }
 
   tileMapToScreen() {
@@ -80,10 +184,10 @@ class GPU {
       case 0:
         if (this.MODECLOCK >= 51) {
           this.MODECLOCK = 0;
-          this.line++;
-          // console.log(this.MODECLOCK, this.line);
+          this.LY++;
+          // console.log(this.MODECLOCK, this.LY);
 
-          if (this.line === 143) {
+          if (this.LY === 143) {
             this.MODE = 1;
             // console.log('WRITING TO CANVAS');
             // for (let i = 0; i < this.screen.data.length; i++) {
@@ -101,11 +205,11 @@ class GPU {
       case 1:
         if (this.MODECLOCK >= 114) {
           this.MODECLOCK = 0;
-          this.line++;
+          this.LY++;
 
-          if (this.line > 153) {
+          if (this.LY > 153) {
             this.MODE = 2;
-            this.line = 0;
+            this.LY = 0;
           }
         }
         break;
@@ -184,16 +288,16 @@ class GPU {
   renderScan() {
     // // let mapOffs = this.bgMap ? 0x1c00 : 0x1800;
     // let mapOffs = 0x1800;
-    // mapOffs += ((this.line + this.backgroundOffsetY) & 0xff) >> 3;
+    // mapOffs += ((this.LY + this.backgroundOffsetY) & 0xff) >> 3;
 
     // let lineOffs = this.backgroundOffsetX >> 3;
 
-    // const y = (this.line + this.backgroundOffsetY) & 0x7;
+    // const y = (this.LY + this.backgroundOffsetY) & 0x7;
     // let x = this.backgroundOffsetX & 0x7;
-    // const canvasOffs = (this.line * 256 * 4) % (256 * 256 * 4);
+    // const canvasOffs = (this.LY * 256 * 4) % (256 * 256 * 4);
     // let colour;
     // let tile = this.vram[mapOffs + lineOffs];
-    // // console.log('render scan sbeing triggered', this.line);
+    // // console.log('render scan sbeing triggered', this.LY);
     // // console.log(JSON.stringify(this.tileset[tile]));
 
     // for (let i = 0; i < 256; i++) {
