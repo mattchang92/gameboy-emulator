@@ -80,7 +80,7 @@ class GPU {
     this.reset();
   }
 
-  setLCDControl(val) {
+  setLCDC(val) {
     this.LCDEnable = val & 0x80;
     this.windowTileAddress = val & 0x40;
     this.windowEnable = val & 0x20;
@@ -91,7 +91,7 @@ class GPU {
     this.bgEnable = val & 0x01;
   }
 
-  setLCDCStatus(val) {
+  setSTAT(val) {
     this.lyInterrupt = val & 0x40;
     this.oamInterrupt = val & 0x20;
     this.vBLankInterrupt = val & 0x10;
@@ -125,9 +125,9 @@ class GPU {
     this.gpuRam[addr] = val;
     switch (addr) {
       case 0x0:
-        this.setLCDControl(val); break;
+        this.setLCDC(val); break;
       case 0x1:
-        this.setLCDCStatus(val); break;
+        this.setSTAT(val); break;
       case 0x2:
         this.SCY = val; break;
       case 0x3:
@@ -154,6 +154,8 @@ class GPU {
   }
 
   tileMapToScreen() {
+    const tileMapAddress = this.bgTileMapAddress ? 0x1c00 : 0x1800;
+
     for (let row = 0; row < 144; row++) {
       for (let col = 0; col < 160; col++) {
         const actualRow = row + this.SCY;
@@ -161,7 +163,7 @@ class GPU {
         const tileIdRow = Math.floor(actualRow / 8);
         const tileIdCol = Math.floor(actualCol / 8);
         const tileIndex = (tileIdRow * 32) + tileIdCol;
-        const tileId = this.vram[0x1800 + tileIndex];
+        const tileId = this.vram[tileMapAddress + tileIndex];
         const tile = this.tileset[tileId];
         if (tile) {
           const colorId = tile[actualRow % 8][actualCol % 8];
