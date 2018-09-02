@@ -43,6 +43,8 @@ class CPU {
       t: 0,
     };
 
+    this.ime = 0;
+
     // components
     this.ram = new CPUMemory();
     this.mmu = new MMU(this.ram);
@@ -62,10 +64,23 @@ class CPU {
     this.SP = 0;
     this.M = 0;
     this.T = 0;
+    this.ime = 0;
     this.clock = {
       m: 0,
       t: 0,
     };
+  }
+
+  disableInterrupt() {
+    this.ime = 0;
+    this.M = 1;
+    this.T = 4;
+  }
+
+  enableInterrupt() {
+    this.ime = 1;
+    this.M = 1;
+    this.T = 4;
   }
 
   dispatch() {
@@ -74,15 +89,25 @@ class CPU {
     }
   }
 
+  rst40() {
+    console.log("rst40 breing called");
+    this.ime = 0;
+    this.SP -= 2;
+    this.mmu.write16(this, this.SP, this.PC);
+    this.PC = 0x0040;
+    this.M = 3;
+    this.T = 12;
+  }
+
   frame() {
-    const frameEnd = this.clock.m + 17556 * 1;
+    const frameEnd = this.clock.m + 17556 * 5;
 
     while (this.clock.m < frameEnd) {
-      if (this.FAIL) {
-        const op = this.mmu.read8(this, this.PC - 1);
-        console.log('waht is the failed op', op.toString(16));
-        return;
-      }
+      // if (this.FAIL) {
+      //   const op = this.mmu.read8(this, this.PC - 1);
+      //   console.log('waht is the failed op', op.toString(16));
+      //   return;
+      // }
 
       const op = this.mmu.read8(this, this.PC++);
       // console.log('test')
@@ -107,6 +132,19 @@ class CPU {
 
       this.clock.m += this.M;
       this.clock.t += this.T;
+
+      // if (this.ime) {
+      //   console.log(this.mmu.ie, this.mmu.if);
+      // }
+
+      if (this.ime && this.mmu.ie && this.mmu.if) {
+        const ifired = this.mmu.ie & this.mmu.if;
+        if (ifired & 0x01) {
+          this.mmu.if &= (0xff - 0x01);
+          this.rst40();
+        }
+      }
+
 
       this.gpu.step(this);
     }

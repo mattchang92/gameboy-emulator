@@ -168,6 +168,10 @@ class GPU {
   }
 
   tileMapToScreen() {
+    // if (!this.LCDEnable || !this.bgEnable) {
+    //   console.log('gegeg', this.LCDEnable, this.bgEnable)
+    // }
+
     const tileMapAddress = this.bgTileMapAddress ? 0x1c00 : 0x1800;
     const tileSet = this.bgAndWindowTileData ? 1 : 2;
     let printed = false;
@@ -265,7 +269,6 @@ class GPU {
         if (this.MODECLOCK >= 43) {
           this.MODECLOCK = 0;
           this.MODE = 0;
-          this.renderScan();
         }
         break;
 

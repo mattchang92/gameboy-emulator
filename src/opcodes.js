@@ -208,7 +208,7 @@ const OPCODES = {
   CPHLm: 0xbe,
   // CPA: 0xbf,
 
-  // RETNZ: 0xc0,
+  RETNZ: 0xc0,
   POPBC: 0xc1,
   // JPNZnn: 0xc2,
   JPnn: 0xc3,
@@ -218,7 +218,7 @@ const OPCODES = {
   // RST00: 0xc7,
   RETZ: 0xc8,
   RET: 0xc9,
-  // JPZnn: 0xca,
+  JPZnn: 0xca,
   EXTops: 0xcb, // ???? secondary opcode table?
   CALLZnn: 0xcc,
   CALLnn: 0xcd,
@@ -233,7 +233,7 @@ const OPCODES = {
   SUBAn: 0xd6,
   // RST10: 0xd7,
   RETC: 0xd8,
-  RETI: 0xd9, // set interupts?
+  RETI: 0xd9,
   // JPCnn: 0xda,
   // CALLCnn: 0xdc,
   // SBCAn: 0xde,
@@ -1172,6 +1172,7 @@ const opcodes = {
     }
   },
   [OPCODES.RETI]: (cpu) => {
+    cpu.ime = 1;
     cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
     cpu.SP += 2;
     cpu.M = 3; cpu.T = 12;
@@ -1232,7 +1233,7 @@ const opcodes = {
   [OPCODES.LDHAnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; },
   [OPCODES.POPAF]: (cpu) => { cpu.F = cpu.mmu.read8(cpu, cpu.SP++) & 0xf0; cpu.A = cpu.mmu.read8(cpu, cpu.SP++); cpu.M = 3; cpu.T = 12; },
   [OPCODES.LDAIOC]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 + cpu.C); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.DI]: (cpu) => { cpu; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.DI]: (cpu) => { cpu.ime = 0; cpu.M = 1; cpu.T = 4; },
   [OPCODES.PUSHAF]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, (cpu.A << 8) | cpu.F); cpu.M = 3; cpu.T = 12; },
   [OPCODES.ORn]: (cpu) => { cpu.A |= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
   [OPCODES.RST30]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x30; cpu.M = 3; cpu.T = 12; },
@@ -1246,7 +1247,7 @@ const opcodes = {
   },
   [OPCODES.LDSPHL]: (cpu) => { cpu.SP = (cpu.H << 8) | cpu.L; },
   [OPCODES.LDAnnm]: (cpu) => { const addr = cpu.mmu.read16(cpu, cpu.PC); cpu.A = cpu.mmu.read8(cpu, addr); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
-  [OPCODES.EI]: (cpu) => { cpu; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.EI]: (cpu) => { cpu.ime = 1; cpu.M = 1; cpu.T = 4; },
   [OPCODES.CPn]: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); setFlags(cpu, cpu.A - val, 1); setHalfCarry(cpu, cpu.A, val, 1); cpu.M = 2; cpu.T = 8; },
   [OPCODES.RST38]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x38; cpu.M = 3; cpu.T = 12; },
 };

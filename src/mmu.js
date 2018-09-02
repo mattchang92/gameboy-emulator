@@ -20,13 +20,26 @@ class MMU {
       0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50,
     ];
     // this.rom = require('../roms/tetris');
-    this.rom = require('../roms/test/03-op sp,hl');
     // this.rom = require('../roms/test/01-special');
+    // this.rom = require('../roms/test/02-interrupts');
+    // this.rom = require('../roms/test/03-op sp,hl');
+    this.rom = require('../roms/test/04-op r,imm');
+    // this.rom = require('../roms/test/05-op rp');
+    // this.rom = require('../roms/test/06-ld r,r');
+    // this.rom = require('../roms/test/07-jr,jp,call,ret,rst');
+    // this.rom = require('../roms/test/08-misc instrs');
+    // this.rom = require('../roms/test/09-op r,r');
+    // this.rom = require('../roms/test/10-bit ops');
+    // this.rom = require('../roms/test/11-op a,(hl)');
     this.eram = new Array(0x2000).fill(0);
     this.oam = [];
     this.vram = new Array(0x2000).fill(0);
     this.wram = new Array(0x2000).fill(0);
     this.zram = [];
+
+    this.ie = 0; // interrupt enabled
+    this.if = 0; // interrupt flag
+
     this.printed = false;
 
     this.test = '';
@@ -116,11 +129,14 @@ class MMU {
 
           // 0xf00 Zero Page RAM (128 B)
           case 0xf00:
+            if (addr === 0xffff) return this.ie;
+            if (addr === 0xff0f) return this.if;
             if (addr >= 0xff80) {
               return this.zram[addr & 0x7f];
             }
             switch (addr & 0xf0) {
               case 0x00:
+                if (addr === 0xff0f) return this.if;
                 return 0; // implement later
 
               case 0x10:
@@ -234,13 +250,20 @@ class MMU {
 
           // 0xf00 Zero Page RAM (128 B)
           case 0xf00:
+            if (addr === 0xffff) {
+              this.ie = val;
+              break;
+            }
+            if (addr === 0xff0f) {
+              this.if = val;
+              break;
+            }
+
             if (addr === 0xff01) {
-              console.log(String.fromCharCode(`${val}`));
               this.test += String.fromCharCode(`${val}`);
               console.log(this.test);
             }
             if (addr === 0xff02) {
-              // console.log(String.fromCharCode(`${val}`));
               // this.test2 += String.fromCharCode(`${val}`);
               // console.log(this.test2);
             }
