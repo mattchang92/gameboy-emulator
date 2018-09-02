@@ -75,9 +75,15 @@ class CPU {
   }
 
   frame() {
-    const frameEnd = this.clock.m + 175560;
+    const frameEnd = this.clock.m + 17556 * 1;
 
     while (this.clock.m < frameEnd) {
+      if (this.FAIL) {
+        const op = this.mmu.read8(this, this.PC - 1);
+        console.log('waht is the failed op', op.toString(16));
+        return;
+      }
+
       const op = this.mmu.read8(this, this.PC++);
       // console.log('test')
       // console.log(this.PC - 1, op.toString(16), opcodes[op]);

@@ -19,18 +19,28 @@ class MMU {
       0x21, 0x04, 0x01, 0x11, 0xA8, 0x00, 0x1A, 0x13, 0xBE, 0x20, 0xFE, 0x23, 0x7D, 0xFE, 0x34, 0x20,
       0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50,
     ];
-    this.rom = require('../roms/tetris');
-    // this.rom = require('../roms/test/06-ld r,r');
+    // this.rom = require('../roms/tetris');
+    this.rom = require('../roms/test/03-op sp,hl');
+    // this.rom = require('../roms/test/01-special');
     this.eram = new Array(0x2000).fill(0);
     this.oam = [];
     this.vram = new Array(0x2000).fill(0);
     this.wram = new Array(0x2000).fill(0);
     this.zram = [];
     this.printed = false;
+
+    this.test = '';
+    this.test2 = '';
   }
 
 
   read8(cpu, addr) {
+    if (cpu === undefined || addr === undefined) {
+      console.log('Missing required params for write byte');
+      if (!cpu) console.log('missing cpu');
+      if (!addr) console.log('missing addr');
+      cpu.FAIL = true;
+    }
     addr &= 0xffff;
     if (cpu.counter < cpu.limit && cpu.logsEnabled) {
       console.log(`Reading byte from address ${addr}`);
@@ -156,6 +166,13 @@ class MMU {
   }
 
   write8(cpu, addr, val) {
+    if (cpu === undefined || addr === undefined || val === undefined) {
+      console.log('Missing required params for write byte');
+      if (!cpu) console.log('missing cpu');
+      if (!addr) console.log('missing addr');
+      if (!val) console.log('missing val');
+      cpu.FAIL = true;
+    }
     if (addr === 0xff50 && !this.biosExecuted) {
       this.printed = true;
       this.biosExecuted = true;
@@ -217,6 +234,17 @@ class MMU {
 
           // 0xf00 Zero Page RAM (128 B)
           case 0xf00:
+            if (addr === 0xff01) {
+              console.log(String.fromCharCode(`${val}`));
+              this.test += String.fromCharCode(`${val}`);
+              console.log(this.test);
+            }
+            if (addr === 0xff02) {
+              // console.log(String.fromCharCode(`${val}`));
+              // this.test2 += String.fromCharCode(`${val}`);
+              // console.log(this.test2);
+            }
+            // if (addr === 0xff02) console.log('writing to 0xff02', val);
             if (addr >= 0xff80) {
               this.zram[addr & 0x7f] = val; break;
             } else {
@@ -233,7 +261,7 @@ class MMU {
                 case 0x50:
                 case 0x60:
                 case 0x70:
-                  cpu.gpu.write8(addr, val);
+                  cpu.gpu.write8(cpu, addr, val);
                   break;
                 default:
                   break;

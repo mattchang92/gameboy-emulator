@@ -45,7 +45,7 @@ const OPCODES = {
   INCH: 0x24,
   DECH: 0x25,
   LDHn: 0x26,
-  // DAA: 0x27, // ??????
+  DAA: 0x27, // ??????
   JRZn: 0x28,
   ADDHLHL: 0x29,
   LDIAHLm: 0x2a,
@@ -59,7 +59,7 @@ const OPCODES = {
   LDSPnn: 0x31,
   LDDHLmA: 0x32,
   // INCSP: 0x33,
-  // INCHLm: 0x34,
+  INCHLm: 0x34,
   DECHLm: 0x35,
   LDHLmn: 0x36,
   // SCF: 0x37,
@@ -202,7 +202,7 @@ const OPCODES = {
   // CPB: 0xb8,
   // CPC: 0xb9,
   // CPD: 0xba,
-  // CPE: 0xbb,
+  CPE: 0xbb,
   // CPH: 0xbc,
   // CPL: 0xbd,
   CPHLm: 0xbe,
@@ -441,7 +441,7 @@ const opcodes = {
     } else {
       cpu.F &= 0xef;
     }
-    cpu.F &= ~0x40;
+    // cpu.F &= ~0x40; // doesn't match other emu
     cpu.H = (hl >>> 8) & 0xff;
     cpu.L = hl & 0xff;
     cpu.M = 3; cpu.T = 12;
@@ -485,8 +485,11 @@ const opcodes = {
     const zero = cpu.F & 0x80;
     let val = cpu.mmu.read8(cpu, cpu.PC++);
     if (val > 127) val = -((~val + 1) & 0xff);
-    if (!zero) cpu.PC += val;
-    cpu.M = 3; cpu.T = 12;
+    cpu.M = 2; cpu.T = 8;
+    if (!zero) {
+      cpu.PC += val;
+      cpu.M++; cpu.T += 4;
+    }
   },
   [OPCODES.LDHLnn]: (cpu) => {
     cpu.L = cpu.mmu.read8(cpu, cpu.PC);
@@ -629,15 +632,15 @@ const opcodes = {
   },
   [OPCODES.INCSP]: (cpu) => { cpu.SP = (cpu.SP + 1) & 0xffff; cpu.M = 1; cpu.T = 4; },
   [OPCODES.INCHLm]: (cpu) => {
-    const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) + 1) & 0xff;
-    cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L);
+    const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) + 1);
     setFlags(cpu, val);
+    cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & 0xff);
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.DECHLm]: (cpu) => {
-    const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) - 1) & 0xff;
-    cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L);
+    const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) - 1);
     setFlags(cpu, val, 1);
+    cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & 0xff);
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDHLmn]: (cpu) => {
@@ -757,7 +760,7 @@ const opcodes = {
   [OPCODES.LDAE]: (cpu) => { cpu.A = cpu.E; cpu.M = 1; cpu.T = 4; },
   [OPCODES.LDAH]: (cpu) => { cpu.A = cpu.H; cpu.M = 1; cpu.T = 4; },
   [OPCODES.LDAL]: (cpu) => { cpu.A = cpu.L; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDAHLm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, (cpu)); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDAHLm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; },
   [OPCODES.LDAA]: (cpu) => { cpu.A = cpu.A; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0x8 ------------------------ */
@@ -1228,7 +1231,7 @@ const opcodes = {
   /* ------------------------ 0xf ------------------------ */
   [OPCODES.LDHAnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; },
   [OPCODES.POPAF]: (cpu) => { cpu.F = cpu.mmu.read8(cpu, cpu.SP++) & 0xf0; cpu.A = cpu.mmu.read8(cpu, cpu.SP++); cpu.M = 3; cpu.T = 12; },
-  [OPCODES.LDAIOC]: (cpu) => { cpu.A = cpu.mmu.read8(0xff00 + cpu.C); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDAIOC]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 + cpu.C); cpu.M = 2; cpu.T = 8; },
   [OPCODES.DI]: (cpu) => { cpu; cpu.M = 1; cpu.T = 4; },
   [OPCODES.PUSHAF]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, (cpu.A << 8) | cpu.F); cpu.M = 3; cpu.T = 12; },
   [OPCODES.ORn]: (cpu) => { cpu.A |= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },

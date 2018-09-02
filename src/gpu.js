@@ -100,6 +100,19 @@ class GPU {
     this.mode = (val & 0x01) + (val & 0x02);
   }
 
+  setPalette(val) {
+    for (let i = 0; i < 4; i++) {
+      switch ((val >> (i * 2)) & 3) {
+        case 0: this.palette[i] = [255, 255, 255, 255]; break;
+        case 1: this.palette[i] = [192, 192, 192, 255]; break;
+        case 2: this.palette[i] = [96, 96, 96, 255]; break;
+        case 3: this.palette[i] = [0, 0, 0, 255]; break;
+        default:
+          break;
+      }
+    }
+  }
+
   read8(addr) {
     addr -= 0xff40;
     switch (addr) {
@@ -119,7 +132,7 @@ class GPU {
     }
   }
 
-  write8(addr, val) {
+  write8(cpu, addr, val) {
     addr -= 0xff40;
     val &= 0xff;
     this.gpuRam[addr] = val;
@@ -133,13 +146,14 @@ class GPU {
       case 0x3:
         this.SCX = val; break;
       case 0x4:
-        this.LY = val; break;
+        console.log('should not be writing to LY'); break;
+        // this.LY = val; break;
       case 0x5:
         this.LYC = val; break;
       case 0x6:
         this.DMA = val; break;
       case 0x7:
-        this.BGP = val; break;
+        this.setPalette(val); break;
       case 0x8:
         this.OBP0 = val; break;
       case 0x9:
@@ -157,6 +171,8 @@ class GPU {
     const tileMapAddress = this.bgTileMapAddress ? 0x1c00 : 0x1800;
     const tileSet = this.bgAndWindowTileData ? 1 : 2;
     let printed = false;
+    // this.SCY = 128;
+    // this.SCX = 128;
 
     for (let row = 0; row < 144; row++) {
       for (let col = 0; col < 160; col++) {
@@ -171,15 +187,22 @@ class GPU {
         if (tileSet === 1) {
           if (!printed) {
             printed = true;
-            console.log('writing tile map to screen tileset 1', this.SCX, this.SCY, this.gpuRam[0].toString(2));
+            // console.log('writing tile map to screen tileset 1', this.SCX, this.SCY, this.gpuRam[0].toString(2));
           }
           tile = this.tileset[tileId];
         } else if (tileSet === 2) {
           if (!printed) {
             printed = true;
-            console.log('writing tile map to screen tileset 2', this.SCX, this.SCY, this.gpuRam[0].toString(2));
+            // console.log('writing tile map to screen tileset 2', this.SCX, this.SCY, this.gpuRam[0].toString(2));
           }
           if (tileId > 127) {
+            // if (val > 127) val = -((~val + 1) & 0xff);
+            // const test = -((~tileId + 1) & 0xff);
+            // const ind = test + 128;
+            // if (!printed) {
+            //   printed = true;
+            //   console.log('writing tile map to screen tileset 2', tileId, this.SCX, this.SCY, this.gpuRam[0].toString(2));
+            // }
             tile = this.tileset[tileId];
           } else {
             tile = this.tileset[256 + tileId];
@@ -206,22 +229,16 @@ class GPU {
     switch (this.MODE) {
       case 0:
         if (this.MODECLOCK >= 51) {
-          this.MODECLOCK = 0;
-          this.LY++;
-          // console.log(this.MODECLOCK, this.LY);
-
           if (this.LY === 143) {
             this.MODE = 1;
-            // console.log('WRITING TO CANVAS');
-            // for (let i = 0; i < this.screen.data.length; i++) {
-            //   this.screen.data[i] = Math.floor(255 * Math.random());
-            // }
-            // this.screen.data = this.screen.data.map(() => Math.floor(255 * Math.random()));
             this.tileMapToScreen();
             this.ctx.putImageData(this.screen, 0, 0);
           } else {
             this.MODE = 2;
           }
+
+          this.MODECLOCK = 0;
+          this.LY++;
         }
         break;
 
