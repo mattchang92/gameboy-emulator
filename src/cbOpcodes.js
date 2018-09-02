@@ -438,7 +438,7 @@ const cbopcodes = {
     cpu.M = 2; cpu.T = 8;
   },
   [CBOPCODES.RLHLm]: (cpu) => {
-    let val = cpu.mmu.read8((cpu.H << 8) | cpu.L);
+    let val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
     const c = cpu.F & 0x10 ? 1 : 0;
     const overflow = val & 0x80 ? 0x10 : 0;
     val = (val << 1) | c;
@@ -511,7 +511,7 @@ const cbopcodes = {
     cpu.M = 2; cpu.T = 8;
   },
   [CBOPCODES.RRHLm]: (cpu) => {
-    let val = cpu.mmu.read8((cpu.H << 8) | cpu.L);
+    let val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
     const c = cpu.F & 0x10 ? 0x80 : 0;
     const overflow = val & 1 ? 0x10 : 0;
     val = (val >> 1) | c;
@@ -575,7 +575,7 @@ const cbopcodes = {
   },
   [CBOPCODES.SLAHLm]: (cpu) => {
     console.log('Calling illegal Opcode!!');
-    const val = cpu.mmu.read8((cpu.H << 8) | cpu.L);
+    const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
     const overflow = val & 0x80 ? 0x10 : 0;
     setFlags(cpu, val << 1);
     cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, (val << 1) & 0xff);
@@ -827,7 +827,7 @@ const cbopcodes = {
   [CBOPCODES.RES0E]: (cpu) => { cpu.E &= ~0x01; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES0H]: (cpu) => { cpu.H &= ~0x01; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES0L]: (cpu) => { cpu.L &= ~0x01; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RES0HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x01); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.RES0HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x01); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.RES0A]: (cpu) => { cpu.A &= ~0x01; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES1B]: (cpu) => { cpu.B &= ~0x02; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES1C]: (cpu) => { cpu.C &= ~0x02; cpu.M = 2; cpu.T = 8; },
@@ -835,7 +835,7 @@ const cbopcodes = {
   [CBOPCODES.RES1E]: (cpu) => { cpu.E &= ~0x02; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES1H]: (cpu) => { cpu.H &= ~0x02; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES1L]: (cpu) => { cpu.L &= ~0x02; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RES1HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x02); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.RES1HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x02); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.RES1A]: (cpu) => { cpu.A &= ~0x02; cpu.M = 2; cpu.T = 8; },
 
   /* ------------------------ 0x9------------------------ */
@@ -845,7 +845,7 @@ const cbopcodes = {
   [CBOPCODES.RES2E]: (cpu) => { cpu.E &= ~0x04; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES2H]: (cpu) => { cpu.H &= ~0x04; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES2L]: (cpu) => { cpu.L &= ~0x04; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RES2HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x04); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.RES2HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x04); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.RES2A]: (cpu) => { cpu.A &= ~0x04; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES3B]: (cpu) => { cpu.B &= ~0x08; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES3C]: (cpu) => { cpu.C &= ~0x08; cpu.M = 2; cpu.T = 8; },
@@ -853,7 +853,7 @@ const cbopcodes = {
   [CBOPCODES.RES3E]: (cpu) => { cpu.E &= ~0x08; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES3H]: (cpu) => { cpu.H &= ~0x08; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES3L]: (cpu) => { cpu.L &= ~0x08; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RES3HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x08); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.RES3HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x08); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.RES3A]: (cpu) => { cpu.A &= ~0x08; cpu.M = 2; cpu.T = 8; },
 
   /* ------------------------ 0xa------------------------ */
@@ -863,7 +863,7 @@ const cbopcodes = {
   [CBOPCODES.RES4E]: (cpu) => { cpu.E &= ~0x10; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES4H]: (cpu) => { cpu.H &= ~0x10; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES4L]: (cpu) => { cpu.L &= ~0x10; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RES4HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x10); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.RES4HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x10); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.RES4A]: (cpu) => { cpu.A &= ~0x10; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES5B]: (cpu) => { cpu.B &= ~0x20; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES5C]: (cpu) => { cpu.C &= ~0x20; cpu.M = 2; cpu.T = 8; },
@@ -871,7 +871,7 @@ const cbopcodes = {
   [CBOPCODES.RES5E]: (cpu) => { cpu.E &= ~0x20; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES5H]: (cpu) => { cpu.H &= ~0x20; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES5L]: (cpu) => { cpu.L &= ~0x20; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RES5HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x20); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.RES5HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x20); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.RES5A]: (cpu) => { cpu.A &= ~0x20; cpu.M = 2; cpu.T = 8; },
 
   /* ------------------------ 0xb------------------------ */
@@ -881,7 +881,7 @@ const cbopcodes = {
   [CBOPCODES.RES6E]: (cpu) => { cpu.E &= ~0x40; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES6H]: (cpu) => { cpu.H &= ~0x40; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES6L]: (cpu) => { cpu.L &= ~0x40; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RES6HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x40); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.RES6HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x40); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.RES6A]: (cpu) => { cpu.A &= ~0x40; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES7B]: (cpu) => { cpu.B &= ~0x80; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES7C]: (cpu) => { cpu.C &= ~0x80; cpu.M = 2; cpu.T = 8; },
@@ -889,7 +889,7 @@ const cbopcodes = {
   [CBOPCODES.RES7E]: (cpu) => { cpu.E &= ~0x80; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES7H]: (cpu) => { cpu.H &= ~0x80; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.RES7L]: (cpu) => { cpu.L &= ~0x80; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RES7HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x80); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.RES7HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & ~0x80); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.RES7A]: (cpu) => { cpu.A &= ~0x80; cpu.M = 2; cpu.T = 8; },
 
   /* ------------------------ 0xc------------------------ */
@@ -899,7 +899,7 @@ const cbopcodes = {
   [CBOPCODES.SET0E]: (cpu) => { cpu.E |= 0x01; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET0H]: (cpu) => { cpu.H |= 0x01; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET0L]: (cpu) => { cpu.L |= 0x01; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.SET0HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x01); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET0HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x01); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.SET0A]: (cpu) => { cpu.A |= 0x01; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1B]: (cpu) => { cpu.B |= 0x02; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1C]: (cpu) => { cpu.C |= 0x02; cpu.M = 2; cpu.T = 8; },
@@ -907,7 +907,7 @@ const cbopcodes = {
   [CBOPCODES.SET1E]: (cpu) => { cpu.E |= 0x02; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1H]: (cpu) => { cpu.H |= 0x02; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1L]: (cpu) => { cpu.L |= 0x02; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.SET1HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x02); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET1HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x02); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.SET1A]: (cpu) => { cpu.A |= 0x02; cpu.M = 2; cpu.T = 8; },
 
   /* ------------------------ 0xd------------------------ */
@@ -917,7 +917,7 @@ const cbopcodes = {
   [CBOPCODES.SET0E]: (cpu) => { cpu.E |= 0x04; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET0H]: (cpu) => { cpu.H |= 0x04; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET0L]: (cpu) => { cpu.L |= 0x04; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.SET0HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x04); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET0HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x04); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.SET0A]: (cpu) => { cpu.A |= 0x04; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1B]: (cpu) => { cpu.B |= 0x08; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1C]: (cpu) => { cpu.C |= 0x08; cpu.M = 2; cpu.T = 8; },
@@ -925,7 +925,7 @@ const cbopcodes = {
   [CBOPCODES.SET1E]: (cpu) => { cpu.E |= 0x08; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1H]: (cpu) => { cpu.H |= 0x08; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1L]: (cpu) => { cpu.L |= 0x08; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.SET1HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x08); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET1HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x08); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.SET1A]: (cpu) => { cpu.A |= 0x08; cpu.M = 2; cpu.T = 8; },
 
   /* ------------------------ 0xe------------------------ */
@@ -935,7 +935,7 @@ const cbopcodes = {
   [CBOPCODES.SET0E]: (cpu) => { cpu.E |= 0x10; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET0H]: (cpu) => { cpu.H |= 0x10; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET0L]: (cpu) => { cpu.L |= 0x10; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.SET0HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x10); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET0HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x10); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.SET0A]: (cpu) => { cpu.A |= 0x10; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1B]: (cpu) => { cpu.B |= 0x20; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1C]: (cpu) => { cpu.C |= 0x20; cpu.M = 2; cpu.T = 8; },
@@ -943,7 +943,7 @@ const cbopcodes = {
   [CBOPCODES.SET1E]: (cpu) => { cpu.E |= 0x20; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1H]: (cpu) => { cpu.H |= 0x20; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1L]: (cpu) => { cpu.L |= 0x20; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.SET1HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x20); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET1HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x20); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.SET1A]: (cpu) => { cpu.A |= 0x20; cpu.M = 2; cpu.T = 8; },
 
   /* ------------------------ 0xf------------------------ */
@@ -953,7 +953,7 @@ const cbopcodes = {
   [CBOPCODES.SET0E]: (cpu) => { cpu.E |= 0x40; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET0H]: (cpu) => { cpu.H |= 0x40; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET0L]: (cpu) => { cpu.L |= 0x40; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.SET0HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x40); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET0HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x40); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.SET0A]: (cpu) => { cpu.A |= 0x40; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1B]: (cpu) => { cpu.B |= 0x80; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1C]: (cpu) => { cpu.C |= 0x80; cpu.M = 2; cpu.T = 8; },
@@ -961,7 +961,7 @@ const cbopcodes = {
   [CBOPCODES.SET1E]: (cpu) => { cpu.E |= 0x80; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1H]: (cpu) => { cpu.H |= 0x80; cpu.M = 2; cpu.T = 8; },
   [CBOPCODES.SET1L]: (cpu) => { cpu.L |= 0x80; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.SET1HLm]: (cpu) => { const val = cpu.mmu.read8((cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x80); cpu.M = 3; cpu.T = 12; },
+  [CBOPCODES.SET1HLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val | 0x80); cpu.M = 3; cpu.T = 12; },
   [CBOPCODES.SET1A]: (cpu) => { cpu.A |= 0x80; cpu.M = 2; cpu.T = 8; },
 };
 
