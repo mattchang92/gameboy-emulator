@@ -19,11 +19,11 @@ class MMU {
       0x21, 0x04, 0x01, 0x11, 0xA8, 0x00, 0x1A, 0x13, 0xBE, 0x20, 0xFE, 0x23, 0x7D, 0xFE, 0x34, 0x20,
       0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50,
     ];
-    // this.rom = require('../roms/tetris');
+    this.rom = require('../roms/tetris');
     // this.rom = require('../roms/test/01-special');
     // this.rom = require('../roms/test/02-interrupts');
     // this.rom = require('../roms/test/03-op sp,hl');
-    this.rom = require('../roms/test/04-op r,imm');
+    // this.rom = require('../roms/test/04-op r,imm');
     // this.rom = require('../roms/test/05-op rp');
     // this.rom = require('../roms/test/06-ld r,r');
     // this.rom = require('../roms/test/07-jr,jp,call,ret,rst');
@@ -38,7 +38,7 @@ class MMU {
     this.zram = [];
 
     this.ie = 0; // interrupt enabled
-    this.if = 0; // interrupt flag
+    this.if = 0xe0; // interrupt flag (top 3 bits always set)
 
     this.printed = false;
 
@@ -182,6 +182,7 @@ class MMU {
   }
 
   write8(cpu, addr, val) {
+    if (addr === 0xff80) return;
     if (cpu === undefined || addr === undefined || val === undefined) {
       console.log('Missing required params for write byte');
       if (!cpu) console.log('missing cpu');
@@ -259,7 +260,7 @@ class MMU {
               break;
             }
 
-            if (addr === 0xff01) {
+            if (addr === 0xff01 && cpu.testMode) {
               this.test += String.fromCharCode(`${val}`);
               console.log(this.test);
             }

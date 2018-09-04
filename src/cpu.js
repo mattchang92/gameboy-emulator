@@ -1,11 +1,13 @@
 const CPUMemory = require('./cpuMemory');
 const GPU = require('./gpu');
 const MMU = require('./mmu');
-const { opcodes } = require('./opcodes');
+const { opcodes, interrupts } = require('./opcodes');
 
 class CPU {
   constructor() {
     // general use registers
+    this.testMode = false;
+    this.rstCalled = false;
     this.counter = 0;
     this.initialCounter = 0;
     this.logsEnabled = false;
@@ -43,7 +45,7 @@ class CPU {
       t: 0,
     };
 
-    this.ime = 0;
+    this.ime = 1;
 
     // components
     this.ram = new CPUMemory();
@@ -89,18 +91,29 @@ class CPU {
     }
   }
 
-  rst40() {
-    console.log("rst40 breing called");
-    this.ime = 0;
-    this.SP -= 2;
-    this.mmu.write16(this, this.SP, this.PC);
-    this.PC = 0x0040;
-    this.M = 3;
-    this.T = 12;
+  handleInterrupts() {
+    if (this.ime && this.mmu.ie && this.mmu.if) {
+      let ifired = this.mmu.ie & this.mmu.if;
+      for (let i = 0; i < 5; i++) {
+        if (ifired & 0x01) {
+          const mask = 1 << i;
+          this.mmu.if &= (0xff - mask);
+          interrupts[i](this);
+          break;
+        } else {
+          ifired >>= 1;
+        }
+      }
+    }
   }
 
   frame() {
-    const frameEnd = this.clock.m + 17556 * 5;
+    if (!this.timeout) {
+      setTimeout(() => {
+        this.timeout = true;
+      }, 4000);
+    }
+    const frameEnd = this.clock.m + 17556 * 1;
 
     while (this.clock.m < frameEnd) {
       // if (this.FAIL) {
@@ -122,6 +135,11 @@ class CPU {
       if (this.counter < this.limit && this.logsEnabled) {
         console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), this.SP, this.B, this.C, this.D, this.E, this.H, this.L, this.A);
       }
+      
+      if (this.timeout) {
+        // console.log('if ', this.mmu.if, ' ie ', this.mmu.ie, ' ime ', this.ime);
+        // console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), this.SP, this.B, this.C, this.D, this.E, this.H, this.L, this.A);
+      }
 
       if (typeof opcodes[op] !== 'function') {
         console.log('not a function!!!', op, op.toString(16), opcodes[op]);
@@ -137,14 +155,7 @@ class CPU {
       //   console.log(this.mmu.ie, this.mmu.if);
       // }
 
-      if (this.ime && this.mmu.ie && this.mmu.if) {
-        const ifired = this.mmu.ie & this.mmu.if;
-        if (ifired & 0x01) {
-          this.mmu.if &= (0xff - 0x01);
-          this.rst40();
-        }
-      }
-
+      this.handleInterrupts();
 
       this.gpu.step(this);
     }

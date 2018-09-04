@@ -28,6 +28,7 @@ const {
 
 class GPU {
   constructor(mmu) {
+    this.mmu = mmu;
     this.MODE = 2;
     this.MODECLOCK = 0;
     this.backgroundOffsetX = 0;
@@ -58,22 +59,22 @@ class GPU {
     this.WX = 0; // Window X Position (R/W)
 
     // 0xff40 LCDC
-    this.LCDEnable = 0;
-    this.windowTileAddress = 0;
-    this.windowEnable = 0;
-    this.bgAndWindowTileData = 0;
-    this.bgTileMapAddress = 0;
-    this.objSize = 0;
-    this.objEnable = 0;
-    this.bgEnable = 0;
+    this.LCDEnable = 0; // bit 7
+    this.windowTileAddress = 0; // bit 6
+    this.windowEnable = 0; // bit 5
+    this.bgAndWindowTileData = 0; // bit 4
+    this.bgTileMapAddress = 0; // bit 3
+    this.objSize = 0; // bit 2
+    this.objEnable = 0; // bit 1
+    this.bgEnable = 0; // bit 0
 
     // 0xff41 STAT
-    this.lyInterrupt = 0;
-    this.oamInterrupt = 0;
-    this.vBLankInterrupt = 0;
-    this.hBlankInterrupt = 0;
-    this.lyFlag = 0;
-    this.mode = 0;
+    this.lyInterrupt = 0; // bit 6
+    this.oamInterrupt = 0; // bit 5
+    this.vBLankInterrupt = 0; // bit 4
+    this.hBlankInterrupt = 0; // bit 3
+    this.lyFlag = 0; // bit 2
+    this.mode = 0; // bit 0-1
 
     this.mapCounter = 0; // test variable
 
@@ -237,6 +238,7 @@ class GPU {
             this.MODE = 1;
             this.tileMapToScreen();
             this.ctx.putImageData(this.screen, 0, 0);
+            this.mmu.if |= 1;
           } else {
             this.MODE = 2;
           }

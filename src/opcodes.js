@@ -14,7 +14,7 @@ const OPCODES = {
   RLCA: 0x07,
   LDnnSP: 0x08,
   // ADDHLBC: 0x09,
-  // LDABCm: 0x0a,
+  LDABCm: 0x0a,
   DECBC: 0x0b,
   INCC: 0x0c,
   DECC: 0x0d,
@@ -291,6 +291,14 @@ const setHalfCarry = (cpu, a, b, isSub) => {
   } else {
     cpu.F &= ~0x20;
   }
+};
+
+const RESTART = {
+  RST40: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0040; cpu.M = 3; cpu.T = 12; },
+  RST48: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0048; cpu.M = 3; cpu.T = 12; },
+  RST50: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0050; cpu.M = 3; cpu.T = 12; },
+  RST58: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0058; cpu.M = 3; cpu.T = 12; },
+  RST60: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0060; cpu.M = 3; cpu.T = 12; },
 };
 
 const opcodes = {
@@ -1172,6 +1180,7 @@ const opcodes = {
     }
   },
   [OPCODES.RETI]: (cpu) => {
+    console.log('calling reti');
     cpu.ime = 1;
     cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
     cpu.SP += 2;
@@ -1252,8 +1261,17 @@ const opcodes = {
   [OPCODES.RST38]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x38; cpu.M = 3; cpu.T = 12; },
 };
 
+const interrupts = [
+  RESTART.RST40,
+  RESTART.RST48,
+  RESTART.RST50,
+  RESTART.RST58,
+  RESTART.RST60,
+];
+
 
 module.exports = {
   opcodes,
   OPCODES,
+  interrupts,
 };
