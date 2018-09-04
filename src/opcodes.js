@@ -13,7 +13,7 @@ const OPCODES = {
   LDBn: 0x06,
   RLCA: 0x07,
   LDnnSP: 0x08,
-  // ADDHLBC: 0x09,
+  ADDHLBC: 0x09,
   LDABCm: 0x0a,
   DECBC: 0x0b,
   INCC: 0x0c,
@@ -65,7 +65,7 @@ const OPCODES = {
   // SCF: 0x37,
   JRCn: 0x38,
   ADDHLSP: 0x39,
-  // LDDAHLm: 0x3a,
+  LDDAHLm: 0x3a,
   // DECSP: 0x3b,
   INCA: 0x3c,
   DECA: 0x3d,
@@ -145,12 +145,12 @@ const OPCODES = {
   // ADDAD: 0x82,
   ADDAE: 0x83,
   // ADDAH: 0x84,
-  // ADDAL: 0x85,
+  ADDAL: 0x85,
   ADDAHLm: 0x86,
   ADDAA: 0x87,
   ADCAB: 0x88,
   ADCAC: 0x89,
-  // ADCAD: 0x8a,
+  ADCAD: 0x8a,
   // ADCAE: 0x8b,
   // ADCAH: 0x8c,
   // ADCAL: 0x8d,
@@ -160,7 +160,7 @@ const OPCODES = {
   SUBAB: 0x90,
   // SUBAC: 0x91,
   // SUBAD: 0x92,
-  // SUBAE: 0x93,
+  SUBAE: 0x93,
   // SUBAH: 0x94,
   // SUBAL: 0x95,
   // SUBAHLm: 0x96,
@@ -206,16 +206,16 @@ const OPCODES = {
   // CPH: 0xbc,
   // CPL: 0xbd,
   CPHLm: 0xbe,
-  // CPA: 0xbf,
+  CPA: 0xbf,
 
   RETNZ: 0xc0,
   POPBC: 0xc1,
-  // JPNZnn: 0xc2,
+  JPNZnn: 0xc2,
   JPnn: 0xc3,
   CALLNZnn: 0xc4,
   PUSHBC: 0xc5,
   ADDAn: 0xc6,
-  // RST00: 0xc7,
+  RST00: 0xc7,
   RETZ: 0xc8,
   RET: 0xc9,
   JPZnn: 0xca,
@@ -227,7 +227,7 @@ const OPCODES = {
 
   RETNC: 0xd0,
   POPDE: 0xd1,
-  // JPNCnn: 0xd2,
+  JPNCnn: 0xd2,
   // CALLNCnn: 0xd4,
   PUSHDE: 0xd5,
   SUBAn: 0xd6,
@@ -256,14 +256,14 @@ const OPCODES = {
   LDAIOC: 0xf2, // NOTE copy pasted from other repo. docs say is invalid
   DI: 0xf3, // disable interupts. no interupts yet
   PUSHAF: 0xf5,
-  // ORn: 0xf6,
+  ORn: 0xf6,
   // RST30: 0xf7,
   // LDHLSPd: 0xf8,
   // LDSPHL: 0xf9,
   LDAnnm: 0xfa,
   EI: 0xfb, // enable interupts. no interupts yet
   CPn: 0xfe,
-  // RST38: 0xff,
+  RST38: 0xff,
 };
 
 // Zero (0x80): Set if the last operation produced a result of 0;
@@ -1180,7 +1180,6 @@ const opcodes = {
     }
   },
   [OPCODES.RETI]: (cpu) => {
-    console.log('calling reti');
     cpu.ime = 1;
     cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
     cpu.SP += 2;

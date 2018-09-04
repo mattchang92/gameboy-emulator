@@ -108,24 +108,11 @@ class CPU {
   }
 
   frame() {
-    if (!this.timeout) {
-      setTimeout(() => {
-        this.timeout = true;
-      }, 4000);
-    }
-    const frameEnd = this.clock.m + 17556 * 1;
+    const frameEnd = this.clock.m + 17556 * 0.75;
 
     while (this.clock.m < frameEnd) {
-      // if (this.FAIL) {
-      //   const op = this.mmu.read8(this, this.PC - 1);
-      //   console.log('waht is the failed op', op.toString(16));
-      //   return;
-      // }
-
       const op = this.mmu.read8(this, this.PC++);
-      // console.log('test')
-      // console.log(this.PC - 1, op.toString(16), opcodes[op]);
-      // console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), opcodes[op].toString());
+
       this.initialCounter++;
       if (this.initialCounter > this.offset) {
         // this.logsEnabled = true;
