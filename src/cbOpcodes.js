@@ -283,20 +283,8 @@ const setFlags = (cpu, val, isSub) => {
 const testBit = (cpu, val) => {
   cpu.F &= 0x1f;
   cpu.F |= 0x20;
-  cpu.F = val ? 0 : 0x80;
-  // if (val) {
-  //   cpu.F &= 0x7f;
-  // } else {
-  //   cpu.F |= 0x80;
-  // }
+  if (val === 0) cpu.F |= 0x80;
 };
-
-// function() {
-//   Z80._r.f &= 0x1F;
-//   Z80._r.f |= 0x20;
-//   Z80._r.f = (Z80._r.h & 0x80) ? 0 : 0x80;
-//   Z80._r.m = 2;
-// }
 
 const cbopcodes = {
   /* ------------------------ 0x0------------------------ */

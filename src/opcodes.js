@@ -1,8 +1,5 @@
 const { cbopcodes } = require('./cbOpcodes');
 
-// let counter = 0;
-// const flag = false;
-
 const OPCODES = {
   NOP: 0x00,
   LDBCnn: 0x01,
@@ -219,7 +216,7 @@ const OPCODES = {
   RETZ: 0xc8,
   RET: 0xc9,
   JPZnn: 0xca,
-  EXTops: 0xcb, // ???? secondary opcode table?
+  EXTops: 0xcb,
   CALLZnn: 0xcc,
   CALLnn: 0xcd,
   ADCAn: 0xce,
@@ -254,14 +251,14 @@ const OPCODES = {
   LDHAnm: 0xf0,
   POPAF: 0xf1,
   LDAIOC: 0xf2, // NOTE copy pasted from other repo. docs say is invalid
-  DI: 0xf3, // disable interupts. no interupts yet
+  DI: 0xf3,
   PUSHAF: 0xf5,
   ORn: 0xf6,
   // RST30: 0xf7,
   // LDHLSPd: 0xf8,
   // LDSPHL: 0xf9,
   LDAnnm: 0xfa,
-  EI: 0xfb, // enable interupts. no interupts yet
+  EI: 0xfb
   CPn: 0xfe,
   RST38: 0xff,
 };
@@ -528,7 +525,6 @@ const opcodes = {
     cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.DAA]: (cpu) => {
-    // Potentially illegal instruction?
     const sub = (cpu.F & 0x40) ? 1 : 0;
     const h = (cpu.F & 0x20) ? 1 : 0;
     let c = (cpu.F & 0x10) ? 1 : 0;
