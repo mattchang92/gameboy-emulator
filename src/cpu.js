@@ -122,7 +122,7 @@ class CPU {
       if (this.counter < this.limit && this.logsEnabled) {
         console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), this.SP, this.B, this.C, this.D, this.E, this.H, this.L, this.A);
       }
-      
+
       if (this.timeout) {
         // console.log('if ', this.mmu.if, ' ie ', this.mmu.ie, ' ime ', this.ime);
         // console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), this.SP, this.B, this.C, this.D, this.E, this.H, this.L, this.A);
