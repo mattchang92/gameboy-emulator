@@ -136,9 +136,6 @@ class MMU {
             }
             switch (addr & 0xf0) {
               case 0x00:
-                if (addr === 0xff0f) return this.if;
-                return 0; // implement later
-
               case 0x10:
               case 0x20:
               case 0x30:

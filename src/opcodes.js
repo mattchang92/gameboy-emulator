@@ -266,6 +266,7 @@ const OPCODES = {
   RST38: 0xff,
 };
 
+//Flags = Z N H C
 // Zero (0x80): Set if the last operation produced a result of 0;
 // Operation (0x40): Set if the last operation was a subtraction;
 // Half-carry (0x20): Set if, in the result of the last operation, the lower half of the byte overflowed past 15;
@@ -301,6 +302,131 @@ const RESTART = {
   RST60: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0060; cpu.M = 3; cpu.T = 12; },
 };
 
+const INCREMENT = {
+  // 8 bit increments. Flag = (* 0 * -)
+  INCB: (cpu) => { setFlags(cpu, cpu.B + 1); setHalfCarry(cpu, cpu.B, 1); cpu.B = ++cpu.B & 0xff; cpu.M = 1; cpu.T = 4; },
+  INCC: (cpu) => {  setFlags(cpu, cpu.C + 1);  setHalfCarry(cpu, cpu.C, 1);  cpu.C = ++cpu.C & 0xff;  cpu.M = 1; cpu.T = 4;},
+  INCD: (cpu) => {  setFlags(cpu, cpu.D + 1);  setHalfCarry(cpu, cpu.D, 1);  cpu.D = ++cpu.D & 0xff;  cpu.M = 1; cpu.T = 4;},
+  INCE: (cpu) => {  setFlags(cpu, cpu.E + 1);  setHalfCarry(cpu, cpu.E, 1);  cpu.E = ++cpu.E & 0xff;  cpu.M = 1; cpu.T = 4;},
+  INCH: (cpu) => {  setFlags(cpu, cpu.H + 1);  setHalfCarry(cpu, cpu.H, 1);  cpu.H = ++cpu.H & 0xff;  cpu.M = 1; cpu.T = 4;},
+  INCL: (cpu) => {  setFlags(cpu, cpu.L + 1);  setHalfCarry(cpu, cpu.L, 1);  cpu.L = ++cpu.L & 0xff;  cpu.M = 1; cpu.T = 4;},
+  INCA: (cpu) => {  setFlags(cpu, cpu.A + 1);  setHalfCarry(cpu, cpu.A, 1);  cpu.A = ++cpu.A & 0xff;  cpu.M = 1; cpu.T = 4;},
+
+  // 16 bit increments Flag = (- - - -)
+  INCBC: (cpu) => {  cpu.C = (cpu.C + 1) & 0xff;  if (!cpu.C) {    cpu.B = (cpu.B + 1) & 0xff;  }  cpu.M = 1; cpu.T = 4;},
+  INCDE:(cpu) => {  cpu.E = (cpu.E + 1) & 0xff;  if (!cpu.E) {    cpu.D = (cpu.D + 1) & 0xff;  }  cpu.M = 1; cpu.T = 4;},
+  INCHL: (cpu) => {  cpu.L = (cpu.L + 1) & 0xff;  if (!cpu.L) {    cpu.H = (cpu.H + 1) & 0xff;  }  cpu.M = 1; cpu.T = 4;},
+  INCSP:(cpu) => { cpu.SP = (cpu.SP + 1) & 0xffff; cpu.M = 1; cpu.T = 4; },
+};
+
+const DECREMENT = {
+  // 8 bit decrements Flag = (* 1 * -)
+  DECB: (cpu) => {  cpu.B--;  setFlags(cpu, cpu.B, 1);  cpu.B &= 0xff;  cpu.M = 1; cpu.T = 4;},
+  DECC: (cpu) => {  cpu.C--;  setFlags(cpu, cpu.C, 1);  cpu.C &= 0xff;  cpu.M = 1; cpu.T = 4;},
+  DECD: (cpu) => {  cpu.D--;  setFlags(cpu, cpu.D, 1);  cpu.D &= 0xff;  cpu.M = 1; cpu.T = 4;},
+  DECE: (cpu) => {  cpu.E--;  setFlags(cpu, cpu.E, 1);  cpu.E &= 0xff;  cpu.M = 1; cpu.T = 4;},
+  DECH: (cpu) => {  cpu.H--;  setFlags(cpu, cpu.H, 1);  cpu.H &= 0xff;  cpu.M = 1; cpu.T = 4;},
+  DECL: (cpu) => {  cpu.L--;  setFlags(cpu, cpu.L, 1);  cpu.L &= 0xff;  cpu.M = 1; cpu.T = 4;},
+  DECA: (cpu) => {  cpu.A--;  setFlags(cpu, cpu.A, 1);  cpu.A &= 0xff;  cpu.M = 1; cpu.T = 4;},
+
+  // 16 bit decrements. Flag = (- - - -)
+  DECBC: (cpu) => {  cpu.C = (cpu.C - 1) & 0xff;  if (cpu.C === 0xff) {    cpu.B = (cpu.B - 1) & 0xff;  }  cpu.M = 1; cpu.T = 4;},
+  DECDE: (cpu) => {  cpu.E = (cpu.E - 1) & 0xff;  if (cpu.E === 0xff) {    cpu.C = (cpu.C - 1) & 0xff;  }  cpu.M = 1; cpu.T = 4;},
+  DECHL: (cpu) => {  cpu.L = (cpu.L - 1) & 0xff;  if (cpu.L === 0xff) {    cpu.H = (cpu.H - 1) & 0xff;  }  cpu.M = 1; cpu.T = 4;},
+  DECSP: (cpu) => { cpu.SP = (cpu.SP - 1) & 0xffff; cpu.M = 2; cpu.T = 8; },
+};
+
+const ADD = {
+  // 8 bit adds. Flag = (* 0 * *)
+  ADDAB: (cpu) => {  setFlags(cpu, cpu.A + cpu.B);  setHalfCarry(cpu, cpu.A, cpu.B);  cpu.A = (cpu.A + cpu.B) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  ADDAC: (cpu) => {  setFlags(cpu, cpu.A + cpu.C);  setHalfCarry(cpu, cpu.A, cpu.C);  cpu.A = (cpu.A + cpu.C) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  ADDAD: (cpu) => {  setFlags(cpu, cpu.A + cpu.D);  setHalfCarry(cpu, cpu.A, cpu.D);  cpu.A = (cpu.A + cpu.D) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  ADDAE: (cpu) => {  setFlags(cpu, cpu.A + cpu.E);  setHalfCarry(cpu, cpu.A, cpu.E);  cpu.A = (cpu.A + cpu.E) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  ADDAH: (cpu) => {  setFlags(cpu, cpu.A + cpu.H);  setHalfCarry(cpu, cpu.A, cpu.H);  cpu.A = (cpu.A + cpu.H) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  ADDAL: (cpu) => {  setFlags(cpu, cpu.A + cpu.L);  setHalfCarry(cpu, cpu.A, cpu.L);  cpu.A = (cpu.A + cpu.L) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  ADDAHLm: (cpu) => {  const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);  setFlags(cpu, cpu.A + val);  setHalfCarry(cpu, cpu.A, val);  cpu.A = (cpu.A + val) & 0xff;  cpu.M = 2; cpu.T = 8;},
+  ADDAA: (cpu) => {  setFlags(cpu, cpu.A + cpu.A);  setHalfCarry(cpu, cpu.A, cpu.A);  cpu.A = (cpu.A + cpu.A) & 0xff;  cpu.M = 1; cpu.T = 4;},
+
+  // 8 bit add with carry. Same flag as adds
+  ADCAB:(cpu) => {  setFlags(cpu, cpu.A + cpu.L);  setHalfCarry(cpu, cpu.A, cpu.L);  cpu.A = (cpu.A + cpu.L) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  ADCAC:(cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A + cpu.C + carry);  setHalfCarry(cpu, cpu.A, cpu.C + carry);  cpu.A = (cpu.A + cpu.C) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  ADCAD:(cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A + cpu.D + carry);  setHalfCarry(cpu, cpu.A, cpu.D + carry);  cpu.A = (cpu.A + cpu.D) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  ADCAE:(cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A + cpu.E + carry);  setHalfCarry(cpu, cpu.A, cpu.E + carry);  cpu.A = (cpu.A + cpu.E) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  ADCAH:(cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A + cpu.H + carry);  setHalfCarry(cpu, cpu.A, cpu.H + carry);  cpu.A = (cpu.A + cpu.H) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  ADCAL:(cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A + cpu.L + carry);  setHalfCarry(cpu, cpu.A, cpu.L + carry);  cpu.A = (cpu.A + cpu.L) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  ADCAHLm:(cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);  setFlags(cpu, cpu.A + val + carry);  setHalfCarry(cpu, cpu.A, val + carry);  cpu.A = (cpu.A + val) & 0xff;  cpu.M = 2; cpu.T = 8;},
+  ADCAA:(cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A + cpu.A + carry);  setHalfCarry(cpu, cpu.A, cpu.A + carry);  cpu.A = (cpu.A + cpu.A) & 0xff;  cpu.M = 1; cpu.T = 4;},
+
+  // 16 bit HL add. Flag = (- 0 * *)
+  ADDHLBC: (cpu) => {
+    let hl = (cpu.H << 8) + cpu.L;
+    hl += (cpu.B << 8) + cpu.C;
+    if (hl > 0xffff) { cpu.F |= 0x10; } else { cpu.F &= 0xef; }
+    cpu.F &= ~0x40;
+    cpu.H = (hl >>> 8) & 0xff;
+    cpu.L = hl & 0xff;
+    cpu.M = 3; cpu.T = 12;
+  },
+  ADDHLDE: (cpu) => {
+    let hl = (cpu.H << 8) + cpu.L;
+    hl += (cpu.D << 8) + cpu.E;
+    if (hl > 0xffff) { cpu.F |= 0x10; } else { cpu.F &= 0xef; }
+    // cpu.F &= ~0x40; // doesn't match other emu
+    cpu.H = (hl >>> 8) & 0xff;
+    cpu.L = hl & 0xff;
+    cpu.M = 3; cpu.T = 12;
+  },
+  ADDHLHL: (cpu) => {
+    let hl = (cpu.H << 8) + cpu.L;
+    hl <<= 1;
+    if (hl > 0xffff) { cpu.F |= 0x10; } else { cpu.F &= 0xef; }
+    cpu.F &= ~0x40;
+    cpu.H = (hl >>> 8) & 0xff;
+    cpu.L = hl & 0xff;
+    cpu.M = 3; cpu.T = 12;
+  },
+  ADDHLSP: (cpu) => {
+    let hl = (cpu.H << 8) + cpu.L;
+    hl += cpu.SP;
+    if (hl > 0xffff) { cpu.F |= 0x10; } else { cpu.F &= 0xef; }
+    cpu.F &= ~0x40;
+    cpu.H = (hl >>> 8) & 0xff;
+    cpu.L = hl & 0xff;
+    cpu.M = 3; cpu.T = 12;
+  },
+
+  // 16 bit SP add. Flag = (- 0 * *)
+  ADDSPd: (cpu) => {
+    let i = cpu.mmu.read8(cpu, cpu.PC++);
+    if (i > 127) i = -((~i + 1) & 0xff);
+    cpu.SP += i;
+    cpu.F &= 0x30; // TODO set carry/half carry
+    cpu.M = 4; cpu.T = 16;
+  },
+};
+
+const SUBTRACT = {
+  // 8 bit subtract. Flag = (* 1 * *)
+  SUBAB: (cpu) => {  setFlags(cpu, cpu.A - cpu.B, 1);  setHalfCarry(cpu, cpu.A, cpu.B, 1);  cpu.A = (cpu.A - cpu.B) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  SUBAC: (cpu) => {  setFlags(cpu, cpu.A - cpu.C, 1);  setHalfCarry(cpu, cpu.A, cpu.C, 1);  cpu.A = (cpu.A - cpu.C) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  SUBAD: (cpu) => {  setFlags(cpu, cpu.A - cpu.D, 1);  setHalfCarry(cpu, cpu.A, cpu.D, 1);  cpu.A = (cpu.A - cpu.D) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  SUBAE: (cpu) => {  setFlags(cpu, cpu.A - cpu.E, 1);  setHalfCarry(cpu, cpu.A, cpu.E, 1);  cpu.A = (cpu.A - cpu.E) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  SUBAH: (cpu) => {  setFlags(cpu, cpu.A - cpu.H, 1);  setHalfCarry(cpu, cpu.A, cpu.H, 1);  cpu.A = (cpu.A - cpu.H) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  SUBAL: (cpu) => {  setFlags(cpu, cpu.A - cpu.L, 1);  setHalfCarry(cpu, cpu.A, cpu.L, 1);  cpu.A = (cpu.A - cpu.L) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  SUBAHLm: (cpu) => {  const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);  setFlags(cpu, cpu.A - val, 1);  setHalfCarry(cpu, cpu.A, val, 1);  cpu.A = (cpu.A - val) & 0xff;  cpu.M = 2; cpu.T = 8;},
+  SUBAA: (cpu) => {   cpu.A = 0;   cpu.F = 0xc0;   cpu.M = 1; cpu.T = 4; },
+
+  // 8 bit subtract with carry. Same flag as above
+  SUBCAB: (cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A - cpu.B - carry, 1);  setHalfCarry(cpu, cpu.A, cpu.B + carry, 1);  cpu.A = (cpu.A - cpu.B - carry) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  SUBCAC: (cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A - cpu.C - carry, 1);  setHalfCarry(cpu, cpu.A, cpu.C + carry, 1);  cpu.A = (cpu.A - cpu.C - carry) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  SUBCAD: (cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A - cpu.D - carry, 1);  setHalfCarry(cpu, cpu.A, cpu.D + carry, 1);  cpu.A = (cpu.A - cpu.D - carry) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  SUBCAE: (cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A - cpu.E - carry, 1);  setHalfCarry(cpu, cpu.A, cpu.E + carry, 1);  cpu.A = (cpu.A - cpu.E - carry) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  SUBCAH: (cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A - cpu.H - carry, 1);  setHalfCarry(cpu, cpu.A, cpu.H + carry, 1);  cpu.A = (cpu.A - cpu.H - carry) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  SUBCAL: (cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A - cpu.L - carry, 1);  setHalfCarry(cpu, cpu.A, cpu.L + carry, 1);  cpu.A = (cpu.A - cpu.L - carry) & 0xff;  cpu.M = 1; cpu.T = 4;},
+  SUBCAHLm: (cpu) => {  const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A - val - carry, 1);  setHalfCarry(cpu, cpu.A, val + carry, 1);  cpu.A = (cpu.A - val - carry) & 0xff;  cpu.M = 2; cpu.T = 8;},
+  SUBCAA: (cpu) => {  const carry = (cpu.F & 0x10) ? 1 : 0;  setFlags(cpu, cpu.A - cpu.B - carry, 1);  setHalfCarry(cpu, cpu.A, cpu.B + carry, 1);  cpu.A = (cpu.A - cpu.B - carry) & 0xff;  cpu.M = 1; cpu.T = 4;},
+};
+
 const opcodes = {
   /* ------------------------ 0x0 ------------------------ */
   [OPCODES.NOP]: (cpu) => { cpu.M = 1; cpu.T = 4; },
@@ -313,23 +439,9 @@ const opcodes = {
     cpu.mmu.write8(cpu, cpu.B << 8 | cpu.C, cpu.A);
     cpu.M = 2; cpu.T = 8;
   },
-  [OPCODES.INCBC]: (cpu) => {
-    cpu.C = (cpu.C + 1) & 0xff;
-    if (!cpu.C) cpu.B = (cpu.B + 1) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.INCB]: (cpu) => {
-    setFlags(cpu, cpu.B + 1);
-    setHalfCarry(cpu, cpu.B, 1);
-    cpu.B = ++cpu.B & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.DECB]: (cpu) => {
-    cpu.B--;
-    setFlags(cpu, cpu.B, 1);
-    cpu.B &= 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
+  [OPCODES.INCBC]: INCREMENT.INCBC,
+  [OPCODES.INCB]: INCREMENT.INCB,
+  [OPCODES.DECB]: DECREMENT.DECB,
   [OPCODES.LDBn]: (cpu) => {
     cpu.B = cpu.mmu.read8(cpu, cpu.PC++);
     cpu.M = 2; cpu.T = 8;
@@ -346,41 +458,15 @@ const opcodes = {
     cpu.PC += 2;
     cpu.M = 1; cpu.T = 4;
   },
-  [OPCODES.ADDHLBC]: (cpu) => {
-    let hl = (cpu.H << 8) + cpu.L;
-    hl += (cpu.B << 8) + cpu.C;
-    if (hl > 0xffff) {
-      cpu.F |= 0x10;
-    } else {
-      cpu.F &= 0xef;
-    }
-    cpu.F &= ~0x40;
-    cpu.H = (hl >>> 8) & 0xff;
-    cpu.L = hl & 0xff;
-    cpu.M = 3; cpu.T = 12;
-  },
+  [OPCODES.ADDHLBC]: ADD.ADDHLBC,
   [OPCODES.LDABCm]: (cpu) => {
     const address = (cpu.B << 8) + cpu.C;
     cpu.A = cpu.mmu.read8(cpu, address);
     cpu.M = 2; cpu.T = 8;
   },
-  [OPCODES.DECBC]: (cpu) => {
-    cpu.C = (cpu.C - 1) & 0xff;
-    if (cpu.C === 0xff) cpu.B = (cpu.B - 1) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.INCC]: (cpu) => {
-    setFlags(cpu, cpu.C + 1);
-    setHalfCarry(cpu, cpu.C, 1);
-    cpu.C = ++cpu.C & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.DECC]: (cpu) => {
-    cpu.C--;
-    setFlags(cpu, cpu.C, 1);
-    cpu.C &= 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
+  [OPCODES.DECBC]: DECREMENT.DECBC,
+  [OPCODES.INCC]: INCREMENT.INCC,
+  [OPCODES.DECC]: DECREMENT.DECC,
   [OPCODES.LDCn]: (cpu) => {
     cpu.C = cpu.mmu.read8(cpu, cpu.PC++);
     cpu.M = 2; cpu.T = 8;
@@ -407,23 +493,9 @@ const opcodes = {
     cpu.mmu.write8(cpu, cpu.D << 8 | cpu.E, cpu.A);
     cpu.M = 2; cpu.T = 8;
   },
-  [OPCODES.INCDE]: (cpu) => {
-    cpu.E = (cpu.E + 1) & 0xff;
-    if (!cpu.E) cpu.D = (cpu.D + 1) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.INCD]: (cpu) => {
-    setFlags(cpu, cpu.D + 1);
-    setHalfCarry(cpu, cpu.D, 1);
-    cpu.D = ++cpu.D & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.DECD]: (cpu) => {
-    cpu.D--;
-    setFlags(cpu, cpu.D, 1);
-    cpu.D &= 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
+  [OPCODES.INCDE]: INCREMENT.INCDE,
+  [OPCODES.INCD]: INCREMENT.INCD,
+  [OPCODES.DECD]: DECREMENT.DECD,
   [OPCODES.LDDn]: (cpu) => {
     cpu.D = cpu.mmu.read8(cpu, cpu.PC++);
     cpu.M = 2; cpu.T = 8;
@@ -441,41 +513,15 @@ const opcodes = {
     cpu.PC += val;
     cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.ADDHLDE]: (cpu) => {
-    let hl = (cpu.H << 8) + cpu.L;
-    hl += (cpu.D << 8) + cpu.E;
-    if (hl > 0xffff) {
-      cpu.F |= 0x10;
-    } else {
-      cpu.F &= 0xef;
-    }
-    // cpu.F &= ~0x40; // doesn't match other emu
-    cpu.H = (hl >>> 8) & 0xff;
-    cpu.L = hl & 0xff;
-    cpu.M = 3; cpu.T = 12;
-  },
+  [OPCODES.ADDHLDE]: ADD.ADDHLDE,
   [OPCODES.LDADEm]: (cpu) => {
     const address = (cpu.D << 8) | cpu.E;
     cpu.A = cpu.mmu.read8(cpu, address);
     cpu.M = 2; cpu.T = 8;
   },
-  [OPCODES.DECDE]: (cpu) => {
-    cpu.E = (cpu.E - 1) & 0xff;
-    if (cpu.E === 0xff) cpu.C = (cpu.C - 1) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.INCE]: (cpu) => {
-    setFlags(cpu, cpu.E + 1);
-    setHalfCarry(cpu, cpu.E, 1);
-    cpu.E = ++cpu.E & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.DECE]: (cpu) => {
-    cpu.E--;
-    setFlags(cpu, cpu.E, 1);
-    cpu.E &= 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
+  [OPCODES.DECDE]: DECREMENT.DECDE,
+  [OPCODES.INCE]: INCREMENT.INCE,
+  [OPCODES.DECE]: DECREMENT.DECE,
   [OPCODES.LDEn]: (cpu) => {
     cpu.E = cpu.mmu.read8(cpu, cpu.PC++);
     cpu.M = 2; cpu.T = 48;
@@ -511,23 +557,9 @@ const opcodes = {
     if (!cpu.L) cpu.H = (cpu.H + 1) & 0xff;
     cpu.M = 2; cpu.T = 8;
   },
-  [OPCODES.INCHL]: (cpu) => {
-    cpu.L = (cpu.L + 1) & 0xff;
-    if (!cpu.L) cpu.H = (cpu.H + 1) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.INCH]: (cpu) => {
-    setFlags(cpu, cpu.H + 1);
-    setHalfCarry(cpu, cpu.H, 1);
-    cpu.H = ++cpu.H & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.DECH]: (cpu) => {
-    cpu.H--;
-    setFlags(cpu, cpu.H, 1);
-    cpu.H &= 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
+  [OPCODES.INCHL]: INCREMENT.INCHL,
+  [OPCODES.INCH]: INCREMENT.INCH,
+  [OPCODES.DECH]: DECREMENT.DECH,
   [OPCODES.LDHn]: (cpu) => {
     cpu.H = cpu.mmu.read8(cpu, cpu.PC++);
     cpu.M = 2; cpu.T = 8;
@@ -560,19 +592,7 @@ const opcodes = {
     if (zero) cpu.PC += val;
     cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.ADDHLHL]: (cpu) => {
-    let hl = (cpu.H << 8) + cpu.L;
-    hl <<= 1;
-    if (hl > 0xffff) {
-      cpu.F |= 0x10;
-    } else {
-      cpu.F &= 0xef;
-    }
-    cpu.F &= ~0x40;
-    cpu.H = (hl >>> 8) & 0xff;
-    cpu.L = hl & 0xff;
-    cpu.M = 3; cpu.T = 12;
-  },
+  [OPCODES.ADDHLHL]: ADD.ADDHLHL,
   [OPCODES.LDIAHLm]: (cpu) => {
     const address = (cpu.H << 8) + cpu.L;
     cpu.A = cpu.mmu.read8(cpu, address);
@@ -580,23 +600,9 @@ const opcodes = {
     if (!cpu.L) cpu.H = (cpu.H + 1) & 0xff;
     cpu.M = 2; cpu.T = 8;
   },
-  [OPCODES.DECHL]: (cpu) => {
-    cpu.L = (cpu.L - 1) & 0xff;
-    if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.INCL]: (cpu) => {
-    setFlags(cpu, cpu.L + 1);
-    setHalfCarry(cpu, cpu.L, 1);
-    cpu.L = ++cpu.L & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.DECL]: (cpu) => {
-    cpu.L--;
-    setFlags(cpu, cpu.L, 1);
-    cpu.L &= 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
+  [OPCODES.DECHL]: DECREMENT.DECHL,
+  [OPCODES.INCL]: INCREMENT.INCL,
+  [OPCODES.DECL]: DECREMENT.DECL,
   [OPCODES.LDLn]: (cpu) => {
     cpu.L = cpu.mmu.read8(cpu, cpu.PC++);
     cpu.M = 2; cpu.T = 8;
@@ -638,7 +644,7 @@ const opcodes = {
     if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
     cpu.M = 2; cpu.T = 8;
   },
-  [OPCODES.INCSP]: (cpu) => { cpu.SP = (cpu.SP + 1) & 0xffff; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.INCSP]: INCREMENT.INCSP,
   [OPCODES.INCHLm]: (cpu) => {
     const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) + 1);
     setFlags(cpu, val);
@@ -663,19 +669,7 @@ const opcodes = {
     if (val > 127) val = -((~val + 1) & 0xff);
     if (carry) { cpu.PC += val; cpu.M++; cpu.T += 4; }
   },
-  [OPCODES.ADDHLSP]: (cpu) => {
-    let hl = (cpu.H << 8) + cpu.L;
-    hl += cpu.SP;
-    if (hl > 0xffff) {
-      cpu.F |= 0x10;
-    } else {
-      cpu.F &= 0xef;
-    }
-    cpu.F &= ~0x40;
-    cpu.H = (hl >>> 8) & 0xff;
-    cpu.L = hl & 0xff;
-    cpu.M = 3; cpu.T = 12;
-  },
+  [OPCODES.ADDHLSP]: ADD.ADDHLSP,
   [OPCODES.LDDAHLm]: (cpu) => {
     const address = (cpu.H << 8) + cpu.L;
     cpu.A = cpu.mmu.read8(cpu, address);
@@ -683,19 +677,9 @@ const opcodes = {
     if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
     cpu.M = 2; cpu.T = 8;
   },
-  [OPCODES.DECSP]: (cpu) => { cpu.SP = (cpu.SP - 1) & 0xffff; cpu.M = 2; cpu.T = 8; },
-  [OPCODES.INCA]: (cpu) => {
-    setFlags(cpu, cpu.A + 1);
-    setHalfCarry(cpu, cpu.A, 1);
-    cpu.A = ++cpu.A & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.DECA]: (cpu) => {
-    cpu.A--;
-    setFlags(cpu, cpu.A, 1);
-    cpu.A &= 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
+  [OPCODES.DECSP]: DECREMENT.DECSP,
+  [OPCODES.INCA]: INCREMENT.INCA,
+  [OPCODES.DECA]: DECREMENT.DECA,
   [OPCODES.LDAn]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.PC++); cpu.M = 2; cpu.T = 8; },
   [OPCODES.CFF]: (cpu) => { cpu.F &= ~0x10; cpu.M = 1; cpu.T = 4; },
 
@@ -772,218 +756,40 @@ const opcodes = {
   [OPCODES.LDAA]: (cpu) => { cpu.A = cpu.A; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0x8 ------------------------ */
-  [OPCODES.ADDAB]: (cpu) => {
-    setFlags(cpu, cpu.A + cpu.B);
-    setHalfCarry(cpu, cpu.A, cpu.B);
-    cpu.A = (cpu.A + cpu.B) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADDAC]: (cpu) => {
-    setFlags(cpu, cpu.A + cpu.C);
-    setHalfCarry(cpu, cpu.A, cpu.C);
-    cpu.A = (cpu.A + cpu.C) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADDAD]: (cpu) => {
-    setFlags(cpu, cpu.A + cpu.D);
-    setHalfCarry(cpu, cpu.A, cpu.D);
-    cpu.A = (cpu.A + cpu.D) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADDAE]: (cpu) => {
-    setFlags(cpu, cpu.A + cpu.E);
-    setHalfCarry(cpu, cpu.A, cpu.E);
-    cpu.A = (cpu.A + cpu.E) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADDAH]: (cpu) => {
-    setFlags(cpu, cpu.A + cpu.H);
-    setHalfCarry(cpu, cpu.A, cpu.H);
-    cpu.A = (cpu.A + cpu.H) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADDAL]: (cpu) => {
-    setFlags(cpu, cpu.A + cpu.L);
-    setHalfCarry(cpu, cpu.A, cpu.L);
-    cpu.A = (cpu.A + cpu.L) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADDAHLm]: (cpu) => {
-    const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
-    setFlags(cpu, cpu.A + val);
-    setHalfCarry(cpu, cpu.A, val);
-    cpu.A = (cpu.A + val) & 0xff;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [OPCODES.ADDAA]: (cpu) => {
-    setFlags(cpu, cpu.A + cpu.A);
-    setHalfCarry(cpu, cpu.A, cpu.A);
-    cpu.A = (cpu.A + cpu.A) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADCAB]: (cpu) => {
-    setFlags(cpu, cpu.A + cpu.L);
-    setHalfCarry(cpu, cpu.A, cpu.L);
-    cpu.A = (cpu.A + cpu.L) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADCAC]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A + cpu.C + carry);
-    setHalfCarry(cpu, cpu.A, cpu.C + carry);
-    cpu.A = (cpu.A + cpu.C) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADCAD]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A + cpu.D + carry);
-    setHalfCarry(cpu, cpu.A, cpu.D + carry);
-    cpu.A = (cpu.A + cpu.D) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADCAE]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A + cpu.E + carry);
-    setHalfCarry(cpu, cpu.A, cpu.E + carry);
-    cpu.A = (cpu.A + cpu.E) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADCAH]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A + cpu.H + carry);
-    setHalfCarry(cpu, cpu.A, cpu.H + carry);
-    cpu.A = (cpu.A + cpu.H) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADCAL]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A + cpu.L + carry);
-    setHalfCarry(cpu, cpu.A, cpu.L + carry);
-    cpu.A = (cpu.A + cpu.L) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.ADCAHLm]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
-    setFlags(cpu, cpu.A + val + carry);
-    setHalfCarry(cpu, cpu.A, val + carry);
-    cpu.A = (cpu.A + val) & 0xff;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [OPCODES.ADCAA]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A + cpu.A + carry);
-    setHalfCarry(cpu, cpu.A, cpu.A + carry);
-    cpu.A = (cpu.A + cpu.A) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
+  [OPCODES.ADDAB]: ADD.ADDAB,
+  [OPCODES.ADDAC]: ADD.ADDAC,
+  [OPCODES.ADDAD]: ADD.ADDAD,
+  [OPCODES.ADDAE]: ADD.ADDAE,
+  [OPCODES.ADDAH]: ADD.ADDAH,
+  [OPCODES.ADDAL]: ADD.ADDAL,
+  [OPCODES.ADDAHLm]: ADD.ADDAHLm,
+  [OPCODES.ADDAA]: ADD.ADDAA,
+  [OPCODES.ADCAB]: ADD.ADCAB,
+  [OPCODES.ADCAC]: ADD.ADCAC,
+  [OPCODES.ADCAD]: ADD.ADCAD,
+  [OPCODES.ADCAE]: ADD.ADCAE,
+  [OPCODES.ADCAH]: ADD.ADCAH,
+  [OPCODES.ADCAL]: ADD.ADCAL,
+  [OPCODES.ADCAHLm]: ADD.ADCAHLm,
+  [OPCODES.ADCAA]: ADD.ADCAA,
 
   /* ------------------------ 0x9 ------------------------ */
-  [OPCODES.SUBAB]: (cpu) => {
-    setFlags(cpu, cpu.A - cpu.B, 1);
-    setHalfCarry(cpu, cpu.A, cpu.B, 1);
-    cpu.A = (cpu.A - cpu.B) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBAC]: (cpu) => {
-    setFlags(cpu, cpu.A - cpu.C, 1);
-    setHalfCarry(cpu, cpu.A, cpu.C, 1);
-    cpu.A = (cpu.A - cpu.C) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBAD]: (cpu) => {
-    setFlags(cpu, cpu.A - cpu.D, 1);
-    setHalfCarry(cpu, cpu.A, cpu.D, 1);
-    cpu.A = (cpu.A - cpu.D) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBAE]: (cpu) => {
-    setFlags(cpu, cpu.A - cpu.E, 1);
-    setHalfCarry(cpu, cpu.A, cpu.E, 1);
-    cpu.A = (cpu.A - cpu.E) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBAH]: (cpu) => {
-    setFlags(cpu, cpu.A - cpu.H, 1);
-    setHalfCarry(cpu, cpu.A, cpu.H, 1);
-    cpu.A = (cpu.A - cpu.H) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBAL]: (cpu) => {
-    setFlags(cpu, cpu.A - cpu.L, 1);
-    setHalfCarry(cpu, cpu.A, cpu.L, 1);
-    cpu.A = (cpu.A - cpu.L) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBAHLm]: (cpu) => {
-    const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
-    setFlags(cpu, cpu.A - val, 1);
-    setHalfCarry(cpu, cpu.A, val, 1);
-    cpu.A = (cpu.A - val) & 0xff;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [OPCODES.SUBAA]: (cpu) => {
-    cpu.A = 0;
-    cpu.F = 0xc0;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBCAB]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A - cpu.B - carry, 1);
-    setHalfCarry(cpu, cpu.A, cpu.B + carry, 1);
-    cpu.A = (cpu.A - cpu.B - carry) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBCAC]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A - cpu.C - carry, 1);
-    setHalfCarry(cpu, cpu.A, cpu.C + carry, 1);
-    cpu.A = (cpu.A - cpu.C - carry) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBCAD]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A - cpu.D - carry, 1);
-    setHalfCarry(cpu, cpu.A, cpu.D + carry, 1);
-    cpu.A = (cpu.A - cpu.D - carry) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBCAE]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A - cpu.E - carry, 1);
-    setHalfCarry(cpu, cpu.A, cpu.E + carry, 1);
-    cpu.A = (cpu.A - cpu.E - carry) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBCAH]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A - cpu.H - carry, 1);
-    setHalfCarry(cpu, cpu.A, cpu.H + carry, 1);
-    cpu.A = (cpu.A - cpu.H - carry) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBCAL]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A - cpu.L - carry, 1);
-    setHalfCarry(cpu, cpu.A, cpu.L + carry, 1);
-    cpu.A = (cpu.A - cpu.L - carry) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
-  [OPCODES.SUBCAHLm]: (cpu) => {
-    const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A - val - carry, 1);
-    setHalfCarry(cpu, cpu.A, val + carry, 1);
-    cpu.A = (cpu.A - val - carry) & 0xff;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [OPCODES.SUBCAA]: (cpu) => {
-    const carry = (cpu.F & 0x10) ? 1 : 0;
-    setFlags(cpu, cpu.A - cpu.B - carry, 1);
-    setHalfCarry(cpu, cpu.A, cpu.B + carry, 1);
-    cpu.A = (cpu.A - cpu.B - carry) & 0xff;
-    cpu.M = 1; cpu.T = 4;
-  },
+  [OPCODES.SUBAB]: SUBTRACT.SUBAB,
+  [OPCODES.SUBAC]: SUBTRACT.SUBAC,
+  [OPCODES.SUBAD]: SUBTRACT.SUBAD,
+  [OPCODES.SUBAE]: SUBTRACT.SUBAE,
+  [OPCODES.SUBAH]: SUBTRACT.SUBAH,
+  [OPCODES.SUBAL]: SUBTRACT.SUBAL,
+  [OPCODES.SUBAHLm]: SUBTRACT.SUBAHLm,
+  [OPCODES.SUBAA]: SUBTRACT.SUBAA,
+  [OPCODES.SUBCAB]: SUBTRACT.SUBCAB,
+  [OPCODES.SUBCAC]: SUBTRACT.SUBCAC,
+  [OPCODES.SUBCAD]: SUBTRACT.SUBCAD,
+  [OPCODES.SUBCAE]: SUBTRACT.SUBCAE,
+  [OPCODES.SUBCAH]: SUBTRACT.SUBCAH,
+  [OPCODES.SUBCAL]: SUBTRACT.SUBCAL,
+  [OPCODES.SUBCAHLm]: SUBTRACT.SUBCAHLm,
+  [OPCODES.SUBCAA]: SUBTRACT.SUBCAA,
 
   /* ------------------------ 0xa ------------------------ */
   [OPCODES.ANDB]: (cpu) => { cpu.A &= cpu.B; cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
@@ -1225,13 +1031,7 @@ const opcodes = {
     cpu.PC = 0x20;
     cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.ADDSPd]: (cpu) => {
-    let i = cpu.mmu.read8(cpu, cpu.PC++);
-    if (i > 127) i = -((~i + 1) & 0xff);
-    cpu.SP += i;
-    cpu.F &= 0x30; // TODO set carry/half carry
-    cpu.M = 4; cpu.T = 16;
-  },
+  [OPCODES.ADDSPd]: ADD.ADDSPd,
   [OPCODES.JPHLm]: (cpu) => { cpu.PC = (cpu.H << 8) | cpu.L; cpu.M = 1; cpu.T = 4; },
   [OPCODES.LDnnmA]: (cpu) => { cpu.mmu.write8(cpu, cpu.mmu.read16(cpu, cpu.PC), cpu.A); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
   [OPCODES.XORn]: (cpu) => { cpu.A ^= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },

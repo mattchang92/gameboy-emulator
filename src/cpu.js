@@ -108,7 +108,7 @@ class CPU {
   }
 
   frame() {
-    const frameEnd = this.clock.m + 17556 * 0.75;
+    const frameEnd = this.clock.m + 17556 * 5;
 
     while (this.clock.m < frameEnd) {
       const op = this.mmu.read8(this, this.PC++);
