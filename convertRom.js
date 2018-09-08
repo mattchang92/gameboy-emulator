@@ -1,7 +1,7 @@
 const fs = require('fs');
 
-const path = './roms/test';
-const name = '10-bit ops';
+const path = './roms';
+const name = 'dr_mario';
 
 const rom = fs.readFileSync(`${path}/${name}.gb`, { encoding: 'binary' });
 

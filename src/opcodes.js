@@ -126,7 +126,7 @@ const OPCODES = {
   LDHLmE: 0x73,
   LDHLmH: 0x74,
   LDHLmL: 0x75,
-  // HALT: 0x76,
+  HALT: 0x76,
   LDHLmA: 0x77,
   LDAB: 0x78,
   LDAC: 0x79,
@@ -220,7 +220,7 @@ const OPCODES = {
   CALLZnn: 0xcc,
   CALLnn: 0xcd,
   ADCAn: 0xce,
-  // RST08: 0xcf,
+  RST08: 0xcf,
 
   RETNC: 0xd0,
   POPDE: 0xd1,
@@ -258,7 +258,7 @@ const OPCODES = {
   // LDHLSPd: 0xf8,
   // LDSPHL: 0xf9,
   LDAnnm: 0xfa,
-  EI: 0xfb
+  EI: 0xfb,
   CPn: 0xfe,
   RST38: 0xff,
 };
