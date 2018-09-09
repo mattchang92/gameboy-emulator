@@ -36,15 +36,13 @@ class GPU {
     this.LY = 0;
     this.gpuRam = new Array(0xff80 - 0xff40).fill(0);
     this.tileset = [];
+    this.objectData = [];
     this.canvas = {};
     this.screen = {};
     this.vram = mmu.vram;
-    this.palette = [
-      [255, 255, 255, 255],
-      [192, 192, 192, 255],
-      [96, 96, 96, 255],
-      [0, 0, 0, 255],
-    ];
+    this.bgPalette = [];
+    this.objPalette0 = [];
+    this.objPalette1 = [];
 
     // 0xff42 - 0xff4b
     this.SCY = 0; // scroll Y (R/W)
@@ -101,13 +99,13 @@ class GPU {
     this.mode = (val & 0x01) + (val & 0x02);
   }
 
-  setPalette(val) {
+  setPalette(val, palette) {
     for (let i = 0; i < 4; i++) {
       switch ((val >> (i * 2)) & 3) {
-        case 0: this.palette[i] = [255, 255, 255, 255]; break;
-        case 1: this.palette[i] = [192, 192, 192, 255]; break;
-        case 2: this.palette[i] = [96, 96, 96, 255]; break;
-        case 3: this.palette[i] = [0, 0, 0, 255]; break;
+        case 0: palette[i] = [255, 255, 255, 255]; break;
+        case 1: palette[i] = [192, 192, 192, 255]; break;
+        case 2: palette[i] = [96, 96, 96, 255]; break;
+        case 3: palette[i] = [0, 0, 0, 255]; break;
         default:
           break;
       }
@@ -139,9 +137,11 @@ class GPU {
     this.gpuRam[addr] = val;
     switch (addr) {
       case 0x0:
-        this.setLCDC(val); break;
+        this.setLCDC(val);
+        this.gpuRam[addr] = val; break;
       case 0x1:
-        this.setSTAT(val); break;
+        this.setSTAT(val);
+        this.gpuRam[addr] = val; break;
       case 0x2:
         this.SCY = val; break;
       case 0x3:
@@ -154,10 +154,13 @@ class GPU {
       case 0x6:
         this.DMA = val; break;
       case 0x7:
-        this.setPalette(val); break;
+        this.setPalette(val, this.bgPalette);
+        this.BGP = val; break;
       case 0x8:
+        this.setPalette(val, this.objPalette0);
         this.OBP0 = val; break;
       case 0x9:
+        this.setPalette(val, this.objPalette1);
         this.OBP1 = val; break;
       case 0xa:
         this.WY = val; break;
@@ -168,16 +171,28 @@ class GPU {
     }
   }
 
-  tileMapToScreen() {
-    // if (!this.LCDEnable || !this.bgEnable) {
-    //   console.log('gegeg', this.LCDEnable, this.bgEnable)
-    // }
+  buildObjectData(addr, val) {
+    const obj = addr >> 2;
+    if (obj >= 40) console.log('Address given for object is not valid', obj);
 
+    switch (addr & 3) {
+      case 0: this.objectData[obj].y = val - 16; break;
+      case 1: this.objectData[obj].x = val - 8; break;
+      case 2: this.objectData[obj].tile = val; break;
+      case 3:
+        this.objectData[obj].palette = (val & 0x10) ? 1 : 0;
+        this.objectData[obj].xflip = (val & 0x20) ? 1 : 0;
+        this.objectData[obj].yflip = (val & 0x40) ? 1 : 0;
+        this.objectData[obj].zIndex = (val & 0x80) ? 1 : 0;
+        break;
+      default: break;
+    }
+  }
+
+  tileMapToScreen() {
     const tileMapAddress = this.bgTileMapAddress ? 0x1c00 : 0x1800;
     const tileSet = this.bgAndWindowTileData ? 1 : 2;
     let printed = false;
-    // this.SCY = 128;
-    // this.SCX = 128;
 
     for (let row = 0; row < 144; row++) {
       for (let col = 0; col < 160; col++) {
@@ -232,7 +247,7 @@ class GPU {
   step(cpu) {
     this.MODECLOCK += cpu.M;
     switch (this.MODE) {
-      case 0:
+      case 0: // Hblank
         if (this.MODECLOCK >= 51) {
           if (this.LY === 143) {
             this.MODE = 1;
@@ -248,7 +263,7 @@ class GPU {
         }
         break;
 
-      case 1:
+      case 1: // Vblank
         if (this.MODECLOCK >= 114) {
           this.MODECLOCK = 0;
           this.LY++;
@@ -260,14 +275,14 @@ class GPU {
         }
         break;
 
-      case 2:
+      case 2: // OAM read mode
         if (this.MODECLOCK >= 20) {
           this.MODECLOCK = 0;
           this.MODE = 3;
         }
         break;
 
-      case 3:
+      case 3: // VRAM read mode
         if (this.MODECLOCK >= 43) {
           this.MODECLOCK = 0;
           this.MODE = 0;
@@ -282,7 +297,7 @@ class GPU {
   reset() {
     /* eslint-disable-next-line */
     const canvas = document.getElementById('game-screen');
-    // console.log(canvas);
+
     this.tileset = new Array(NUM_TILES).fill(null)
       .map(() => new Array(ROWS_IN_TILE).fill([])
         .map(() => new Array(COLS_IN_TILE).fill(0)));
@@ -297,12 +312,43 @@ class GPU {
         .split(',')
         .map(num => parseInt(num, 10));
 
-
-      // const data = new Array(256 * 256 * 4).fill(255);
-
       this.screen.data.set(data);
 
       this.ctx.putImageData(this.screen, 0, 0);
+    }
+
+    this.bgPalette = [
+      [255, 255, 255, 255],
+      [192, 192, 192, 255],
+      [96, 96, 96, 255],
+      [0, 0, 0, 255],
+    ];
+
+    this.objPalette0 = [
+      [255, 255, 255, 255],
+      [192, 192, 192, 255],
+      [96, 96, 96, 255],
+      [0, 0, 0, 255],
+    ];
+
+    this.objPalette1 = [
+      [255, 255, 255, 255],
+      [192, 192, 192, 255],
+      [96, 96, 96, 255],
+      [0, 0, 0, 255],
+    ];
+
+    for (let i = 0; i < 40; i++) {
+      this.objectData[i] = {
+        y: -16,
+        x: -8,
+        tile: 0,
+        palette: 0,
+        xflip: 0,
+        yflip: 0,
+        xIndex: 0,
+        num: i,
+      };
     }
   }
 
@@ -325,49 +371,7 @@ class GPU {
       // console.log(tile, this.tileset[tile]);
 
       this.tileset[tile][y][i] = leastSigBit + mostSigBit;
-      // console.log('checking first tile', this.tileset[tile]);
-
-      // console.log('setting tile info', leastSigBit + mostSigBit);
-      // console.log('tile is', JSON.stringify(this.tileset[tile]));
     }
-  }
-
-  renderScan() {
-    // // let mapOffs = this.bgMap ? 0x1c00 : 0x1800;
-    // let mapOffs = 0x1800;
-    // mapOffs += ((this.LY + this.backgroundOffsetY) & 0xff) >> 3;
-
-    // let lineOffs = this.backgroundOffsetX >> 3;
-
-    // const y = (this.LY + this.backgroundOffsetY) & 0x7;
-    // let x = this.backgroundOffsetX & 0x7;
-    // const canvasOffs = (this.LY * 256 * 4) % (256 * 256 * 4);
-    // let colour;
-    // let tile = this.vram[mapOffs + lineOffs];
-    // // console.log('render scan sbeing triggered', this.LY);
-    // // console.log(JSON.stringify(this.tileset[tile]));
-
-    // for (let i = 0; i < 256; i++) {
-    //   colour = this.palette[this.tileset[tile][y][x]];
-    //   // console.log('what is the color', y, x, this.tileset[tile]);
-    //   // console.log("what is ist", colour);
-    //   // console.log('rendering scan', canvasOffs);
-    //   // console.log(this.screen.data.slice(canvasOffs, canvasOffs + 5))
-    //   // console.log(canvasOffs, colour)
-    //   this.screen.data[canvasOffs + 0] = colour[0];
-    //   this.screen.data[canvasOffs + 1] = colour[1];
-    //   this.screen.data[canvasOffs + 2] = colour[2];
-    //   this.screen.data[canvasOffs + 3] = colour[3];
-    //   // console.log(this.screen.data.slice(canvasOffs, canvasOffs + 5));
-
-    //   x++;
-    //   if (x === 8) {
-    //     x = 0;
-    //     lineOffs = (lineOffs + 1) & 31;
-    //     tile = this.vram[mapOffs + lineOffs];
-    //     if (this.bgTile === 1 && tile < 128) tile += 256;
-    //   }
-    // }
   }
 }
 

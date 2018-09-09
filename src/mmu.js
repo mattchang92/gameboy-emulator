@@ -33,10 +33,10 @@ class MMU {
     // this.rom = require('../roms/test/09-op r,r');
     // this.rom = require('../roms/test/10-bit ops');
     // this.rom = require('../roms/test/11-op a,(hl)');
-    this.eram = new Array(0x2000).fill(0);
-    this.oam = new Array(0xa0).fill(0);
-    this.vram = new Array(0x2000).fill(0);
-    this.wram = new Array(0x3e00).fill(0);
+    this.eram = new Array(0x2000).fill(0); // 0xa000 - 0xbfff
+    this.oam = new Array(0xa0).fill(0); // 0xfe00 - 0xfe9f
+    this.vram = new Array(0x2000).fill(0); // 0x8000 - 0x9fff
+    this.wram = new Array(0x3e00).fill(0); // 0xc000 - 0xdfff (shadow copy)
     this.zram = new Array(0x7f).fill(0);
 
     this.ie = 0; // interrupt enabled
@@ -109,8 +109,7 @@ class MMU {
 
           // Object Attribute Memory (OAM 160B)
           case 0xe00:
-            if (addr < 0xfea0) return this.oam[addr & 0xff];
-            return 0;
+            return addr < 0xfea0 ? this.oam[addr & 0xff] : 0;
 
           // 0xf00 Zero Page RAM (128 B)
           case 0xf00:
@@ -220,7 +219,11 @@ class MMU {
 
           // Object Attribute Memory (OAM 160B)
           case 0xe00:
-            if (addr < 0xfea0) this.oam[addr & 0xff] = val; break;
+            if (addr < 0xfea0) {
+              this.oam[addr & 0xff] = val;
+              cpu.gpu.buildObjectData(addr - 0xfe00, val);
+            }
+            break;
 
           // 0xf00 Zero Page RAM (128 B)
           case 0xf00:
