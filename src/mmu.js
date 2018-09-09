@@ -36,7 +36,7 @@ class MMU {
     this.oam = [];
     this.vram = new Array(0x2000).fill(0);
     this.wram = new Array(0x2000).fill(0);
-    this.zram = [];
+    this.zram = new Array(0x7f).fill(0);
 
     this.ie = 0; // interrupt enabled
     this.if = 0xe0; // interrupt flag (top 3 bits always set)
@@ -113,6 +113,7 @@ class MMU {
       // Working RAM (8K)
       case 0xc000:
       case 0xd000:
+      case 0xe000:
         return this.wram[addr & 0x1fff];
 
       // 0xf000:
@@ -134,24 +135,14 @@ class MMU {
             if (addr === 0xff0f) return this.if;
             if (addr >= 0xff80) {
               return this.zram[addr & 0x7f];
-            }
-            switch (addr & 0xf0) {
-              case 0x00:
-              case 0x10:
-              case 0x20:
-              case 0x30:
-                return 0;
-
-              case 0x40:
-              case 0x50:
-              case 0x60:
-              case 0x70:
-                return cpu.gpu.read8(addr);
-              default:
-                break;
+            } else if (addr >= 0xff40) {
+              return cpu.gpu.read8(addr);
             }
 
-            return 0; // I/O control
+            switch (addr & 0x3f) {
+              case 0x00: return cpu.controller.read();
+              default: return 0;
+            }
 
           default:
             break;
@@ -183,9 +174,9 @@ class MMU {
     if (addr === 0xff80) return;
     if (cpu === undefined || addr === undefined || val === undefined) {
       console.log('Missing required params for write byte');
-      if (!cpu) console.log('missing cpu');
-      if (!addr) console.log('missing addr');
-      if (!val) console.log('missing val');
+      if (!cpu === undefined) console.log('missing cpu');
+      if (!addr === undefined) console.log('missing addr');
+      if (!val === undefined) console.log('missing val');
       cpu.FAIL = true;
     }
     if (addr === 0xff50 && !this.biosExecuted) {
@@ -269,25 +260,14 @@ class MMU {
             // if (addr === 0xff02) console.log('writing to 0xff02', val);
             if (addr >= 0xff80) {
               this.zram[addr & 0x7f] = val; break;
+            } else if (addr >= 0xff40) {
+              cpu.gpu.write8(cpu, addr, val); break;
             } else {
-              switch (addr & 0xf0) {
-                case 0x00:
-                  break; // implement later
-
-                case 0x10:
-                case 0x20:
-                case 0x30:
-                  break;
-
-                case 0x40:
-                case 0x50:
-                case 0x60:
-                case 0x70:
-                  cpu.gpu.write8(cpu, addr, val);
-                  break;
-                default:
-                  break;
+              if (addr === 0xff00) {
+                cpu.controller.write(val);
               }
+              // implement other registers later
+              break;
             }
           default:
             break;
@@ -302,6 +282,10 @@ class MMU {
   write16(cpu, addr, val) {
     if (cpu.counter < cpu.limit && cpu.logsEnabled) {
       console.log(`Writing word to address ${addr} with value ${val}`);
+    }
+
+    if (cpu === undefined || addr === undefined || val === undefined) {
+      console.log('Missing required params for write word');
     }
 
     // if (addr === 0xff50) console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');

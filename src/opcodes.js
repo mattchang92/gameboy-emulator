@@ -3,7 +3,7 @@ const { cbopcodes } = require('./cbOpcodes');
 const OPCODES = {
   NOP: 0x00,
   LDBCnn: 0x01,
-  // LDBCmA: 0x02,
+  LDBCmA: 0x02,
   INCBC: 0x03,
   INCB: 0x04,
   DECB: 0x05,
@@ -137,9 +137,9 @@ const OPCODES = {
   LDAHLm: 0x7e,
   LDAA: 0x7f,
 
-  // ADDAB: 0x80,
+  ADDAB: 0x80,
   // ADDAC: 0x81,
-  // ADDAD: 0x82,
+  ADDAD: 0x82,
   ADDAE: 0x83,
   // ADDAH: 0x84,
   ADDAL: 0x85,
@@ -174,14 +174,14 @@ const OPCODES = {
   // ANDB: 0xa0,
   ANDC: 0xa1,
   // ANDD: 0xa2,
-  // ANDE: 0xa3,
+  ANDE: 0xa3,
   // ANDH: 0xa4,
   // ANDL: 0xa5,
   // ANDHLm: 0xa6,
   ANDA: 0xa7,
   // XORB: 0xa8,
   XORC: 0xa9,
-  // XORD: 0xaa,
+  XORD: 0xaa,
   // XORE: 0xab,
   // XORH: 0xac,
   XORL: 0xad,
@@ -440,6 +440,7 @@ const opcodes = {
   [OPCODES.LDABCm]: (cpu) => {
     const address = (cpu.B << 8) + cpu.C;
     cpu.A = cpu.mmu.read8(cpu, address);
+    if (cpu.A === undefined) console.log('A is undefined at 1', address);
     cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.DECBC]: DECREMENT.DECBC,
@@ -483,6 +484,7 @@ const opcodes = {
   [OPCODES.LDADEm]: (cpu) => {
     const address = (cpu.D << 8) | cpu.E;
     cpu.A = cpu.mmu.read8(cpu, address);
+    if (cpu.A === undefined) console.log('A is undefined at 2', address);
     cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.DECDE]: DECREMENT.DECDE,
@@ -555,6 +557,8 @@ const opcodes = {
   [OPCODES.LDIAHLm]: (cpu) => {
     const address = (cpu.H << 8) + cpu.L;
     cpu.A = cpu.mmu.read8(cpu, address);
+    if (cpu.A === undefined) console.log('A is undefined at 3', address);
+
     cpu.L = (cpu.L + 1) & 0xff;
     if (!cpu.L) cpu.H = (cpu.H + 1) & 0xff;
     cpu.M = 2; cpu.T = 8;
@@ -622,6 +626,8 @@ const opcodes = {
   [OPCODES.LDDAHLm]: (cpu) => {
     const address = (cpu.H << 8) + cpu.L;
     cpu.A = cpu.mmu.read8(cpu, address);
+    if (cpu.A === undefined) console.log('A is undefined at 4', address);
+
     cpu.L = (cpu.L - 1) & 0xff;
     if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
     cpu.M = 2; cpu.T = 8;
@@ -629,7 +635,7 @@ const opcodes = {
   [OPCODES.DECSP]: DECREMENT.DECSP,
   [OPCODES.INCA]: INCREMENT.INCA,
   [OPCODES.DECA]: DECREMENT.DECA,
-  [OPCODES.LDAn]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.PC++); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDAn]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.PC++); cpu.M = 2; cpu.T = 8; if (cpu.A === undefined) console.log('A is undefined at 5');},
   [OPCODES.CFF]: (cpu) => { cpu.F &= ~0x10; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0x4 ------------------------ */
@@ -701,7 +707,7 @@ const opcodes = {
   [OPCODES.LDAE]: (cpu) => { cpu.A = cpu.E; cpu.M = 1; cpu.T = 4; },
   [OPCODES.LDAH]: (cpu) => { cpu.A = cpu.H; cpu.M = 1; cpu.T = 4; },
   [OPCODES.LDAL]: (cpu) => { cpu.A = cpu.L; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDAHLm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDAHLm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; if (cpu.A === undefined) console.log('A is undefined at 6');},
   [OPCODES.LDAA]: (cpu) => { cpu.A = cpu.A; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0x8 ------------------------ */
@@ -841,7 +847,7 @@ const opcodes = {
       }
       cbopcodes[op](cpu);
     } else {
-      console.log('No CB opcode instruction found');
+      console.log('No CB opcode instruction found', op.toString(16));
     }
   },
   [OPCODES.CALLZnn]: (cpu) => {
@@ -961,9 +967,9 @@ const opcodes = {
   [OPCODES.RST28]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x28; cpu.M = 3; cpu.T = 12; },
 
   /* ------------------------ 0xf ------------------------ */
-  [OPCODES.LDHAnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; },
-  [OPCODES.POPAF]: (cpu) => { cpu.F = cpu.mmu.read8(cpu, cpu.SP++) & 0xf0; cpu.A = cpu.mmu.read8(cpu, cpu.SP++); cpu.M = 3; cpu.T = 12; },
-  [OPCODES.LDAIOC]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 + cpu.C); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHAnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; if (cpu.A === undefined) console.log('A is undefined at 7', (0xff00 | cpu.mmu.read8(cpu, cpu.PC - 1)).toString(16));},
+  [OPCODES.POPAF]: (cpu) => { cpu.F = cpu.mmu.read8(cpu, cpu.SP++) & 0xf0; cpu.A = cpu.mmu.read8(cpu, cpu.SP++); cpu.M = 3; cpu.T = 12; if (cpu.A === undefined) console.log('A is undefined at 8');},
+  [OPCODES.LDAIOC]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 + cpu.C); cpu.M = 2; cpu.T = 8; if (cpu.A === undefined) console.log('A is undefined at 9');},
   [OPCODES.DI]: (cpu) => { cpu.ime = 0; cpu.M = 1; cpu.T = 4; },
   [OPCODES.PUSHAF]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, (cpu.A << 8) | cpu.F); cpu.M = 3; cpu.T = 12; },
   [OPCODES.ORn]: (cpu) => { cpu.A |= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
@@ -977,7 +983,7 @@ const opcodes = {
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDSPHL]: (cpu) => { cpu.SP = (cpu.H << 8) | cpu.L; },
-  [OPCODES.LDAnnm]: (cpu) => { const addr = cpu.mmu.read16(cpu, cpu.PC); cpu.A = cpu.mmu.read8(cpu, addr); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
+  [OPCODES.LDAnnm]: (cpu) => { const addr = cpu.mmu.read16(cpu, cpu.PC); cpu.A = cpu.mmu.read8(cpu, addr); cpu.PC += 2; cpu.M = 4; cpu.T = 16; if (cpu.A === undefined) console.log('A is undefined at 4', addr);},
   [OPCODES.EI]: (cpu) => { cpu.ime = 1; cpu.M = 1; cpu.T = 4; },
   [OPCODES.CPn]: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); setFlags(cpu, cpu.A, val, 1); cpu.M = 2; cpu.T = 8; },
   [OPCODES.RST38]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x38; cpu.M = 3; cpu.T = 12; },

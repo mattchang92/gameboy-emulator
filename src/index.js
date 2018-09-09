@@ -1,8 +1,7 @@
+// const cpu = require('./cpu');
 const CPU = require('./cpu');
 
 const cpu = new CPU();
-
-cpu.dispatch();
 
 let gameLoop;
 
@@ -23,3 +22,7 @@ document.getElementById('stop').onclick = () => {
 };
 
 // cpu.dispatch();
+
+window.onkeydown = cpu.controller.keyDown.bind(cpu.controller);
+
+window.onkeyup = cpu.controller.keyUp.bind(cpu.controller);

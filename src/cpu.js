@@ -1,6 +1,7 @@
 const CPUMemory = require('./cpuMemory');
 const GPU = require('./gpu');
 const MMU = require('./mmu');
+const Controller = require('./controller');
 const { opcodes, interrupts } = require('./opcodes');
 
 class CPU {
@@ -51,6 +52,7 @@ class CPU {
     this.ram = new CPUMemory();
     this.mmu = new MMU(this.ram);
     this.gpu = new GPU(this.mmu);
+    this.controller = new Controller();
   }
 
   reset() {
@@ -92,7 +94,17 @@ class CPU {
   }
 
   handleInterrupts() {
+    /*
+      Interrupts
+      0 VBlank
+      1 LCD stat
+      2 Timer
+      3 Serial
+      4 Joypad
+    */
     if (this.ime && this.mmu.ie && this.mmu.if) {
+      this.HALT = 0;
+      // console.log(this.mmu.ie.toString(2), this.mmu.if.toString(2))
       let ifired = this.mmu.ie & this.mmu.if;
       for (let i = 0; i < 5; i++) {
         if (ifired & 0x01) {
@@ -108,35 +120,55 @@ class CPU {
   }
 
   frame() {
-    const frameEnd = this.clock.m + 17556 * 5;
+    const frameEnd = this.clock.m + 17556 * 2;
 
     while (this.clock.m < frameEnd) {
-      const op = this.mmu.read8(this, this.PC++);
+      Object.keys(this).forEach((key) => {
+        if (this[key] === undefined) {
+          const op = this.mmu.read8(this, this.PC - 1);
+          console.log('property is undefined', key, op.toString(16));
+        }
+      });
 
-      this.initialCounter++;
-      if (this.initialCounter > this.offset) {
-        // this.logsEnabled = true;
-        this.counter++;
+      if (this.FAIL) {
+        const op = this.mmu.read8(this, this.PC - 1);
+        console.log("write byte failed", op.toString(16));
+        this.FAIL = false;
       }
 
-      if (this.counter < this.limit && this.logsEnabled) {
-        console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), this.SP, this.B, this.C, this.D, this.E, this.H, this.L, this.A);
+      if (this.HALT) {
+        this.M = 1;
+      } else {
+
+        const op = this.mmu.read8(this, this.PC++);
+
+        this.initialCounter++;
+        if (this.initialCounter > this.offset) {
+          // this.logsEnabled = true;
+          this.counter++;
+        }
+
+        if (this.counter < this.limit && this.logsEnabled) {
+          console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), this.SP, this.B, this.C, this.D, this.E, this.H, this.L, this.A);
+        }
+
+        if (this.timeout) {
+          // console.log('if ', this.mmu.if, ' ie ', this.mmu.ie, ' ime ', this.ime);
+          // console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), this.SP, this.B, this.C, this.D, this.E, this.H, this.L, this.A);
+        }
+
+        if (typeof opcodes[op] !== 'function') {
+          const prevOp = this.mmu.read8(this, this.PC - 2);
+          console.log('not a function!!!', op, op.toString(16), opcodes[op], ' previous is ', prevOp.toString(16), ' pc is at ', this.PC);
+        }
+        opcodes[op](this);
+        this.PC &= 0xffff;
+
+
+        this.clock.m += this.M;
+        this.clock.t += this.T;
       }
 
-      if (this.timeout) {
-        // console.log('if ', this.mmu.if, ' ie ', this.mmu.ie, ' ime ', this.ime);
-        // console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), this.SP, this.B, this.C, this.D, this.E, this.H, this.L, this.A);
-      }
-
-      if (typeof opcodes[op] !== 'function') {
-        console.log('not a function!!!', op, op.toString(16), opcodes[op]);
-      }
-      opcodes[op](this);
-      this.PC &= 0xffff;
-
-
-      this.clock.m += this.M;
-      this.clock.t += this.T;
 
       // if (this.ime) {
       //   console.log(this.mmu.ie, this.mmu.if);
@@ -148,5 +180,6 @@ class CPU {
     }
   }
 }
+
 
 module.exports = CPU;
