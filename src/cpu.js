@@ -12,7 +12,7 @@ class CPU {
     this.counter = 0;
     this.initialCounter = 0;
     this.logsEnabled = false;
-    this.offset = 0;
+    this.offset = 15000;
     this.limit = 30000;
 
     this.A = 0;
@@ -120,15 +120,15 @@ class CPU {
   }
 
   frame() {
-    const frameEnd = this.clock.m + 17556 * 2;
+    const frameEnd = this.clock.m + 17556 * 10;
 
     while (this.clock.m < frameEnd) {
-      Object.keys(this).forEach((key) => {
-        if (this[key] === undefined) {
-          const op = this.mmu.read8(this, this.PC - 1);
-          console.log('property is undefined', key, op.toString(16));
-        }
-      });
+      // Object.keys(this).forEach((key) => {
+      //   if (this[key] === undefined) {
+      //     const op = this.mmu.read8(this, this.PC - 1);
+      //     console.log('property is undefined', key, op.toString(16));
+      //   }
+      // });
 
       if (this.FAIL) {
         const op = this.mmu.read8(this, this.PC - 1);
@@ -139,17 +139,14 @@ class CPU {
       if (this.HALT) {
         this.M = 1;
       } else {
-
+        const pc = this.PC;
+        const sp = this.SP;
         const op = this.mmu.read8(this, this.PC++);
 
         this.initialCounter++;
         if (this.initialCounter > this.offset) {
           // this.logsEnabled = true;
           this.counter++;
-        }
-
-        if (this.counter < this.limit && this.logsEnabled) {
-          console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), this.SP, this.B, this.C, this.D, this.E, this.H, this.L, this.A);
         }
 
         if (this.timeout) {
@@ -162,6 +159,11 @@ class CPU {
           console.log('not a function!!!', op, op.toString(16), opcodes[op], ' previous is ', prevOp.toString(16), ' pc is at ', this.PC);
         }
         opcodes[op](this);
+
+        if (this.counter < this.limit && this.logsEnabled) {
+          console.log('PC:', pc, ' OP:', op.toString(16), ' F:', this.F.toString(2).slice(0, 4), ' SP:', sp, ' B:', this.B, ' C:', this.C, ' D:', this.D, ' E:', this.E, ' H:', this.H, ' L:', this.L, ' A:', this.A);
+        }
+
         this.PC &= 0xffff;
 
 

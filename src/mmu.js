@@ -21,6 +21,7 @@ class MMU {
     ];
     this.rom = require('../roms/tetris');
     // this.rom = require('../roms/dr_mario');
+    // this.rom = require('../roms/ttt');
     // this.rom = require('../roms/test/01-special');
     // this.rom = require('../roms/test/02-interrupts');
     // this.rom = require('../roms/test/03-op sp,hl');
@@ -33,9 +34,9 @@ class MMU {
     // this.rom = require('../roms/test/10-bit ops');
     // this.rom = require('../roms/test/11-op a,(hl)');
     this.eram = new Array(0x2000).fill(0);
-    this.oam = [];
+    this.oam = new Array(0xa0).fill(0);
     this.vram = new Array(0x2000).fill(0);
-    this.wram = new Array(0x2000).fill(0);
+    this.wram = new Array(0x3e00).fill(0);
     this.zram = new Array(0x7f).fill(0);
 
     this.ie = 0; // interrupt enabled
@@ -57,33 +58,15 @@ class MMU {
     }
     addr &= 0xffff;
     if (cpu.counter < cpu.limit && cpu.logsEnabled) {
-      console.log(`Reading byte from address ${addr}`);
+      // console.log(`Reading byte from address ${addr}`);
     }
     switch (addr & 0xf000) {
       // Bios (256 B) /ROM0 (16K)
       // 0x0104-0x0133
 
-      // 0x00A8-0x00D7
-
       case 0x0000:
         if (!this.biosExecuted) {
-          // console.log('reading from bios at addrss ', addr);
-          // if (addr <= 0x0133 && addr >= 0x0104) {
-          //   const testAddr = addr - 0x0104;
-          //   // console.log('logo hack inbound', this.bios[0x00a8 + testAddr], this.rom[addr]);
-          //   // return this.rom[addr];
-          //   return this.bios[0x00a8 + testAddr];
-          // }
-
-          // if (addr <= 0x014D && addr >= 0x0134) {
-          //   return addr === 0x0134 ? 0xe7 : 0;
-          // }
-
           if (addr < 0x100) return this.bios[addr];
-          if (cpu.PC === 0x0100) {
-            this.biosExecuted = true;
-            console.log('--------------------BIOS FULLY EXECUTED--------------------');
-          }
         }
         return this.rom[addr];
 
@@ -158,7 +141,7 @@ class MMU {
   read16(cpu, addr) {
     addr &= 0xffff;
     if (cpu.counter < cpu.limit && cpu.logsEnabled) {
-      console.log(`Reading word from address ${addr}`);
+      // console.log(`Reading word from address ${addr}`);
     }
 
     // const one = this.read8(cpu, addr);
@@ -182,10 +165,10 @@ class MMU {
     if (addr === 0xff50 && !this.biosExecuted) {
       this.printed = true;
       this.biosExecuted = true;
-      console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+      // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     }
     if (cpu.counter < cpu.limit && cpu.logsEnabled) {
-      console.log(`Writing byte to address ${addr} with value ${val}`);
+      // console.log(`Writing byte to address ${addr} with value ${val}`);
     }
     addr &= 0xffff;
 
@@ -224,6 +207,7 @@ class MMU {
       // Working RAM (8K)
       case 0xc000:
       case 0xd000:
+      case 0xe000:
         this.wram[addr & 0x1fff] = val; break;
 
       // 0xf000:
@@ -281,11 +265,11 @@ class MMU {
 
   write16(cpu, addr, val) {
     if (cpu.counter < cpu.limit && cpu.logsEnabled) {
-      console.log(`Writing word to address ${addr} with value ${val}`);
+      // console.log(`Writing word to address ${addr} with value ${val}`);
     }
 
     if (cpu === undefined || addr === undefined || val === undefined) {
-      console.log('Missing required params for write word');
+      // console.log('Missing required params for write word');
     }
 
     // if (addr === 0xff50) console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');

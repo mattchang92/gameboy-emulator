@@ -272,7 +272,6 @@ const CBOPCODES = {
   SET7A: 0xff,
 };
 
-
 const setFlags = (cpu, val, isSub) => {
   cpu.F = 0;
   if (!(val & 0xff)) cpu.F |= 0x80;
@@ -283,7 +282,8 @@ const setFlags = (cpu, val, isSub) => {
 const testBit = (cpu, val) => {
   cpu.F &= 0x1f;
   cpu.F |= 0x20;
-  if (val === 0) cpu.F |= 0x80;
+  cpu.F = val ? 0 : 0x80;
+  // if (val === 0) cpu.F |= 0x80;
 };
 
 const cbopcodes = {
@@ -383,10 +383,11 @@ const cbopcodes = {
   [CBOPCODES.RLC]: (cpu) => {
     const c = cpu.F & 0x10 ? 1 : 0;
     const overflow = cpu.C & 0x80 ? 0x10 : 0;
-    cpu.C = (cpu.C << 1) | c;
-    setFlags(cpu, cpu.C);
+    cpu.C = (cpu.C << 1) + c;
+    // setFlags(cpu, cpu.C);
     cpu.C &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
+    cpu.F = cpu.C ? 0 : 0x80;
+    cpu.F = (cpu.F & 0xef) + overflow;
     cpu.M = 2; cpu.T = 8;
   },
   [CBOPCODES.RLD]: (cpu) => {

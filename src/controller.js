@@ -33,8 +33,8 @@ class Controller {
 
   read() {
     switch (this.column) {
-      case 0x10: return this.rows[0];
-      case 0x20: return this.rows[1];
+      case 0x10: return this.rows[1];
+      case 0x20: return this.rows[0];
       default: return 0;
     }
   }
@@ -53,6 +53,7 @@ class Controller {
   */
   keyDown(e) {
     const key = this.inputMap[e.keyCode];
+    // console.log(e.keyCode, key);
     switch (key) {
       case this.INPUT.A: this.rows[1] &= 0xe; break;
       case this.INPUT.B: this.rows[1] &= 0xd; break;

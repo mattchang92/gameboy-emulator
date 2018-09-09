@@ -138,7 +138,7 @@ const OPCODES = {
   LDAA: 0x7f,
 
   ADDAB: 0x80,
-  // ADDAC: 0x81,
+  ADDAC: 0x81,
   ADDAD: 0x82,
   ADDAE: 0x83,
   // ADDAH: 0x84,
@@ -151,7 +151,7 @@ const OPCODES = {
   // ADCAE: 0x8b,
   // ADCAH: 0x8c,
   // ADCAL: 0x8d,
-  // ADCAHLm: 0x8e,
+  ADCAHLm: 0x8e,
   // ADCAA: 0x8f,
 
   SUBAB: 0x90,
@@ -171,7 +171,7 @@ const OPCODES = {
   // SUBCAHLm: 0x9e,
   // SUBCAA: 0x9f,
 
-  // ANDB: 0xa0,
+  ANDB: 0xa0,
   ANDC: 0xa1,
   // ANDD: 0xa2,
   ANDE: 0xa3,
@@ -190,14 +190,14 @@ const OPCODES = {
 
   ORB: 0xb0,
   ORC: 0xb1,
-  // ORD: 0xb2,
+  ORD: 0xb2,
   // ORE: 0xb3,
   // ORH: 0xb4,
   // ORL: 0xb5,
   ORHLm: 0xb6,
   ORA: 0xb7,
   // CPB: 0xb8,
-  // CPC: 0xb9,
+  CPC: 0xb9,
   // CPD: 0xba,
   CPE: 0xbb,
   // CPH: 0xbc,
@@ -234,7 +234,7 @@ const OPCODES = {
   // JPCnn: 0xda,
   // CALLCnn: 0xdc,
   // SUBCAn: 0xde,
-  // RST18: 0xdf,
+  RST18: 0xdf,
 
   LDHnmA: 0xe0,
   POPHL: 0xe1,
@@ -286,7 +286,7 @@ const setHalfCarry = (cpu, a, b, isSub, is16BitOp) => {
   }
 };
 
-const setFlags = (cpu, a, b, isSub, is16BitOp) => {
+const setFlags = (cpu, a, b, isSub = 0, is16BitOp = 0) => {
   const overflowLimit = is16BitOp ? 0xffff : 0xff;
   const val = isSub ? a - b : a + b;
 
@@ -325,14 +325,25 @@ const INCREMENT = {
 
 const DECREMENT = {
   // 8 bit decrements Flag = (* 1 * -)
-  DECB: (cpu) => { setFlags(cpu, cpu.B, 1, 1); cpu.B--; cpu.B &= 0xff; cpu.M = 1; cpu.T = 4; },
-  DECC: (cpu) => { setFlags(cpu, cpu.C, 1, 1); cpu.C--; cpu.C &= 0xff; cpu.M = 1; cpu.T = 4; },
-  DECD: (cpu) => { setFlags(cpu, cpu.D, 1, 1); cpu.D--; cpu.D &= 0xff; cpu.M = 1; cpu.T = 4; },
-  DECE: (cpu) => { setFlags(cpu, cpu.E, 1, 1); cpu.E--; cpu.E &= 0xff; cpu.M = 1; cpu.T = 4; },
-  DECH: (cpu) => { setFlags(cpu, cpu.H, 1, 1); cpu.H--; cpu.H &= 0xff; cpu.M = 1; cpu.T = 4; },
-  DECL: (cpu) => { setFlags(cpu, cpu.L, 1, 1); cpu.L--; cpu.L &= 0xff; cpu.M = 1; cpu.T = 4; },
-  DECHLm: (cpu) => { const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) - 1); setFlags(cpu, val - 1, 1, 1); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & 0xff); cpu.M = 3; cpu.T = 12; },
-  DECA: (cpu) => { setFlags(cpu, cpu.A, 1, 1); cpu.A--; cpu.A &= 0xff; cpu.M = 1; cpu.T = 4; },
+  // Following working emu
+  DECB: (cpu) => { cpu.B--; cpu.B &= 0xff; cpu.F = cpu.B ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
+  DECC: (cpu) => { cpu.C--; cpu.C &= 0xff; cpu.F = cpu.C ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
+  DECD: (cpu) => { cpu.D--; cpu.D &= 0xff; cpu.F = cpu.D ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
+  DECE: (cpu) => { cpu.E--; cpu.E &= 0xff; cpu.F = cpu.E ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
+  DECH: (cpu) => { cpu.H--; cpu.H &= 0xff; cpu.F = cpu.H ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
+  DECL: (cpu) => { cpu.L--; cpu.L &= 0xff; cpu.F = cpu.L ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
+  DECHLm: (cpu) => { const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) - 1); cpu.F = val ? 0 : 0x80; cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & 0xff); cpu.M = 3; cpu.T = 12; },
+  DECA: (cpu) => { cpu.A--; cpu.A &= 0xff; cpu.F = cpu.A ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
+
+  // Original
+  // DECB: (cpu) => { setFlags(cpu, cpu.B, 1, 1); cpu.B--; cpu.B &= 0xff; cpu.M = 1; cpu.T = 4; },
+  // DECC: (cpu) => { setFlags(cpu, cpu.C, 1, 1); cpu.C--; cpu.C &= 0xff; cpu.M = 1; cpu.T = 4; },
+  // DECD: (cpu) => { setFlags(cpu, cpu.D, 1, 1); cpu.D--; cpu.D &= 0xff; cpu.M = 1; cpu.T = 4; },
+  // DECE: (cpu) => { setFlags(cpu, cpu.E, 1, 1); cpu.E--; cpu.E &= 0xff; cpu.M = 1; cpu.T = 4; },
+  // DECH: (cpu) => { setFlags(cpu, cpu.H, 1, 1); cpu.H--; cpu.H &= 0xff; cpu.M = 1; cpu.T = 4; },
+  // DECL: (cpu) => { setFlags(cpu, cpu.L, 1, 1); cpu.L--; cpu.L &= 0xff; cpu.M = 1; cpu.T = 4; },
+  // DECHLm: (cpu) => { const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) - 1); setFlags(cpu, val - 1, 1, 1); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & 0xff); cpu.M = 3; cpu.T = 12; },
+  // DECA: (cpu) => { setFlags(cpu, cpu.A, 1, 1); cpu.A--; cpu.A &= 0xff; cpu.M = 1; cpu.T = 4; },
 
   // 16 bit decrements. Flag = (- - - -)
   DECBC: (cpu) => { cpu.C = (cpu.C - 1) & 0xff; if (cpu.C === 0xff) { cpu.B = (cpu.B - 1) & 0xff; } cpu.M = 1; cpu.T = 4; },
@@ -405,7 +416,7 @@ const SUBTRACT = {
 const ROTATE = {
   // Flag = (0 0 0 *)
   RLCA: (cpu) => { const carry = cpu.A & 0x80 ? 1 : 0; cpu.F = cpu.A & 0x80 ? 0x10 : 0; cpu.A = ((cpu.A << 1) | carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  RLA: (cpu) => { const carry = cpu.F & 0x10 ? 1 : 0; cpu.F = cpu.A & 0x80 ? 0x10 : 0; cpu.A = ((cpu.A << 1) | carry) & 0xff; cpu.M = 1; cpu.T = 4; },
+  RLA: (cpu) => { const carry = cpu.F & 0x10 ? 1 : 0; const overflow = cpu.A & 0x80 ? 0x10 : 0; cpu.A = ((cpu.A << 1) | carry) & 0xff; cpu.F = (cpu.F & 0xef) | overflow; cpu.M = 1; cpu.T = 4; }, // verified
   RRCA: (cpu) => { const carry = cpu.A & 1 ? 0x80 : 0; cpu.F = cpu.A & 1 ? 0x10 : 0; cpu.A = ((cpu.A >>> 1) | carry) & 0xff; cpu.M = 1; cpu.T = 4; },
   RRA: (cpu) => { const carry = cpu.F & 0x10 ? 0x80 : 0; cpu.F = cpu.A & 1 ? 0x10 : 0; cpu.A = ((cpu.A >>> 1) | carry) & 0xff; cpu.M = 1; cpu.T = 4; },
 };
@@ -594,7 +605,7 @@ const opcodes = {
     //   cpu.logsEnabled = true;
     // }
     if (cpu.counter < cpu.limit && cpu.logsEnabled) {
-      console.log('should be loading to memory', (cpu.H << 8 | cpu.L).toString(16), cpu.A, cpu.PC, cpu.SP);
+      // console.log('should be loading to memory', (cpu.H << 8 | cpu.L).toString(16), cpu.A, cpu.PC, cpu.SP);
     }
 
     // if (counter < 8300) {
@@ -839,11 +850,11 @@ const opcodes = {
     // cpu.F = 0; cpu.PC++;
     // console.log(cpu.mmu.biosExecuted);
     // console.log('startin extops', cpu.PC);
-    cpu.F = 0;
     const op = cpu.mmu.read8(cpu, cpu.PC++);
     if (cbopcodes[op]) {
-      if (cpu.logsEnabled && cpu.counter < cpu.limit) {
-        console.log('inside extops', cpu.PC, op.toString(16));
+      // if (cpu.logsEnabled && cpu.counter < cpu.limit) {
+      if (cpu.logsEnabled) {
+        console.log('inside extops', op.toString(16));
       }
       cbopcodes[op](cpu);
     } else {
