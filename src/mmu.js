@@ -118,14 +118,22 @@ class MMU {
             if (addr >= 0xff80) {
               return this.zram[addr & 0x7f];
             } else if (addr >= 0xff40) {
-              return cpu.gpu.read8(addr);
+              return cpu.gpu.read(addr);
+            } else if (addr < 0xff10) {
+              switch (addr & 0xf) {
+                case 0:
+                  return cpu.controller.read();
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                  return cpu.timer.read(cpu, addr);
+                default:
+                  return 0;
+              }
             }
 
-            switch (addr & 0x3f) {
-              case 0x00: return cpu.controller.read();
-              default: return 0;
-            }
-
+            return 0;
           default:
             break;
         }
@@ -248,14 +256,24 @@ class MMU {
             if (addr >= 0xff80) {
               this.zram[addr & 0x7f] = val; break;
             } else if (addr >= 0xff40) {
-              cpu.gpu.write8(cpu, addr, val); break;
-            } else {
-              if (addr === 0xff00) {
-                cpu.controller.write(val);
+              cpu.gpu.write(cpu, addr, val); break;
+            } else if (addr < 0xff10) {
+              switch (addr & 0xf) {
+                case 0:
+                  cpu.controller.write(val); break;
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                  cpu.timer.write(cpu, addr, val); break;
+                default:
+                  break;
               }
-              // implement other registers later
-              break;
             }
+            break;
+
+            // implement other registers later
+            // break;
           default:
             break;
         }

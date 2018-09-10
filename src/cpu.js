@@ -1,6 +1,7 @@
 const CPUMemory = require('./cpuMemory');
 const GPU = require('./gpu');
 const MMU = require('./mmu');
+const Timer = require('./timer');
 const Controller = require('./controller');
 const { opcodes, interrupts } = require('./opcodes');
 
@@ -52,6 +53,7 @@ class CPU {
     this.ram = new CPUMemory();
     this.mmu = new MMU(this.ram);
     this.gpu = new GPU(this.mmu);
+    this.timer = new Timer();
     this.controller = new Controller();
   }
 
@@ -73,6 +75,7 @@ class CPU {
       m: 0,
       t: 0,
     };
+    this.mmu.biosExecuted = false;
   }
 
   disableInterrupt() {
@@ -132,7 +135,7 @@ class CPU {
 
       if (this.FAIL) {
         const op = this.mmu.read8(this, this.PC - 1);
-        console.log("write byte failed", op.toString(16));
+        console.log('write byte failed', op.toString(16));
         this.FAIL = false;
       }
 
@@ -165,18 +168,14 @@ class CPU {
         }
 
         this.PC &= 0xffff;
-
-
-        this.clock.m += this.M;
-        this.clock.t += this.T;
       }
 
 
-      // if (this.ime) {
-      //   console.log(this.mmu.ie, this.mmu.if);
-      // }
-
       this.handleInterrupts();
+
+      this.clock.m += this.M;
+      this.clock.t += this.T;
+      this.timer.increment(this);
 
       this.gpu.step(this);
     }

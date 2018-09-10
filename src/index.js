@@ -1,4 +1,5 @@
 // const cpu = require('./cpu');
+/* eslint-disable */
 const CPU = require('./cpu');
 
 const cpu = new CPU();
@@ -14,6 +15,11 @@ document.getElementById('run').onclick = () => {
 
 document.getElementById('step').onclick = () => {
   cpu.step();
+};
+
+document.getElementById('reset').onclick = () => {
+  cpu.reset();
+  cpu.gpu.reset();
 };
 
 document.getElementById('stop').onclick = () => {

@@ -115,7 +115,7 @@ class GPU {
     }
   }
 
-  read8(addr) {
+  read(addr) {
     addr -= 0xff40;
     switch (addr) {
       case 0x0: return this.gpuRam[addr];
@@ -134,7 +134,7 @@ class GPU {
     }
   }
 
-  write8(cpu, addr, val) {
+  write(cpu, addr, val) {
     addr -= 0xff40;
     val &= 0xff;
     this.gpuRam[addr] = val;
@@ -348,9 +348,9 @@ class GPU {
   }
 
   _renderSpritesLine(scanRow) {
-    const isOnScreen = obj => ((obj.x + x) >= 0) && ((obj.x + x) < 160);
+    const isOnScreen = (obj, x) => ((obj.x + x) >= 0) && ((obj.x + x) < 160);
     const isNotTransparent = (tileRow, x) => tileRow[x];
-    const isDisplayed = obj => obj.zIndex || !scanRow[obj.x + x];
+    const isDisplayed = (obj, x) => obj.zIndex || !scanRow[obj.x + x];
 
     for (let i = 0; i < NUM_SPRITES; i++) {
       const obj = this.objectData[i];
@@ -366,7 +366,7 @@ class GPU {
         }
 
         for (let x = 0; x < 8; x++) {
-          if (isOnScreen(obj) && isNotTransparent(tileRow, x) && isDisplayed(obj)) {
+          if (isOnScreen(obj, x) && isNotTransparent(tileRow, x) && isDisplayed(obj, x)) {
             const colorArr = palette[tileRow[obj.xFlip ? (7 - x) : x]];
             for (let j = 0; j < CANVAS_ELEMENTS_PER_PIXEL; j++) {
               const offset = baseIndex + (x * 4);

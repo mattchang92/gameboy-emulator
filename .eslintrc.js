@@ -2,6 +2,7 @@ module.exports = {
   "extends": "airbnb-base",
   "rules": {
     "camelcase": "off",
+    "global-require": "off",
     "no-plusplus": "off",
     "no-underscore-dangle": "off",
     "no-param-reassign": "off",
