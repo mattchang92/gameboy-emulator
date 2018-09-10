@@ -24,6 +24,9 @@ const {
   COLS_IN_TILE,
   SCREEN_WIDTH,
   SCREEN_HEIGHT,
+  NUM_SPRITES,
+  CANVAS_ELEMENTS_PER_PIXEL,
+  TILES_IN_SCREEN_WIDTH,
 } = require('./constants');
 
 class GPU {
@@ -181,67 +184,23 @@ class GPU {
       case 2: this.objectData[obj].tile = val; break;
       case 3:
         this.objectData[obj].palette = (val & 0x10) ? 1 : 0;
-        this.objectData[obj].xflip = (val & 0x20) ? 1 : 0;
-        this.objectData[obj].yflip = (val & 0x40) ? 1 : 0;
+        this.objectData[obj].xFlip = (val & 0x20) ? 1 : 0;
+        this.objectData[obj].yFlip = (val & 0x40) ? 1 : 0;
         this.objectData[obj].zIndex = (val & 0x80) ? 1 : 0;
         break;
       default: break;
     }
   }
 
-  tileMapToScreen() {
+  renderScanline() {
     const tileMapAddress = this.bgTileMapAddress ? 0x1c00 : 0x1800;
     const tileSet = this.bgAndWindowTileData ? 1 : 2;
-    let printed = false;
+    const scanRow = [];
 
-    for (let row = 0; row < 144; row++) {
-      for (let col = 0; col < 160; col++) {
-        let tile;
-        const actualRow = row + this.SCY;
-        const actualCol = col + this.SCX;
-        const tileIdRow = Math.floor(actualRow / 8);
-        const tileIdCol = Math.floor(actualCol / 8);
-        const tileIndex = (tileIdRow * 32) + tileIdCol;
-        const tileId = this.vram[tileMapAddress + tileIndex];
+    if (!this.LCDEnable) return;
 
-        if (tileSet === 1) {
-          if (!printed) {
-            printed = true;
-            // console.log('writing tile map to screen tileset 1', this.SCX, this.SCY, this.gpuRam[0].toString(2));
-          }
-          tile = this.tileset[tileId];
-        } else if (tileSet === 2) {
-          if (!printed) {
-            printed = true;
-            // console.log('writing tile map to screen tileset 2', this.SCX, this.SCY, this.gpuRam[0].toString(2));
-          }
-          if (tileId > 127) {
-            // if (val > 127) val = -((~val + 1) & 0xff);
-            // const test = -((~tileId + 1) & 0xff);
-            // const ind = test + 128;
-            // if (!printed) {
-            //   printed = true;
-            //   console.log('writing tile map to screen tileset 2', tileId, this.SCX, this.SCY, this.gpuRam[0].toString(2));
-            // }
-            tile = this.tileset[tileId];
-          } else {
-            tile = this.tileset[256 + tileId];
-          }
-          // if (val > 127) val = -((~val + 1) & 0xff);
-        }
-        if (tile) {
-          const colorId = tile[actualRow % 8][actualCol % 8];
-          const colorArr = this.palette[colorId];
-
-          const baseIndex = (row * 160 * 4) + (col * 4);
-          for (let i = 0; i < 4; i++) {
-            this.screen.data[baseIndex + i] = colorArr[i];
-          }
-        } else {
-          console.log('tile not found', row, this.SCY, col, this.SCX);
-        }
-      }
-    }
+    if (this.bgEnable) this._renderBackgroundLine(tileMapAddress, tileSet, scanRow);
+    if (this.objEnable) this._renderSpritesLine(scanRow);
   }
 
   step(cpu) {
@@ -251,7 +210,6 @@ class GPU {
         if (this.MODECLOCK >= 51) {
           if (this.LY === 143) {
             this.MODE = 1;
-            this.tileMapToScreen();
             this.ctx.putImageData(this.screen, 0, 0);
             this.mmu.if |= 1;
           } else {
@@ -284,6 +242,7 @@ class GPU {
 
       case 3: // VRAM read mode
         if (this.MODECLOCK >= 43) {
+          this.renderScanline();
           this.MODECLOCK = 0;
           this.MODE = 0;
         }
@@ -317,26 +276,9 @@ class GPU {
       this.ctx.putImageData(this.screen, 0, 0);
     }
 
-    this.bgPalette = [
-      [255, 255, 255, 255],
-      [192, 192, 192, 255],
-      [96, 96, 96, 255],
-      [0, 0, 0, 255],
-    ];
-
-    this.objPalette0 = [
-      [255, 255, 255, 255],
-      [192, 192, 192, 255],
-      [96, 96, 96, 255],
-      [0, 0, 0, 255],
-    ];
-
-    this.objPalette1 = [
-      [255, 255, 255, 255],
-      [192, 192, 192, 255],
-      [96, 96, 96, 255],
-      [0, 0, 0, 255],
-    ];
+    this.bgPalette = [[255, 255, 255, 255], [192, 192, 192, 255], [96, 96, 96, 255], [0, 0, 0, 255]];
+    this.objPalette0 = [[255, 255, 255, 255], [192, 192, 192, 255], [96, 96, 96, 255], [0, 0, 0, 255]];
+    this.objPalette1 = [[255, 255, 255, 255], [192, 192, 192, 255], [96, 96, 96, 255], [0, 0, 0, 255]];
 
     for (let i = 0; i < 40; i++) {
       this.objectData[i] = {
@@ -344,8 +286,8 @@ class GPU {
         x: -8,
         tile: 0,
         palette: 0,
-        xflip: 0,
-        yflip: 0,
+        xFlip: 0,
+        yFlip: 0,
         xIndex: 0,
         num: i,
       };
@@ -362,7 +304,7 @@ class GPU {
     const tile = (addr >> 4) & 0x1ff;
     const y = (addr >> 1) & 0x7;
     let bitIndex;
-    // console.log('tile is ', tile, y);
+
     for (let i = 0; i < 8; i++) {
       bitIndex = 1 << (7 - i);
       const leastSigBit = (this.vram[addr] & bitIndex) ? 1 : 0;
@@ -371,6 +313,68 @@ class GPU {
       // console.log(tile, this.tileset[tile]);
 
       this.tileset[tile][y][i] = leastSigBit + mostSigBit;
+    }
+  }
+
+  _renderBackgroundLine(tileMapAddress, tileSet, scanRow) {
+    for (let col = 0; col < SCREEN_WIDTH; col++) {
+      let tile;
+      const actualRow = this.LY + this.SCY;
+      const actualCol = col + this.SCX;
+      const tileIdRow = Math.floor(actualRow / ROWS_IN_TILE);
+      const tileIdCol = Math.floor(actualCol / COLS_IN_TILE);
+      const tileIndex = (tileIdRow * TILES_IN_SCREEN_WIDTH) + tileIdCol;
+      const tileId = this.vram[tileMapAddress + tileIndex];
+
+      if (tileSet === 1 || tileId > 127) {
+        tile = this.tileset[tileId];
+      } else {
+        tile = this.tileset[256 + tileId];
+      }
+
+      if (tile) {
+        const colorId = tile[actualRow % ROWS_IN_TILE][actualCol % COLS_IN_TILE];
+        const colorArr = this.bgPalette[colorId];
+
+        const baseIndex = ((this.LY * SCREEN_WIDTH) + col) * CANVAS_ELEMENTS_PER_PIXEL;
+        for (let i = 0; i < CANVAS_ELEMENTS_PER_PIXEL; i++) {
+          this.screen.data[baseIndex + i] = colorArr[i];
+        }
+        scanRow[col] = colorId;
+      } else {
+        console.log('tile not found', this.LY, this.SCY, col, this.SCX);
+      }
+    }
+  }
+
+  _renderSpritesLine(scanRow) {
+    const isOnScreen = obj => ((obj.x + x) >= 0) && ((obj.x + x) < 160);
+    const isNotTransparent = (tileRow, x) => tileRow[x];
+    const isDisplayed = obj => obj.zIndex || !scanRow[obj.x + x];
+
+    for (let i = 0; i < NUM_SPRITES; i++) {
+      const obj = this.objectData[i];
+      if (obj.y <= this.LY && (obj.y + 8) > this.LY) {
+        const palette = obj.palette ? this.objPalette1 : this.objPalette0;
+        const baseIndex = ((this.LY * SCREEN_WIDTH) + obj.x) * CANVAS_ELEMENTS_PER_PIXEL;
+        let tileRow;
+
+        if (obj.yFlip) {
+          tileRow = this.tileset[obj.tile][7 - (this.LY - obj.y)];
+        } else {
+          tileRow = this.tileset[obj.tile][this.LY - obj.y];
+        }
+
+        for (let x = 0; x < 8; x++) {
+          if (isOnScreen(obj) && isNotTransparent(tileRow, x) && isDisplayed(obj)) {
+            const colorArr = palette[tileRow[obj.xFlip ? (7 - x) : x]];
+            for (let j = 0; j < CANVAS_ELEMENTS_PER_PIXEL; j++) {
+              const offset = baseIndex + (x * 4);
+              this.screen.data[offset + j] = colorArr[j];
+            }
+          }
+        }
+      }
     }
   }
 }

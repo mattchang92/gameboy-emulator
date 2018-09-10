@@ -120,7 +120,7 @@ class CPU {
   }
 
   frame() {
-    const frameEnd = this.clock.m + 17556 * 10;
+    const frameEnd = this.clock.m + 17556 * 1;
 
     while (this.clock.m < frameEnd) {
       // Object.keys(this).forEach((key) => {
