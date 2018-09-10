@@ -2,6 +2,7 @@ class Controller {
   constructor() {
     this.rows = [0x0f, 0x0f];
     this.column = 0;
+
     const INPUT = {
       DOWN: 'down',
       UP: 'up',
@@ -53,7 +54,7 @@ class Controller {
   */
   keyDown(e) {
     const key = this.inputMap[e.keyCode];
-    // console.log(e.keyCode, key);
+
     switch (key) {
       case this.INPUT.A: this.rows[1] &= 0xe; break;
       case this.INPUT.B: this.rows[1] &= 0xd; break;

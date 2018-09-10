@@ -155,6 +155,11 @@ class GPU {
       case 0x5:
         this.LYC = val; break;
       case 0x6:
+        for (let i = 0; i < 160; i++) {
+          const newVal = this.mmu.read8(cpu, (val << 8) + i);
+          this.mmu.oam[i] = newVal;
+          this._updateOam(0xfe00 + i, newVal);
+        }
         this.DMA = val; break;
       case 0x7:
         this.setPalette(val, this.bgPalette);
@@ -374,6 +379,32 @@ class GPU {
             }
           }
         }
+      }
+    }
+  }
+
+  _updateOam(addr, val) {
+    addr -= 0xFE00;
+    const obj = addr >> 2;
+    if (obj < 40) {
+      switch (addr & 3) {
+        case 0:
+          this.objectData[obj].y = val - 16;
+          break;
+        case 1:
+          this.objectData[obj].x = val - 8;
+          break;
+        case 2:
+          if (this.objSize) this.objectData[obj].tile = (val & 0xFE);
+          else this.objectData[obj].tile = val;
+          break;
+        case 3:
+          this.objectData[obj].palette = (val & 0x10) ? 1 : 0;
+          this.objectData[obj].xFlip = (val & 0x20) ? 1 : 0;
+          this.objectData[obj].yFlip = (val & 0x40) ? 1 : 0;
+          this.objectData[obj].zIndex = (val & 0x80) ? 1 : 0;
+          break;
+        default: break;
       }
     }
   }

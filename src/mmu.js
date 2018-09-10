@@ -1,6 +1,6 @@
 class MMU {
   constructor() {
-    this.biosExecuted = false;
+    this.biosExecuted = true;
     this.bios = [
       0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0x20, 0xFB, 0x21, 0x26, 0xFF, 0x0E,
       0x11, 0x3E, 0x80, 0x32, 0xE2, 0x0C, 0x3E, 0xF3, 0xE2, 0x32, 0x3E, 0x77, 0x77, 0x3E, 0xFC, 0xE0,
@@ -20,14 +20,14 @@ class MMU {
       0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50,
     ];
     // this.rom = require('../roms/tetris');
-    // this.rom = require('../roms/dr_mario');
+    this.rom = require('../roms/dr_mario');
     // this.rom = require('../roms/ttt');
     // this.rom = require('../roms/test/01-special');
     // this.rom = require('../roms/test/02-interrupts');
     // this.rom = require('../roms/test/03-op sp,hl');
     // this.rom = require('../roms/test/04-op r,imm');
     // this.rom = require('../roms/test/05-op rp');
-    this.rom = require('../roms/test/06-ld r,r');
+    // this.rom = require('../roms/test/06-ld r,r');
     // this.rom = require('../roms/test/07-jr,jp,call,ret,rst');
     // this.rom = require('../roms/test/08-misc instrs');
     // this.rom = require('../roms/test/09-op r,r');

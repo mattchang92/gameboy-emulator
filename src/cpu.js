@@ -8,7 +8,7 @@ const { opcodes, interrupts } = require('./opcodes');
 class CPU {
   constructor() {
     // general use registers
-    this.testMode = true;
+    this.testMode = false;
     this.rstCalled = false;
     this.counter = 0;
     this.initialCounter = 0;
@@ -30,7 +30,7 @@ class CPU {
     this.L = 0;
 
     // program counter
-    this.PC = 0;
+    this.PC = 0x0100;
 
     // stack pointer
     this.SP = 0;
@@ -70,7 +70,7 @@ class CPU {
     this.SP = 0;
     this.M = 0;
     this.T = 0;
-    this.ime = 0;
+    this.ime = 1;
     this.clock = {
       m: 0,
       t: 0,
