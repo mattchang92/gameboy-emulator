@@ -471,28 +471,60 @@ const LOAD = {
   POPAF: cpu => POP_nn(cpu, 'AF'),
 };
 
+const add = (cpu, n) => {
+  const sum = cpu.A + n;
+
+  cpu.F = 0;
+  if ((sum & 0xff) === 0) cpu.F |= zFlag;
+  if (((cpu.a ^ n ^ sum) & 0x10) !== 0) cpu.F |= hFlag;
+  if ((sum & 0x100) !== 0) cpu.F |= cFlag;
+
+  return sum;
+};
+
+const ADD_A_n = (cpu, n) => {
+  cpu.A = add(cpu, cpu[n]);
+  cpu.M = 1; cpu.M = 4;
+};
+
+const adc = (cpu, n) => {
+  const carry = cpu.F >>> 4 & 1;
+  const sum = cpu.A + n + carry;
+
+  cpu.F = 0;
+  if ((sum & 0xff) === 0) cpu.F |= zFlag;
+  if (((cpu.a ^ n ^ sum) & 0x10) !== 0) cpu.F |= hFlag;
+  if ((sum & 0x100) !== 0) cpu.F |= cFlag;
+
+  return sum;
+};
+
+const ADC_A_n = (cpu, n) => {
+  cpu.A = adc(cpu, cpu[n]);
+  cpu.M = 1; cpu.T = 4;
+};
 
 const ADD = {
   // 8 bit adds. Flag = (* 0 * *)
-  ADDAB: (cpu) => { setFlags(cpu, cpu.A, cpu.B); cpu.A = (cpu.A + cpu.B) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADDAC: (cpu) => { setFlags(cpu, cpu.A, cpu.C); cpu.A = (cpu.A + cpu.C) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADDAD: (cpu) => { setFlags(cpu, cpu.A, cpu.D); cpu.A = (cpu.A + cpu.D) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADDAE: (cpu) => { setFlags(cpu, cpu.A, cpu.E); cpu.A = (cpu.A + cpu.E) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADDAH: (cpu) => { setFlags(cpu, cpu.A, cpu.H); cpu.A = (cpu.A + cpu.H) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADDAL: (cpu) => { setFlags(cpu, cpu.A, cpu.L); cpu.A = (cpu.A + cpu.L) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADDAHLm: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); setFlags(cpu, cpu.A, val); cpu.A = (cpu.A + val) & 0xff; cpu.M = 2; cpu.T = 8; },
-  ADDAA: (cpu) => { setFlags(cpu, cpu.A, cpu.A); cpu.A = (cpu.A + cpu.A) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADDAn: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); setFlags(cpu, cpu.A, val); cpu.A = (cpu.A + val) & 0xff; cpu.M = 2; cpu.T = 8; },
+  ADDAB: cpu => ADD_A_n(cpu, 'B'),
+  ADDAC: cpu => ADD_A_n(cpu, 'C'),
+  ADDAD: cpu => ADD_A_n(cpu, 'D'),
+  ADDAE: cpu => ADD_A_n(cpu, 'E'),
+  ADDAH: cpu => ADD_A_n(cpu, 'H'),
+  ADDAL: cpu => ADD_A_n(cpu, 'L'),
+  ADDAHLm: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.HL); cpu.A = add(cpu, val); cpu.M = 2; cpu.T = 8; },
+  ADDAA: cpu => ADD_A_n(cpu, 'A'),
+  ADDAn: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); cpu.A = add(cpu, val); cpu.M = 2; cpu.T = 8; },
   // 8 bit add with carry. Same flag as adds
-  ADCAB: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.L + carry); cpu.A = (cpu.A + cpu.L + carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADCAC: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.C + carry); cpu.A = (cpu.A + cpu.C + carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADCAD: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.D + carry); cpu.A = (cpu.A + cpu.D + carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADCAE: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.E + carry); cpu.A = (cpu.A + cpu.E + carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADCAH: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.H + carry); cpu.A = (cpu.A + cpu.H + carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADCAL: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.L + carry); cpu.A = (cpu.A + cpu.L + carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADCAHLm: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); setFlags(cpu, cpu.A, val + carry); cpu.A = (cpu.A + val + carry) & 0xff; cpu.M = 2; cpu.T = 8; },
-  ADCAA: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.A + carry); cpu.A = (cpu.A + cpu.A + carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  ADCAn: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, val + carry); cpu.A = (cpu.A + val + carry) & 0xff; cpu.M = 2; cpu.T = 8; },
+  ADCAB: cpu => ADC_A_n(cpu, 'B'),
+  ADCAC: cpu => ADC_A_n(cpu, 'C'),
+  ADCAD: cpu => ADC_A_n(cpu, 'D'),
+  ADCAE: cpu => ADC_A_n(cpu, 'E'),
+  ADCAH: cpu => ADC_A_n(cpu, 'H'),
+  ADCAL: cpu => ADC_A_n(cpu, 'L'),
+  ADCAHLm: (cpu) => { cpu.A = adc(cpu, cpu.mmu.read8(cpu.HL)); cpu.M = 2; cpu.T = 8; },
+  ADCAA: cpu => ADC_A_n(cpu, 'A'),
+  ADCAn: (cpu) => { cpu.A = adc(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
   // 16 bit HL add. Flag = (- 0 * *)
   ADDHLBC: (cpu) => { let hl = (cpu.H << 8) + cpu.L; const val = (cpu.B << 8) + cpu.C; setFlags(cpu, hl, val, 0, 1); hl += val; cpu.H = (hl >>> 8) & 0xff; cpu.L = hl & 0xff; cpu.M = 3; cpu.T = 12; },
   ADDHLDE: (cpu) => { let hl = (cpu.H << 8) + cpu.L; const val = (cpu.D << 8) + cpu.E; setFlags(cpu, hl, val, 0, 1); hl += val; cpu.H = (hl >>> 8) & 0xff; cpu.L = hl & 0xff; cpu.M = 3; cpu.T = 12; },
@@ -509,6 +541,30 @@ const ADD = {
   },
 };
 
+
+const SUBTRACT = {
+  // 8 bit subtract. Flag = (* 1 * *)
+  SUBAB: (cpu) => { setFlags(cpu, cpu.A, cpu.B, 1); cpu.A = (cpu.A - cpu.B) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBAC: (cpu) => { setFlags(cpu, cpu.A, cpu.C, 1); cpu.A = (cpu.A - cpu.C) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBAD: (cpu) => { setFlags(cpu, cpu.A, cpu.D, 1); cpu.A = (cpu.A - cpu.D) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBAE: (cpu) => { setFlags(cpu, cpu.A, cpu.E, 1); cpu.A = (cpu.A - cpu.E) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBAH: (cpu) => { setFlags(cpu, cpu.A, cpu.H, 1); cpu.A = (cpu.A - cpu.H) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBAL: (cpu) => { setFlags(cpu, cpu.A, cpu.L, 1); cpu.A = (cpu.A - cpu.L) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBAHLm: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); setFlags(cpu, cpu.A, val, 1); cpu.A = (cpu.A - val) & 0xff; cpu.M = 2; cpu.T = 8; },
+  SUBAA: (cpu) => { cpu.A = 0; cpu.F = 0xc0; cpu.M = 1; cpu.T = 4; },
+  SUBAn: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); setFlags(cpu, cpu.A, val, 1); cpu.A = (cpu.A - val) & 0xff; cpu.M = 2; cpu.T = 8; },
+
+  // 8 bit subtract with carry. Same flag as above
+  SUBCAB: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.B + carry, 1); cpu.A = (cpu.A - cpu.B - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBCAC: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.C + carry, 1); cpu.A = (cpu.A - cpu.C - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBCAD: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.D + carry, 1); cpu.A = (cpu.A - cpu.D - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBCAE: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.E + carry, 1); cpu.A = (cpu.A - cpu.E - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBCAH: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.H + carry, 1); cpu.A = (cpu.A - cpu.H - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBCAL: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.L + carry, 1); cpu.A = (cpu.A - cpu.L - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBCAHLm: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); setFlags(cpu, cpu.A, val + carry, 1); cpu.A = (cpu.A - val - carry) & 0xff; cpu.M = 2; cpu.T = 8; },
+  SUBCAA: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.B + carry, 1); cpu.A = (cpu.A - cpu.B - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
+  SUBCAn: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, val + carry, 1); cpu.A = (cpu.A - val - carry) & 0xff; cpu.M = 2; cpu.T = 8; },
+};
 
 /* END REFACTOR ---------------------------------------------------------------------------------------------------------------------*/
 
@@ -567,29 +623,6 @@ const DECREMENT = {
   DECSP: (cpu) => { cpu.SP = (cpu.SP - 1) & 0xffff; cpu.M = 2; cpu.T = 8; },
 };
 
-const SUBTRACT = {
-  // 8 bit subtract. Flag = (* 1 * *)
-  SUBAB: (cpu) => { setFlags(cpu, cpu.A, cpu.B, 1); cpu.A = (cpu.A - cpu.B) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBAC: (cpu) => { setFlags(cpu, cpu.A, cpu.C, 1); cpu.A = (cpu.A - cpu.C) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBAD: (cpu) => { setFlags(cpu, cpu.A, cpu.D, 1); cpu.A = (cpu.A - cpu.D) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBAE: (cpu) => { setFlags(cpu, cpu.A, cpu.E, 1); cpu.A = (cpu.A - cpu.E) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBAH: (cpu) => { setFlags(cpu, cpu.A, cpu.H, 1); cpu.A = (cpu.A - cpu.H) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBAL: (cpu) => { setFlags(cpu, cpu.A, cpu.L, 1); cpu.A = (cpu.A - cpu.L) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBAHLm: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); setFlags(cpu, cpu.A, val, 1); cpu.A = (cpu.A - val) & 0xff; cpu.M = 2; cpu.T = 8; },
-  SUBAA: (cpu) => { cpu.A = 0; cpu.F = 0xc0; cpu.M = 1; cpu.T = 4; },
-  SUBAn: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); setFlags(cpu, cpu.A, val, 1); cpu.A = (cpu.A - val) & 0xff; cpu.M = 2; cpu.T = 8; },
-
-  // 8 bit subtract with carry. Same flag as above
-  SUBCAB: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.B + carry, 1); cpu.A = (cpu.A - cpu.B - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAC: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.C + carry, 1); cpu.A = (cpu.A - cpu.C - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAD: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.D + carry, 1); cpu.A = (cpu.A - cpu.D - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAE: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.E + carry, 1); cpu.A = (cpu.A - cpu.E - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAH: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.H + carry, 1); cpu.A = (cpu.A - cpu.H - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAL: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.L + carry, 1); cpu.A = (cpu.A - cpu.L - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAHLm: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); setFlags(cpu, cpu.A, val + carry, 1); cpu.A = (cpu.A - val - carry) & 0xff; cpu.M = 2; cpu.T = 8; },
-  SUBCAA: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.B + carry, 1); cpu.A = (cpu.A - cpu.B - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAn: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, val + carry, 1); cpu.A = (cpu.A - val - carry) & 0xff; cpu.M = 2; cpu.T = 8; },
-};
 
 const ROTATE = {
   // Flag = (0 0 0 *)
