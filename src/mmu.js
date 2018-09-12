@@ -51,7 +51,7 @@ class MMU {
 
   read8(cpu, addr) {
     if (cpu === undefined || addr === undefined) {
-      console.log('Missing required params for write byte');
+      console.log('Missing required params for read byte');
       if (!cpu) console.log('missing cpu');
       if (!addr) console.log('missing addr');
       cpu.FAIL = true;

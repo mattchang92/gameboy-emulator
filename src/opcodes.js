@@ -522,7 +522,7 @@ const ADD = {
   ADCAE: cpu => ADC_A_n(cpu, 'E'),
   ADCAH: cpu => ADC_A_n(cpu, 'H'),
   ADCAL: cpu => ADC_A_n(cpu, 'L'),
-  ADCAHLm: (cpu) => { cpu.A = adc(cpu, cpu.mmu.read8(cpu.HL)); cpu.M = 2; cpu.T = 8; },
+  ADCAHLm: (cpu) => { cpu.A = adc(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 2; cpu.T = 8; },
   ADCAA: cpu => ADC_A_n(cpu, 'A'),
   ADCAn: (cpu) => { cpu.A = adc(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
   // 16 bit HL add. Flag = (- 0 * *)
@@ -595,17 +595,84 @@ const SUBTRACT = {
   SUBCAL: cpu => SBC_A_n(cpu, 'L'),
   SUBCAHLm: (cpu) => { cpu.A = sbc(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 2; cpu.T = 8; },
   SUBCAA: cpu => SBC_A_n(cpu, 'A'),
-  SUBCAn: (cpu) => { cpu.A = sbc(cpu, cpu.mmu.read8(cpu.PC++)); cpu.M = 2; cpu.T = 8; },
+  SUBCAn: (cpu) => { cpu.A = sbc(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
 };
 
-/* END REFACTOR ---------------------------------------------------------------------------------------------------------------------*/
+const or = (cpu, n) => {
+  const result = cpu.A | n;
+  cpu.F = 0;
+  if ((result & 0xff) === 0) cpu.F |= zFlag;
 
-const RESTART = {
-  RST40: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0040; cpu.M = 3; cpu.T = 12; },
-  RST48: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0048; cpu.M = 3; cpu.T = 12; },
-  RST50: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0050; cpu.M = 3; cpu.T = 12; },
-  RST58: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0058; cpu.M = 3; cpu.T = 12; },
-  RST60: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0060; cpu.M = 3; cpu.T = 12; },
+  return result;
+};
+
+const OR_n = (cpu, n) => {
+  cpu.A = or(cpu, cpu[n]);
+  cpu.M = 1; cpu.T = 4;
+};
+
+const xor = (cpu, n) => {
+  const result = cpu.A ^ n;
+  cpu.F = 0;
+  if ((result & 0xff) === 0) cpu.F |= zFlag;
+
+  return result;
+};
+
+const XOR_n = (cpu, n) => {
+  cpu.A = xor(cpu, cpu[n]);
+  cpu.M = 1; cpu.T = 4;
+};
+
+const CP_n = (cpu, n) => {
+  sub(cpu, cpu[n]);
+  cpu.M = 1; cpu.T = 4;
+};
+
+const LOGICAL = {
+  ORB: cpu => OR_n(cpu, 'B'),
+  ORC: cpu => OR_n(cpu, 'C'),
+  ORD: cpu => OR_n(cpu, 'D'),
+  ORE: cpu => OR_n(cpu, 'E'),
+  ORH: cpu => OR_n(cpu, 'H'),
+  ORL: cpu => OR_n(cpu, 'L'),
+  ORA: cpu => OR_n(cpu, 'A'),
+  ORHLm: (cpu) => { cpu.A = or(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 2; cpu.T = 8; },
+  ORn: (cpu) => { cpu.A = or(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
+
+  XORB: cpu => XOR_n(cpu, 'B'),
+  XORC: cpu => XOR_n(cpu, 'C'),
+  XORD: cpu => XOR_n(cpu, 'D'),
+  XORE: cpu => XOR_n(cpu, 'E'),
+  XORH: cpu => XOR_n(cpu, 'H'),
+  XORL: cpu => XOR_n(cpu, 'L'),
+  XORA: cpu => XOR_n(cpu, 'A'),
+  XORHLm: (cpu) => { cpu.A = xor(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 2; cpu.T = 8; },
+  XORn: (cpu) => { cpu.A = xor(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
+
+  CPB: cpu => CP_n(cpu, 'B'),
+  CPC: cpu => CP_n(cpu, 'C'),
+  CPD: cpu => CP_n(cpu, 'D'),
+  CPE: cpu => CP_n(cpu, 'E'),
+  CPH: cpu => CP_n(cpu, 'H'),
+  CPL: cpu => CP_n(cpu, 'L'),
+  CPA: cpu => CP_n(cpu, 'A'),
+  CPHLm: (cpu) => { sub(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 2; cpu.T = 8; },
+  CPn: (cpu) => { sub(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
+};
+
+const inc = (cpu, n) => {
+  const result = n + 1;
+  cpu.F &= ~0xe0;
+  if ((result & 0xff) === 0) cpu.F |= zFlag;
+  if ((n & 0xf) === 0xf) cpu.F |= hFlag;
+
+  return result;
+};
+
+const INC_n = (cpu, n) => {
+  cpu[n] = inc(cpu, cpu[n]);
+  cpu.M = 1; cpu.T = 4;
 };
 
 const INCREMENT = {
@@ -625,6 +692,17 @@ const INCREMENT = {
   INCHL: (cpu) => { cpu.L = (cpu.L + 1) & 0xff; if (!cpu.L) { cpu.H = (cpu.H + 1) & 0xff; } cpu.M = 1; cpu.T = 4; },
   INCSP: (cpu) => { cpu.SP = (cpu.SP + 1) & 0xffff; cpu.M = 1; cpu.T = 4; },
 };
+
+/* END REFACTOR ---------------------------------------------------------------------------------------------------------------------*/
+
+const RESTART = {
+  RST40: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0040; cpu.M = 3; cpu.T = 12; },
+  RST48: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0048; cpu.M = 3; cpu.T = 12; },
+  RST50: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0050; cpu.M = 3; cpu.T = 12; },
+  RST58: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0058; cpu.M = 3; cpu.T = 12; },
+  RST60: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0060; cpu.M = 3; cpu.T = 12; },
+};
+
 
 const DECREMENT = {
   // 8 bit decrements Flag = (* 1 * -)
@@ -943,32 +1021,32 @@ const opcodes = {
   [OPCODES.ANDL]: (cpu) => { cpu.A &= cpu.L; cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
   [OPCODES.ANDHLm]: (cpu) => { cpu.A &= cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 2; cpu.T = 8; },
   [OPCODES.ANDA]: (cpu) => { cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.XORB]: (cpu) => { cpu.A ^= cpu.B; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.XORC]: (cpu) => { cpu.A ^= cpu.C; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.XORD]: (cpu) => { cpu.A ^= cpu.D; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.XORE]: (cpu) => { cpu.A ^= cpu.E; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.XORH]: (cpu) => { cpu.A ^= cpu.H; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.XORL]: (cpu) => { cpu.A ^= cpu.L; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.XORHLm]: (cpu) => { cpu.A ^= cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
-  [OPCODES.XORA]: (cpu) => { cpu.A = 0; cpu.F = 0x80; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.XORB]: LOGICAL.XORB,
+  [OPCODES.XORC]: LOGICAL.XORC,
+  [OPCODES.XORD]: LOGICAL.XORD,
+  [OPCODES.XORE]: LOGICAL.XORE,
+  [OPCODES.XORH]: LOGICAL.XORH,
+  [OPCODES.XORL]: LOGICAL.XORL,
+  [OPCODES.XORHLm]: LOGICAL.XORHLm,
+  [OPCODES.XORA]: LOGICAL.XORA,
 
   /* ------------------------ 0xb ------------------------ */
-  [OPCODES.ORB]: (cpu) => { cpu.A |= cpu.B; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.ORC]: (cpu) => { cpu.A |= cpu.C; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.ORD]: (cpu) => { cpu.A |= cpu.D; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.ORE]: (cpu) => { cpu.A |= cpu.E; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.ORH]: (cpu) => { cpu.A |= cpu.H; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.ORL]: (cpu) => { cpu.A |= cpu.L; cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.ORHLm]: (cpu) => { cpu.A |= cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
-  [OPCODES.ORA]: (cpu) => { cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.CPB]: (cpu) => { setFlags(cpu, cpu.A, cpu.B, 1); cpu.M = 1; cpu.T = 4; },
-  [OPCODES.CPC]: (cpu) => { setFlags(cpu, cpu.A, cpu.C, 1); cpu.M = 1; cpu.T = 4; },
-  [OPCODES.CPD]: (cpu) => { setFlags(cpu, cpu.A, cpu.D, 1); cpu.M = 1; cpu.T = 4; },
-  [OPCODES.CPE]: (cpu) => { setFlags(cpu, cpu.A, cpu.E, 1); cpu.M = 1; cpu.T = 4; },
-  [OPCODES.CPH]: (cpu) => { setFlags(cpu, cpu.A, cpu.L, 1); cpu.M = 1; cpu.T = 4; },
-  [OPCODES.CPL]: (cpu) => { setFlags(cpu, cpu.A, cpu.B, 1); cpu.M = 1; cpu.T = 4; },
-  [OPCODES.CPHLm]: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); setFlags(cpu, cpu.A, val, 1); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.CPA]: (cpu) => { cpu.F = 0xc0; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.ORB]: LOGICAL.ORB,
+  [OPCODES.ORC]: LOGICAL.ORC,
+  [OPCODES.ORD]: LOGICAL.ORD,
+  [OPCODES.ORE]: LOGICAL.ORE,
+  [OPCODES.ORH]: LOGICAL.ORH,
+  [OPCODES.ORL]: LOGICAL.ORL,
+  [OPCODES.ORHLm]: LOGICAL.ORHLm,
+  [OPCODES.ORA]: LOGICAL.ORA,
+  [OPCODES.CPB]: LOGICAL.CPB,
+  [OPCODES.CPC]: LOGICAL.CPC,
+  [OPCODES.CPD]: LOGICAL.CPD,
+  [OPCODES.CPE]: LOGICAL.CPE,
+  [OPCODES.CPH]: LOGICAL.CPH,
+  [OPCODES.CPL]: LOGICAL.CPL,
+  [OPCODES.CPHLm]: LOGICAL.CPHLm,
+  [OPCODES.CPA]: LOGICAL.CPA,
 
   /* ------------------------ 0xc ------------------------ */
   [OPCODES.RETNZ]: (cpu) => {
@@ -1135,7 +1213,7 @@ const opcodes = {
   [OPCODES.ADDSPd]: ADD.ADDSPd,
   [OPCODES.JPHLm]: (cpu) => { cpu.PC = (cpu.H << 8) | cpu.L; cpu.M = 1; cpu.T = 4; },
   [OPCODES.LDnnmA]: (cpu) => { cpu.mmu.write8(cpu, cpu.mmu.read16(cpu, cpu.PC), cpu.A); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
-  [OPCODES.XORn]: (cpu) => { cpu.A ^= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
+  [OPCODES.XORn]: LOGICAL.XORn,
   [OPCODES.RST28]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x28; cpu.M = 3; cpu.T = 12; },
 
   /* ------------------------ 0xf ------------------------ */
@@ -1144,7 +1222,7 @@ const opcodes = {
   [OPCODES.LDAIOC]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.C); cpu.M = 2; cpu.T = 8; },
   [OPCODES.DI]: (cpu) => { cpu.ime = 0; cpu.M = 1; cpu.T = 4; },
   [OPCODES.PUSHAF]: LOAD.PUSHAF,
-  [OPCODES.ORn]: (cpu) => { cpu.A |= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
+  [OPCODES.ORn]: LOGICAL.ORn,
   [OPCODES.RST30]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x30; cpu.M = 3; cpu.T = 12; },
   [OPCODES.LDHLSPd]: (cpu) => {
     let i = cpu.mmu.read8(cpu, cpu.PC++);
@@ -1161,7 +1239,7 @@ const opcodes = {
   [OPCODES.LDSPHL]: (cpu) => { cpu.SP = cpu.HL; cpu.M = 2; cpu.T = 8; },
   [OPCODES.LDAnnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.mmu.read16(cpu, cpu.PC)); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
   [OPCODES.EI]: (cpu) => { cpu.ime = 1; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.CPn]: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); setFlags(cpu, cpu.A, val, 1); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.CPn]: LOGICAL.CPn,
   [OPCODES.RST38]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x38; cpu.M = 3; cpu.T = 12; },
 };
 
