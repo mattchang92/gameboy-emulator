@@ -541,29 +541,61 @@ const ADD = {
   },
 };
 
+const sub = (cpu, n) => {
+  const diff = cpu.A - n;
+
+  cpu.F = nFlag;
+  if ((diff & 0xff) === 0) cpu.F |= zFlag;
+  if (((cpu.a ^ n ^ diff) & 0x10) !== 0) cpu.F |= hFlag;
+  if ((diff & 0x100) !== 0) cpu.F |= cFlag;
+
+  return diff;
+};
+
+const SUB_n = (cpu, n) => {
+  cpu.A = sub(cpu, cpu[n]);
+  cpu.M = 1; cpu.T = 4;
+};
+
+const sbc = (cpu, n) => {
+  const carry = cpu.F >> 4 & 1;
+  const diff = cpu.A - n - carry;
+
+  cpu.F = nFlag;
+  if ((diff & 0xff) === 0) cpu.F |= zFlag;
+  if (((cpu.a ^ n ^ diff) & 0x10) !== 0) cpu.F |= hFlag;
+  if ((diff & 0x100) !== 0) cpu.F |= cFlag;
+
+  return diff;
+};
+
+const SBC_A_n = (cpu, n) => {
+  cpu.A = sbc(cpu, cpu[n]);
+  cpu.M = 1; cpu.T = 4;
+};
 
 const SUBTRACT = {
   // 8 bit subtract. Flag = (* 1 * *)
-  SUBAB: (cpu) => { setFlags(cpu, cpu.A, cpu.B, 1); cpu.A = (cpu.A - cpu.B) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBAC: (cpu) => { setFlags(cpu, cpu.A, cpu.C, 1); cpu.A = (cpu.A - cpu.C) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBAD: (cpu) => { setFlags(cpu, cpu.A, cpu.D, 1); cpu.A = (cpu.A - cpu.D) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBAE: (cpu) => { setFlags(cpu, cpu.A, cpu.E, 1); cpu.A = (cpu.A - cpu.E) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBAH: (cpu) => { setFlags(cpu, cpu.A, cpu.H, 1); cpu.A = (cpu.A - cpu.H) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBAL: (cpu) => { setFlags(cpu, cpu.A, cpu.L, 1); cpu.A = (cpu.A - cpu.L) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBAHLm: (cpu) => { const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); setFlags(cpu, cpu.A, val, 1); cpu.A = (cpu.A - val) & 0xff; cpu.M = 2; cpu.T = 8; },
-  SUBAA: (cpu) => { cpu.A = 0; cpu.F = 0xc0; cpu.M = 1; cpu.T = 4; },
-  SUBAn: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); setFlags(cpu, cpu.A, val, 1); cpu.A = (cpu.A - val) & 0xff; cpu.M = 2; cpu.T = 8; },
+  SUBAB: cpu => SUB_n(cpu, 'B'),
+  SUBAC: cpu => SUB_n(cpu, 'C'),
+  SUBAD: cpu => SUB_n(cpu, 'D'),
+  SUBAE: cpu => SUB_n(cpu, 'E'),
+  SUBAH: cpu => SUB_n(cpu, 'H'),
+  SUBAL: cpu => SUB_n(cpu, 'L'),
+  SUBAHLm: (cpu) => { cpu.A = sub(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 2; cpu.T = 8; },
+  SUBAA: cpu => SUB_n(cpu, 'A'),
+  SUBAn: (cpu) => { cpu.A = sub(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
 
   // 8 bit subtract with carry. Same flag as above
-  SUBCAB: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.B + carry, 1); cpu.A = (cpu.A - cpu.B - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAC: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.C + carry, 1); cpu.A = (cpu.A - cpu.C - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAD: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.D + carry, 1); cpu.A = (cpu.A - cpu.D - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAE: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.E + carry, 1); cpu.A = (cpu.A - cpu.E - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAH: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.H + carry, 1); cpu.A = (cpu.A - cpu.H - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAL: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.L + carry, 1); cpu.A = (cpu.A - cpu.L - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAHLm: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; const val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); setFlags(cpu, cpu.A, val + carry, 1); cpu.A = (cpu.A - val - carry) & 0xff; cpu.M = 2; cpu.T = 8; },
-  SUBCAA: (cpu) => { const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, cpu.B + carry, 1); cpu.A = (cpu.A - cpu.B - carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  SUBCAn: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); const carry = (cpu.F & 0x10) ? 1 : 0; setFlags(cpu, cpu.A, val + carry, 1); cpu.A = (cpu.A - val - carry) & 0xff; cpu.M = 2; cpu.T = 8; },
+  SUBCAB: cpu => SBC_A_n(cpu, 'B'),
+  SUBCAC: cpu => SBC_A_n(cpu, 'C'),
+  SUBCAD: cpu => SBC_A_n(cpu, 'D'),
+  SUBCAE: cpu => SBC_A_n(cpu, 'E'),
+  SUBCAH: cpu => SBC_A_n(cpu, 'H'),
+  SUBCAL: cpu => SBC_A_n(cpu, 'L'),
+  SUBCAHLm: (cpu) => { cpu.A = sbc(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 2; cpu.T = 8; },
+  SUBCAA: cpu => SBC_A_n(cpu, 'A'),
+  SUBCAn: (cpu) => { cpu.A = sbc(cpu, cpu.mmu.read8(cpu.PC++)); cpu.M = 2; cpu.T = 8; },
 };
 
 /* END REFACTOR ---------------------------------------------------------------------------------------------------------------------*/
