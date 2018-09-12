@@ -25,14 +25,11 @@ class CPU {
       E: 0,
       H: 0,
       L: 0,
+      PC: 0x100,
+      SP: 0,
     };
 
-    // program counter
-    this.PC = 0x0100;
-
     // stack pointer
-    this.SP = 0;
-    this.M = 0;
     this.T = 0;
 
     // halt
@@ -83,6 +80,12 @@ class CPU {
   set DE(x) { this.D = x >> 8; this.E = x; }
   set HL(x) { this.H = x >> 8; this.L = x; }
 
+  get PC() { return this.registers.PC; }
+  get SP() { return this.registers.SP; }
+
+  set PC(x) { this.registers.PC = x & 0xffff; }
+  set SP(x) { this.registers.SP = x & 0xffff; }
+
   reset() {
     this.registers = {
       A: 0,
@@ -93,9 +96,9 @@ class CPU {
       E: 0,
       H: 0,
       L: 0,
+      PC: 0,
+      SP: 0,
     };
-    this.PC = 0;
-    this.SP = 0;
     this.M = 0;
     this.T = 0;
     this.ime = 1;

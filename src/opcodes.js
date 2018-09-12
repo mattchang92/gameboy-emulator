@@ -504,6 +504,16 @@ const ADC_A_n = (cpu, n) => {
   cpu.M = 1; cpu.T = 4;
 };
 
+const ADD_HL_n = (cpu, n) => {
+  const result = cpu.HL + cpu[n];
+  cpu.F &= ~0x70;
+  if (((cpu.HL ^ cpu[n] ^ result) & 0x1000) !== 0) cpu.F |= hFlag;
+  if ((result & 0x10000) !== 0) cpu.F |= cFlag;
+
+  cpu.HL = result;
+  cpu.M = 2; cpu.T = 8;
+};
+
 const ADD = {
   // 8 bit adds. Flag = (* 0 * *)
   ADDAB: cpu => ADD_A_n(cpu, 'B'),
@@ -526,11 +536,10 @@ const ADD = {
   ADCAA: cpu => ADC_A_n(cpu, 'A'),
   ADCAn: (cpu) => { cpu.A = adc(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
   // 16 bit HL add. Flag = (- 0 * *)
-  ADDHLBC: (cpu) => { let hl = (cpu.H << 8) + cpu.L; const val = (cpu.B << 8) + cpu.C; setFlags(cpu, hl, val, 0, 1); hl += val; cpu.H = (hl >>> 8) & 0xff; cpu.L = hl & 0xff; cpu.M = 3; cpu.T = 12; },
-  ADDHLDE: (cpu) => { let hl = (cpu.H << 8) + cpu.L; const val = (cpu.D << 8) + cpu.E; setFlags(cpu, hl, val, 0, 1); hl += val; cpu.H = (hl >>> 8) & 0xff; cpu.L = hl & 0xff; cpu.M = 3; cpu.T = 12; },
-  ADDHLHL: (cpu) => { let hl = (cpu.H << 8) + cpu.L; setFlags(cpu, hl, hl, 0, 1); hl <<= 1; cpu.H = (hl >>> 8) & 0xff; cpu.L = hl & 0xff; cpu.M = 3; cpu.T = 12; },
-  ADDHLSP: (cpu) => { let hl = (cpu.H << 8) + cpu.L; setFlags(cpu, hl, cpu.SP, 0, 1); hl += cpu.SP; cpu.H = (hl >>> 8) & 0xff; cpu.L = hl & 0xff; cpu.M = 3; cpu.T = 12; },
-
+  ADDHLBC: cpu => ADD_HL_n(cpu, 'BC'),
+  ADDHLDE: cpu => ADD_HL_n(cpu, 'DE'),
+  ADDHLHL: cpu => ADD_HL_n(cpu, 'HL'),
+  ADDHLSP: cpu => ADD_HL_n(cpu, 'SP'),
   // 16 bit SP add. Flag = (0 0 * *)
   ADDSPd: (cpu) => {
     let i = cpu.mmu.read8(cpu, cpu.PC++);
@@ -675,22 +684,65 @@ const INC_n = (cpu, n) => {
   cpu.M = 1; cpu.T = 4;
 };
 
+const INC_nn = (cpu, nn) => {
+  cpu[nn]++;
+  cpu.M = 2; cpu.T = 8;
+};
+
 const INCREMENT = {
   // 8 bit increments. Flag = (* 0 * -)
-  INCB: (cpu) => { setFlags(cpu, cpu.B, 1); cpu.B = ++cpu.B & 0xff; cpu.M = 1; cpu.T = 4; },
-  INCC: (cpu) => { setFlags(cpu, cpu.C, 1); cpu.C = ++cpu.C & 0xff; cpu.M = 1; cpu.T = 4; },
-  INCD: (cpu) => { setFlags(cpu, cpu.D, 1); cpu.D = ++cpu.D & 0xff; cpu.M = 1; cpu.T = 4; },
-  INCE: (cpu) => { setFlags(cpu, cpu.E, 1); cpu.E = ++cpu.E & 0xff; cpu.M = 1; cpu.T = 4; },
-  INCH: (cpu) => { setFlags(cpu, cpu.H, 1); cpu.H = ++cpu.H & 0xff; cpu.M = 1; cpu.T = 4; },
-  INCL: (cpu) => { setFlags(cpu, cpu.L, 1); cpu.L = ++cpu.L & 0xff; cpu.M = 1; cpu.T = 4; },
-  INCHLm: (cpu) => { const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) + 1); setFlags(cpu, val - 1, 1); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & 0xff); cpu.M = 3; cpu.T = 12; },
-  INCA: (cpu) => { setFlags(cpu, cpu.A, 1); cpu.A = ++cpu.A & 0xff; cpu.M = 1; cpu.T = 4; },
+  INCB: cpu => INC_n(cpu, 'B'),
+  INCC: cpu => INC_n(cpu, 'C'),
+  INCD: cpu => INC_n(cpu, 'D'),
+  INCE: cpu => INC_n(cpu, 'E'),
+  INCH: cpu => INC_n(cpu, 'H'),
+  INCL: cpu => INC_n(cpu, 'L'),
+  INCHLm: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.HL); cpu.mmu.write8(cpu, cpu.HL, inc(val)); cpu.M = 3; cpu.T = 12; },
+  INCA: cpu => INC_n(cpu, 'A'),
 
   // 16 bit increments Flag = (- - - -)
-  INCBC: (cpu) => { cpu.C = (cpu.C + 1) & 0xff; if (!cpu.C) { cpu.B = (cpu.B + 1) & 0xff; } cpu.M = 1; cpu.T = 4; },
-  INCDE: (cpu) => { cpu.E = (cpu.E + 1) & 0xff; if (!cpu.E) { cpu.D = (cpu.D + 1) & 0xff; } cpu.M = 1; cpu.T = 4; },
-  INCHL: (cpu) => { cpu.L = (cpu.L + 1) & 0xff; if (!cpu.L) { cpu.H = (cpu.H + 1) & 0xff; } cpu.M = 1; cpu.T = 4; },
-  INCSP: (cpu) => { cpu.SP = (cpu.SP + 1) & 0xffff; cpu.M = 1; cpu.T = 4; },
+  INCBC: cpu => INC_nn(cpu, 'BC'),
+  INCDE: cpu => INC_nn(cpu, 'DE'),
+  INCHL: cpu => INC_nn(cpu, 'HL'),
+  INCSP: cpu => INC_nn(cpu, 'SP'),
+};
+
+const dec = (cpu, n) => {
+  const result = n - 1;
+  cpu.F &= ~0xe0;
+  if ((result & 0xff) === 0) cpu.F |= zFlag;
+  cpu.F |= nFlag;
+  if ((n & 0xf) === 0) cpu.F |= hFlag;
+
+  return result;
+};
+
+const DEC_n = (cpu, n) => {
+  cpu[n] = dec(cpu, cpu[n]);
+  cpu.M = 1; cpu.T = 4;
+};
+
+const DEC_nn = (cpu, nn) => {
+  cpu[nn]--;
+  cpu.M = 2; cpu.T = 8;
+};
+
+const DECREMENT = {
+  // 8 bit decrements Flag = (* 1 * -)
+  DECB: cpu => DEC_n(cpu, 'B'),
+  DECC: cpu => DEC_n(cpu, 'C'),
+  DECD: cpu => DEC_n(cpu, 'D'),
+  DECE: cpu => DEC_n(cpu, 'E'),
+  DECH: cpu => DEC_n(cpu, 'H'),
+  DECL: cpu => DEC_n(cpu, 'L'),
+  DECHLm: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.HL); cpu.mmu.write8(cpu, cpu.HL, dec(cpu, val)); cpu.M = 3; cpu.T = 12; },
+  DECA: cpu => DEC_n(cpu, 'A'),
+
+  // 16 bit decrements. Flag = (- - - -)
+  DECBC: cpu => DEC_nn(cpu, 'BC'),
+  DECDE: cpu => DEC_nn(cpu, 'DE'),
+  DECHL: cpu => DEC_nn(cpu, 'HL'),
+  DECSP: cpu => DEC_nn(cpu, 'SP'),
 };
 
 /* END REFACTOR ---------------------------------------------------------------------------------------------------------------------*/
@@ -701,36 +753,6 @@ const RESTART = {
   RST50: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0050; cpu.M = 3; cpu.T = 12; },
   RST58: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0058; cpu.M = 3; cpu.T = 12; },
   RST60: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0060; cpu.M = 3; cpu.T = 12; },
-};
-
-
-const DECREMENT = {
-  // 8 bit decrements Flag = (* 1 * -)
-  // Following working emu
-  // DECB: (cpu) => { cpu.B--; cpu.B &= 0xff; cpu.F = cpu.B ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
-  // DECC: (cpu) => { cpu.C--; cpu.C &= 0xff; cpu.F = cpu.C ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
-  // DECD: (cpu) => { cpu.D--; cpu.D &= 0xff; cpu.F = cpu.D ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
-  // DECE: (cpu) => { cpu.E--; cpu.E &= 0xff; cpu.F = cpu.E ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
-  // DECH: (cpu) => { cpu.H--; cpu.H &= 0xff; cpu.F = cpu.H ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
-  // DECL: (cpu) => { cpu.L--; cpu.L &= 0xff; cpu.F = cpu.L ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
-  // DECHLm: (cpu) => { const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) - 1); cpu.F = val ? 0 : 0x80; cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & 0xff); cpu.M = 3; cpu.T = 12; },
-  // DECA: (cpu) => { cpu.A--; cpu.A &= 0xff; cpu.F = cpu.A ? 0 : 0x80; cpu.M = 1; cpu.T = 4; },
-
-  // Original
-  DECB: (cpu) => { setFlags(cpu, cpu.B, 1, 1); cpu.B--; cpu.B &= 0xff; cpu.M = 1; cpu.T = 4; },
-  DECC: (cpu) => { setFlags(cpu, cpu.C, 1, 1); cpu.C--; cpu.C &= 0xff; cpu.M = 1; cpu.T = 4; },
-  DECD: (cpu) => { setFlags(cpu, cpu.D, 1, 1); cpu.D--; cpu.D &= 0xff; cpu.M = 1; cpu.T = 4; },
-  DECE: (cpu) => { setFlags(cpu, cpu.E, 1, 1); cpu.E--; cpu.E &= 0xff; cpu.M = 1; cpu.T = 4; },
-  DECH: (cpu) => { setFlags(cpu, cpu.H, 1, 1); cpu.H--; cpu.H &= 0xff; cpu.M = 1; cpu.T = 4; },
-  DECL: (cpu) => { setFlags(cpu, cpu.L, 1, 1); cpu.L--; cpu.L &= 0xff; cpu.M = 1; cpu.T = 4; },
-  DECHLm: (cpu) => { const val = (cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L) - 1); setFlags(cpu, val - 1, 1, 1); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & 0xff); cpu.M = 3; cpu.T = 12; },
-  DECA: (cpu) => { setFlags(cpu, cpu.A, 1, 1); cpu.A--; cpu.A &= 0xff; cpu.M = 1; cpu.T = 4; },
-
-  // 16 bit decrements. Flag = (- - - -)
-  DECBC: (cpu) => { cpu.C = (cpu.C - 1) & 0xff; if (cpu.C === 0xff) { cpu.B = (cpu.B - 1) & 0xff; } cpu.M = 1; cpu.T = 4; },
-  DECDE: (cpu) => { cpu.E = (cpu.E - 1) & 0xff; if (cpu.E === 0xff) { cpu.C = (cpu.C - 1) & 0xff; } cpu.M = 1; cpu.T = 4; },
-  DECHL: (cpu) => { cpu.L = (cpu.L - 1) & 0xff; if (cpu.L === 0xff) { cpu.H = (cpu.H - 1) & 0xff; } cpu.M = 1; cpu.T = 4; },
-  DECSP: (cpu) => { cpu.SP = (cpu.SP - 1) & 0xffff; cpu.M = 2; cpu.T = 8; },
 };
 
 
@@ -818,11 +840,11 @@ const opcodes = {
   [OPCODES.DECH]: DECREMENT.DECH,
   [OPCODES.LDHn]: LOAD.LDHn,
   [OPCODES.DAA]: (cpu) => {
-    const sub = (cpu.F & 0x40) ? 1 : 0;
+    const isSub = (cpu.F & 0x40) ? 1 : 0;
     const half = (cpu.F & 0x20) ? 1 : 0;
     const carry = (cpu.F & 0x10) ? 1 : 0;
 
-    if (sub) {
+    if (isSub) {
       if (carry || cpu.A > 0x99) { cpu.A = (cpu.A + 0x60) & 0xff; cpu.F |= 0x10; }
       if (half || (cpu.A & 0x0f) > 0x09) { cpu.A = (cpu.A + 0x6) & 0xff; }
     } else {
@@ -1227,13 +1249,13 @@ const opcodes = {
   [OPCODES.LDHLSPd]: (cpu) => {
     let i = cpu.mmu.read8(cpu, cpu.PC++);
     if (i > 127) i = -((~i + 1) & 0xff);
-    const r = cpu.SP + i;
-    const op = cpu.SP ^ r ^ r;
+    const result = cpu.SP + i;
+    const op = cpu.SP ^ i ^ result;
 
     cpu.F = 0;
     if ((op & 0x10) !== 0) cpu.F |= hFlag;
     if ((op & 0x100) !== 0) cpu.F |= cFlag;
-    cpu.HL = r;
+    cpu.HL = result;
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.LDSPHL]: (cpu) => { cpu.SP = cpu.HL; cpu.M = 2; cpu.T = 8; },
