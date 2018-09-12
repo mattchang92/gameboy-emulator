@@ -538,47 +538,39 @@ const opcodes = {
     cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.DAA]: (cpu) => {
-    // const sub = (cpu.F & 0x40) ? 1 : 0;
-    // const half = (cpu.F & 0x20) ? 1 : 0;
-    // const carry = (cpu.F & 0x10) ? 1 : 0;
-    // if (!sub) {
-    //   if (carry || cpu.A > 0x99) {
-    //     cpu.A = (cpu.A + 0x60) & 0xff;
-    //     cpu.F |= 0x10;
-    //   }
-    //   if (half || (cpu.A & 0xf) > 0x9) {
-    //     cpu.A = (cpu.A + 0x6) & 0xFF;
-    //     cpu.F &= ~0x20;
-    //   }
-    // } else if (carry && half) {
-    //   cpu.A = (cpu.A + 0x9a) & 0xff;
-    //   cpu.F &= ~0x20;
-    // } else if (carry) {
-    //   cpu.A = (cpu.A + 0xa0) & 0xff;
-    // } else if (half) {
-    //   cpu.A = (cpu.A + 0xfa) & 0xff;
-    //   cpu.F &= ~0x20;
-    // }
-    // cpu.F |= (cpu.A === 0 ? 0x80 : 0);
-
     const sub = (cpu.F & 0x40) ? 1 : 0;
     const half = (cpu.F & 0x20) ? 1 : 0;
-    let carry = (cpu.F & 0x10) ? 1 : 0;
+    const carry = (cpu.F & 0x10) ? 1 : 0;
+
     if (sub) {
-      if (carry) cpu.A -= 0x60;
-      if (half) cpu.A = (cpu.A - 0x6) & 0xFF;
+      if (carry || cpu.A > 0x99) { cpu.A = (cpu.A + 0x60) & 0xff; cpu.F |= 0x10; }
+      if (half || (cpu.A & 0x0f) > 0x09) { cpu.A = (cpu.A + 0x6) & 0xff; }
     } else {
-      if ((cpu.A & 0xF) > 9 || half) cpu.A += 0x6;
-      if (cpu.A > 0x9F || carry) cpu.A += 0x60;
+      if (carry) { cpu.A = (cpu.A - 0x60) & 0xff; }
+      if (half) { cpu.A = (cpu.A - 0x6) & 0xff; }
     }
 
-    if (cpu.A & 0x100) carry = 1;
+    cpu.F |= (cpu.A === 0 ? 0x80 : 0);
+    cpu.F &= ~0x20;
 
-    cpu.A &= 0xFF;
-    cpu.F &= 0x40;
+    // const sub = (cpu.F & 0x40) ? 1 : 0;
+    // const half = (cpu.F & 0x20) ? 1 : 0;
+    // let carry = (cpu.F & 0x10) ? 1 : 0;
+    // if (sub) {
+    //   if (carry) cpu.A -= 0x60;
+    //   if (half) cpu.A = (cpu.A - 0x6) & 0xFF;
+    // } else {
+    //   if ((cpu.A & 0xF) > 9 || half) cpu.A += 0x6;
+    //   if (cpu.A > 0x9F || carry) cpu.A += 0x60;
+    // }
 
-    if (cpu.A === 0) cpu.F |= 0x80;
-    if (carry) cpu.F |= 0x10;
+    // if (cpu.A & 0x100) carry = 1;
+
+    // cpu.A &= 0xFF;
+    // cpu.F &= 0x40;
+
+    // if (cpu.A === 0) cpu.F |= 0x80;
+    // if (carry) cpu.F |= 0x10;
   },
   [OPCODES.JRZn]: (cpu) => {
     const zero = (cpu.F >> 7) & 0xff;

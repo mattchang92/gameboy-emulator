@@ -106,11 +106,14 @@ class CPU {
       4 Joypad
     */
     if (this.ime && this.mmu.ie && this.mmu.if) {
+      let interruptProcessed = false;
       this.HALT = 0;
+      this.ime = 0;
       // console.log(this.mmu.ie.toString(2), this.mmu.if.toString(2))
       let ifired = this.mmu.ie & this.mmu.if;
       for (let i = 0; i < 5; i++) {
         if (ifired & 0x01) {
+          interruptProcessed = true;
           const mask = 1 << i;
           this.mmu.if &= (0xff - mask);
           interrupts[i](this);
@@ -119,6 +122,8 @@ class CPU {
           ifired >>= 1;
         }
       }
+
+      if (!interruptProcessed) this.ime = 1;
     }
   }
 
@@ -150,11 +155,6 @@ class CPU {
         if (this.initialCounter > this.offset) {
           // this.logsEnabled = true;
           this.counter++;
-        }
-
-        if (this.timeout) {
-          // console.log('if ', this.mmu.if, ' ie ', this.mmu.ie, ' ime ', this.ime);
-          // console.log(this.PC - 1, op.toString(16), this.F.toString(2).slice(0, 4), this.SP, this.B, this.C, this.D, this.E, this.H, this.L, this.A);
         }
 
         if (typeof opcodes[op] !== 'function') {
