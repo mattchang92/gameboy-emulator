@@ -16,18 +16,16 @@ class CPU {
     this.offset = 15000;
     this.limit = 30000;
 
-    this.A = 0;
-    this.B = 0;
-    this.C = 0;
-    this.D = 0;
-    this.E = 0;
-
-    // flag
-    this.F = 0;
-
-    // general use pointers
-    this.H = 0;
-    this.L = 0;
+    this.registers = {
+      A: 0,
+      F: 0,
+      B: 0,
+      C: 0,
+      D: 0,
+      E: 0,
+      H: 0,
+      L: 0,
+    };
 
     // program counter
     this.PC = 0x0100;
@@ -57,15 +55,45 @@ class CPU {
     this.controller = new Controller();
   }
 
+  get A() { return this.registers.A; }
+  get F() { return this.registers.F; }
+  get B() { return this.registers.B; }
+  get C() { return this.registers.C; }
+  get D() { return this.registers.D; }
+  get E() { return this.registers.E; }
+  get H() { return this.registers.H; }
+  get L() { return this.registers.L; }
+
+  set A(x) { this.registers.A = x & 0xff; }
+  set F(x) { this.registers.F = x & 0xff; }
+  set B(x) { this.registers.B = x & 0xff; }
+  set C(x) { this.registers.C = x & 0xff; }
+  set D(x) { this.registers.D = x & 0xff; }
+  set E(x) { this.registers.E = x & 0xff; }
+  set H(x) { this.registers.H = x & 0xff; }
+  set L(x) { this.registers.L = x & 0xff; }
+
+  get AF() { return (this.registers.A << 8 | this.registers.F); }
+  get BC() { return (this.registers.B << 8 | this.registers.C); }
+  get DE() { return (this.registers.D << 8 | this.registers.E); }
+  get HL() { return (this.registers.H << 8 | this.registers.L); }
+
+  set AF(x) { this.A = x >> 8; this.F = x; }
+  set BC(x) { this.B = x >> 8; this.C = x; }
+  set DE(x) { this.D = x >> 8; this.E = x; }
+  set HL(x) { this.H = x >> 8; this.L = x; }
+
   reset() {
-    this.A = 0;
-    this.B = 0;
-    this.C = 0;
-    this.D = 0;
-    this.E = 0;
-    this.F = 0;
-    this.H = 0;
-    this.L = 0;
+    this.registers = {
+      A: 0,
+      F: 0,
+      B: 0,
+      C: 0,
+      D: 0,
+      E: 0,
+      H: 0,
+      L: 0,
+    };
     this.PC = 0;
     this.SP = 0;
     this.M = 0;

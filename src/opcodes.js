@@ -1,5 +1,10 @@
 const { cbopcodes } = require('./cbOpcodes');
 
+const zFlag = 0x80;
+const nFlag = 0x40;
+const hFlag = 0x20;
+const cFlag = 0x10;
+
 const OPCODES = {
   NOP: 0x00,
   LDBCnn: 0x01,
@@ -297,6 +302,154 @@ const setFlags = (cpu, a, b, isSub = 0, is16BitOp = 0) => {
   setHalfCarry(cpu, a, b, isSub, is16BitOp);
 };
 
+/* START REFACTOR -------------------------------------------------------------------------------------------------------------------*/
+
+// LOADS
+// 55
+const LD_r_n = (cpu, r) => {
+  cpu[r] = cpu.mmu.read8(cpu, cpu.PC++);
+  cpu.M = 2; cpu.T = 8;
+};
+
+// 139
+const LD_r1_r2 = (cpu, r1, r2) => {
+  cpu[r1] = cpu[r2];
+  cpu.M = 1; cpu.T = 4;
+};
+
+// 196
+const LD_r_HLm = (cpu, r) => {
+  cpu[r] = cpu.mmu.read8(cpu, cpu.HL);
+  cpu.M = 2; cpu.T = 8;
+};
+
+// 211
+const LD_HLm_r = (cpu, r) => {
+  cpu.mmu.write8(cpu, cpu.HL, cpu[r]);
+  cpu.M = 2; cpu.T = 8;
+};
+
+// 273
+const LD_A_nnm = (cpu, nn) => {
+  cpu.A = cpu.mmu.read8(cpu, cpu[nn]);
+  cpu.M = 2; cpu.T = 8;
+};
+
+// 338
+const LD_nm_A = (cpu, n) => {
+  cpu.mmu.write8(cpu, cpu[n], cpu.A);
+  cpu.M = 2; cpu.T = 8;
+};
+
+// 549
+const LD_n_nn = (cpu, n) => {
+  cpu[n] = cpu.mmu.read16(cpu, cpu.PC);
+  cpu.PC += 2;
+  cpu.M = 3; cpu.T = 12;
+};
+
+const LOAD = {
+  // LD_r_n 55
+  LDBn: cpu => LD_r_n(cpu, 'B'),
+  LDCn: cpu => LD_r_n(cpu, 'C'),
+  LDDn: cpu => LD_r_n(cpu, 'D'),
+  LDEn: cpu => LD_r_n(cpu, 'E'),
+  LDHn: cpu => LD_r_n(cpu, 'H'),
+  LDLn: cpu => LD_r_n(cpu, 'L'),
+
+  // LD_r1_r2 139
+  LDBB: cpu => LD_r1_r2(cpu, 'B', 'B'),
+  LDBC: cpu => LD_r1_r2(cpu, 'B', 'C'),
+  LDBD: cpu => LD_r1_r2(cpu, 'B', 'D'),
+  LDBE: cpu => LD_r1_r2(cpu, 'B', 'E'),
+  LDBH: cpu => LD_r1_r2(cpu, 'B', 'H'),
+  LDBL: cpu => LD_r1_r2(cpu, 'B', 'L'),
+  LDBA: cpu => LD_r1_r2(cpu, 'B', 'A'),
+
+  LDCB: cpu => LD_r1_r2(cpu, 'C', 'B'),
+  LDCC: cpu => LD_r1_r2(cpu, 'C', 'C'),
+  LDCD: cpu => LD_r1_r2(cpu, 'C', 'D'),
+  LDCE: cpu => LD_r1_r2(cpu, 'C', 'E'),
+  LDCH: cpu => LD_r1_r2(cpu, 'C', 'H'),
+  LDCL: cpu => LD_r1_r2(cpu, 'C', 'L'),
+  LDCA: cpu => LD_r1_r2(cpu, 'C', 'A'),
+
+  LDDB: cpu => LD_r1_r2(cpu, 'D', 'B'),
+  LDDC: cpu => LD_r1_r2(cpu, 'D', 'C'),
+  LDDD: cpu => LD_r1_r2(cpu, 'D', 'D'),
+  LDDE: cpu => LD_r1_r2(cpu, 'D', 'E'),
+  LDDH: cpu => LD_r1_r2(cpu, 'D', 'H'),
+  LDDL: cpu => LD_r1_r2(cpu, 'D', 'L'),
+  LDDA: cpu => LD_r1_r2(cpu, 'D', 'A'),
+
+  LDEB: cpu => LD_r1_r2(cpu, 'E', 'B'),
+  LDEC: cpu => LD_r1_r2(cpu, 'E', 'C'),
+  LDED: cpu => LD_r1_r2(cpu, 'E', 'D'),
+  LDEE: cpu => LD_r1_r2(cpu, 'E', 'E'),
+  LDEH: cpu => LD_r1_r2(cpu, 'E', 'H'),
+  LDEL: cpu => LD_r1_r2(cpu, 'E', 'L'),
+  LDEA: cpu => LD_r1_r2(cpu, 'E', 'A'),
+
+  LDHB: cpu => LD_r1_r2(cpu, 'H', 'B'),
+  LDHC: cpu => LD_r1_r2(cpu, 'H', 'C'),
+  LDHD: cpu => LD_r1_r2(cpu, 'H', 'D'),
+  LDHE: cpu => LD_r1_r2(cpu, 'H', 'E'),
+  LDHH: cpu => LD_r1_r2(cpu, 'H', 'H'),
+  LDHL: cpu => LD_r1_r2(cpu, 'H', 'L'),
+  LDHA: cpu => LD_r1_r2(cpu, 'H', 'A'),
+
+  LDLB: cpu => LD_r1_r2(cpu, 'L', 'B'),
+  LDLC: cpu => LD_r1_r2(cpu, 'L', 'C'),
+  LDLD: cpu => LD_r1_r2(cpu, 'L', 'D'),
+  LDLE: cpu => LD_r1_r2(cpu, 'L', 'E'),
+  LDLH: cpu => LD_r1_r2(cpu, 'L', 'H'),
+  LDLL: cpu => LD_r1_r2(cpu, 'L', 'L'),
+  LDLA: cpu => LD_r1_r2(cpu, 'L', 'A'),
+
+  LDAB: cpu => LD_r1_r2(cpu, 'A', 'B'),
+  LDAC: cpu => LD_r1_r2(cpu, 'A', 'C'),
+  LDAD: cpu => LD_r1_r2(cpu, 'A', 'D'),
+  LDAE: cpu => LD_r1_r2(cpu, 'A', 'E'),
+  LDAH: cpu => LD_r1_r2(cpu, 'A', 'H'),
+  LDAL: cpu => LD_r1_r2(cpu, 'A', 'L'),
+  LDAA: cpu => LD_r1_r2(cpu, 'A', 'A'),
+
+  // LD_r_HLm 196
+  LDBHLm: cpu => LD_r_HLm(cpu, 'B'),
+  LDCHLm: cpu => LD_r_HLm(cpu, 'C'),
+  LDDHLm: cpu => LD_r_HLm(cpu, 'D'),
+  LDEHLm: cpu => LD_r_HLm(cpu, 'E'),
+  LDHHLm: cpu => LD_r_HLm(cpu, 'H'),
+  LDLHLm: cpu => LD_r_HLm(cpu, 'L'),
+
+  // LD_HLm_r 211
+  LDHLmB: cpu => LD_HLm_r(cpu, 'B'),
+  LDHLmC: cpu => LD_HLm_r(cpu, 'C'),
+  LDHLmD: cpu => LD_HLm_r(cpu, 'D'),
+  LDHLmE: cpu => LD_HLm_r(cpu, 'E'),
+  LDHLmH: cpu => LD_HLm_r(cpu, 'H'),
+  LDHLmL: cpu => LD_HLm_r(cpu, 'L'),
+
+  // LD_Mm_A
+  LDABCm: cpu => LD_A_nnm(cpu, 'BC'),
+  LDADEm: cpu => LD_A_nnm(cpu, 'DE'),
+  LDAHLm: cpu => LD_A_nnm(cpu, 'HL'),
+
+  // LD_nm_A 338
+  LDBCmA: cpu => LD_nm_A(cpu, 'BC'),
+  LDDEmA: cpu => LD_nm_A(cpu, 'DE'),
+  LDHLmA: cpu => LD_nm_A(cpu, 'HL'),
+
+  // LD_n_nn
+  LDBCnn: cpu => LD_n_nn(cpu, 'BC'),
+  LDDEnn: cpu => LD_n_nn(cpu, 'DE'),
+  LDHLnn: cpu => LD_n_nn(cpu, 'HL'),
+  LDSPnn: cpu => LD_n_nn(cpu, 'SP'),
+};
+
+
+/* END REFACTOR ---------------------------------------------------------------------------------------------------------------------*/
+
 const RESTART = {
   RST40: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0040; cpu.M = 3; cpu.T = 12; },
   RST48: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0048; cpu.M = 3; cpu.T = 12; },
@@ -424,22 +577,12 @@ const ROTATE = {
 const opcodes = {
   /* ------------------------ 0x0 ------------------------ */
   [OPCODES.NOP]: (cpu) => { cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDBCnn]: (cpu) => {
-    cpu.C = cpu.mmu.read8(cpu, cpu.PC++);
-    cpu.B = cpu.mmu.read8(cpu, cpu.PC++);
-    cpu.M = 3; cpu.T = 12;
-  },
-  [OPCODES.LDBCmA]: (cpu) => {
-    cpu.mmu.write8(cpu, cpu.B << 8 | cpu.C, cpu.A);
-    cpu.M = 2; cpu.T = 8;
-  },
+  [OPCODES.LDBCnn]: LOAD.LDBCnn,
+  [OPCODES.LDBCmA]: LOAD.LDBCmA,
   [OPCODES.INCBC]: INCREMENT.INCBC,
   [OPCODES.INCB]: INCREMENT.INCB,
   [OPCODES.DECB]: DECREMENT.DECB,
-  [OPCODES.LDBn]: (cpu) => {
-    cpu.B = cpu.mmu.read8(cpu, cpu.PC++);
-    cpu.M = 2; cpu.T = 8;
-  },
+  [OPCODES.LDBn]: LOAD.LDBn,
   [OPCODES.RLCA]: ROTATE.RLCA,
   [OPCODES.LDnnSP]: (cpu) => {
     const address = cpu.mmu.read16(cpu, cpu.PC);
@@ -457,33 +600,19 @@ const opcodes = {
   [OPCODES.DECBC]: DECREMENT.DECBC,
   [OPCODES.INCC]: INCREMENT.INCC,
   [OPCODES.DECC]: DECREMENT.DECC,
-  [OPCODES.LDCn]: (cpu) => {
-    cpu.C = cpu.mmu.read8(cpu, cpu.PC++);
-    cpu.M = 2; cpu.T = 8;
-  },
+  [OPCODES.LDCn]: LOAD.LDCn,
   [OPCODES.RRCA]: ROTATE.RRCA,
 
   /* ------------------------ 0x1 ------------------------ */
   [OPCODES.STOP]: (cpu) => {
     cpu.PC++;
   },
-  [OPCODES.LDDEnn]: (cpu) => {
-    cpu.E = cpu.mmu.read8(cpu, cpu.PC);
-    cpu.D = cpu.mmu.read8(cpu, (cpu.PC + 1) & 0xffff);
-    cpu.PC += 2;
-    cpu.M = 3; cpu.T = 12;
-  },
-  [OPCODES.LDDEmA]: (cpu) => {
-    cpu.mmu.write8(cpu, cpu.D << 8 | cpu.E, cpu.A);
-    cpu.M = 2; cpu.T = 8;
-  },
+  [OPCODES.LDDEnn]: LOAD.LDDEnn,
+  [OPCODES.LDDEmA]: LOAD.LDDEmA,
   [OPCODES.INCDE]: INCREMENT.INCDE,
   [OPCODES.INCD]: INCREMENT.INCD,
   [OPCODES.DECD]: DECREMENT.DECD,
-  [OPCODES.LDDn]: (cpu) => {
-    cpu.D = cpu.mmu.read8(cpu, cpu.PC++);
-    cpu.M = 2; cpu.T = 8;
-  },
+  [OPCODES.LDDn]: LOAD.LDDn,
   [OPCODES.RLA]: ROTATE.RLA,
   [OPCODES.JRn]: (cpu) => {
     let val = cpu.mmu.read8(cpu, cpu.PC++);
@@ -501,10 +630,7 @@ const opcodes = {
   [OPCODES.DECDE]: DECREMENT.DECDE,
   [OPCODES.INCE]: INCREMENT.INCE,
   [OPCODES.DECE]: DECREMENT.DECE,
-  [OPCODES.LDEn]: (cpu) => {
-    cpu.E = cpu.mmu.read8(cpu, cpu.PC++);
-    cpu.M = 2; cpu.T = 48;
-  },
+  [OPCODES.LDEn]: LOAD.LDEn,
   [OPCODES.RRA]: ROTATE.RRA,
 
   /* ------------------------ 0x2------------------------ */
@@ -518,25 +644,12 @@ const opcodes = {
       cpu.M++; cpu.T += 4;
     }
   },
-  [OPCODES.LDHLnn]: (cpu) => {
-    cpu.L = cpu.mmu.read8(cpu, cpu.PC);
-    cpu.H = cpu.mmu.read8(cpu, cpu.PC + 1);
-    cpu.PC += 2;
-    cpu.M = 3; cpu.T = 12;
-  },
-  [OPCODES.LDIHLmA]: (cpu) => {
-    cpu.mmu.write8(cpu, cpu.H << 8 | cpu.L, cpu.A);
-    cpu.L = (cpu.L + 1) & 0xff;
-    if (!cpu.L) cpu.H = (cpu.H + 1) & 0xff;
-    cpu.M = 2; cpu.T = 8;
-  },
+  [OPCODES.LDHLnn]: LOAD.LDHLnn,
+  [OPCODES.LDIHLmA]: (cpu) => { cpu.mmu.write8(cpu, cpu.HL++, cpu.A); cpu.M = 2; cpu.T = 8; },
   [OPCODES.INCHL]: INCREMENT.INCHL,
   [OPCODES.INCH]: INCREMENT.INCH,
   [OPCODES.DECH]: DECREMENT.DECH,
-  [OPCODES.LDHn]: (cpu) => {
-    cpu.H = cpu.mmu.read8(cpu, cpu.PC++);
-    cpu.M = 2; cpu.T = 8;
-  },
+  [OPCODES.LDHn]: LOAD.LDHn,
   [OPCODES.DAA]: (cpu) => {
     const sub = (cpu.F & 0x40) ? 1 : 0;
     const half = (cpu.F & 0x20) ? 1 : 0;
@@ -580,22 +693,11 @@ const opcodes = {
     cpu.M = 3; cpu.T = 12;
   },
   [OPCODES.ADDHLHL]: ADD.ADDHLHL,
-  [OPCODES.LDIAHLm]: (cpu) => {
-    const address = (cpu.H << 8) + cpu.L;
-    cpu.A = cpu.mmu.read8(cpu, address);
-    if (cpu.A === undefined) console.log('A is undefined at 3', address);
-
-    cpu.L = (cpu.L + 1) & 0xff;
-    if (!cpu.L) cpu.H = (cpu.H + 1) & 0xff;
-    cpu.M = 2; cpu.T = 8;
-  },
+  [OPCODES.LDIAHLm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.HL++); cpu.M = 2; cpu.T = 8; },
   [OPCODES.DECHL]: DECREMENT.DECHL,
   [OPCODES.INCL]: INCREMENT.INCL,
   [OPCODES.DECL]: DECREMENT.DECL,
-  [OPCODES.LDLn]: (cpu) => {
-    cpu.L = cpu.mmu.read8(cpu, cpu.PC++);
-    cpu.M = 2; cpu.T = 8;
-  },
+  [OPCODES.LDLn]: LOAD.LDLn,
   [OPCODES.CMPL]: (cpu) => {
     cpu.A = (~cpu.A) & 0xff;
     setFlags(cpu, cpu.A, 1);
@@ -610,36 +712,15 @@ const opcodes = {
     if (val > 127) val = -((~val + 1) & 0xff);
     if (!carry) { cpu.PC += val; cpu.M++; cpu.T += 4; }
   },
-  [OPCODES.LDSPnn]: (cpu) => {
-    cpu.SP = cpu.mmu.read16(cpu, cpu.PC);
-    cpu.PC += 2;
-    cpu.M = 3; cpu.T = 12;
-  },
+  [OPCODES.LDSPnn]: LOAD.LDSPnn,
   [OPCODES.LDDHLmA]: (cpu) => {
-    // if ((cpu.H << 8 | cpu.L).toString(16) === '8001') {
-    //   cpu.logsEnabled = true;
-    // }
-    if (cpu.counter < cpu.limit && cpu.logsEnabled) {
-      // console.log('should be loading to memory', (cpu.H << 8 | cpu.L).toString(16), cpu.A, cpu.PC, cpu.SP);
-    }
-
-    // if (counter < 8300) {
-    //   console.log('should be loading to memory', (cpu.H << 8 | cpu.L).toString(16), cpu.A, cpu.PC, cpu.SP);
-    // }
-    // if ((cpu.H << 8 | cpu.L).toString() == '8000') flag = true;
-    // counter++;
-    cpu.mmu.write8(cpu, cpu.H << 8 | cpu.L, cpu.A);
-    cpu.L = (cpu.L - 1) & 0xff;
-    if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
+    cpu.mmu.write8(cpu, cpu.HL--, cpu.A);
     cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.INCSP]: INCREMENT.INCSP,
   [OPCODES.INCHLm]: INCREMENT.INCHLm,
   [OPCODES.DECHLm]: DECREMENT.DECHLm,
-  [OPCODES.LDHLmn]: (cpu) => {
-    cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.mmu.read8(cpu, cpu.PC++));
-    cpu.M = 3; cpu.T = 12;
-  },
+  [OPCODES.LDHLmn]: (cpu) => { cpu.mmu.write8(cpu, cpu.HL, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; },
   [OPCODES.SCF]: (cpu) => { cpu.F |= 0x10; cpu.M = 1; cpu.T = 4; },
   [OPCODES.JRCn]: (cpu) => {
     cpu.M = 2; cpu.T = 8;
@@ -649,92 +730,84 @@ const opcodes = {
     if (carry) { cpu.PC += val; cpu.M++; cpu.T += 4; }
   },
   [OPCODES.ADDHLSP]: ADD.ADDHLSP,
-  [OPCODES.LDDAHLm]: (cpu) => {
-    const address = (cpu.H << 8) + cpu.L;
-    cpu.A = cpu.mmu.read8(cpu, address);
-    if (cpu.A === undefined) console.log('A is undefined at 4', address);
-
-    cpu.L = (cpu.L - 1) & 0xff;
-    if (cpu.L === 0xff) cpu.H = (cpu.H - 1) & 0xff;
-    cpu.M = 2; cpu.T = 8;
-  },
+  [OPCODES.LDDAHLm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.HL--); cpu.M = 2; cpu.T = 8; },
   [OPCODES.DECSP]: DECREMENT.DECSP,
   [OPCODES.INCA]: INCREMENT.INCA,
   [OPCODES.DECA]: DECREMENT.DECA,
-  [OPCODES.LDAn]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.PC++); cpu.M = 2; cpu.T = 8; if (cpu.A === undefined) console.log('A is undefined at 5'); },
+  [OPCODES.LDAn]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.PC++); cpu.M = 2; cpu.T = 8; },
   [OPCODES.CFF]: (cpu) => { cpu.F &= ~0x10; cpu.M = 1; cpu.T = 4; },
 
   /* ------------------------ 0x4 ------------------------ */
-  [OPCODES.LDBB]: (cpu) => { cpu.B = cpu.B; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDBC]: (cpu) => { cpu.B = cpu.C; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDBD]: (cpu) => { cpu.B = cpu.D; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDBE]: (cpu) => { cpu.B = cpu.E; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDBH]: (cpu) => { cpu.B = cpu.H; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDBL]: (cpu) => { cpu.B = cpu.L; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDBHLm]: (cpu) => { cpu.B = cpu.mmu.read8(cpu, ((cpu.H << 8) | cpu.L)); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDBA]: (cpu) => { cpu.B = cpu.A; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDCB]: (cpu) => { cpu.C = cpu.B; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDCC]: (cpu) => { cpu.C = cpu.C; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDCD]: (cpu) => { cpu.C = cpu.D; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDCE]: (cpu) => { cpu.C = cpu.E; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDCH]: (cpu) => { cpu.C = cpu.H; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDCL]: (cpu) => { cpu.C = cpu.L; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDCHLm]: (cpu) => { cpu.C = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDCA]: (cpu) => { cpu.C = cpu.A; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDBB]: LOAD.LDBB,
+  [OPCODES.LDBC]: LOAD.LDBC,
+  [OPCODES.LDBD]: LOAD.LDBD,
+  [OPCODES.LDBE]: LOAD.LDBE,
+  [OPCODES.LDBH]: LOAD.LDBH,
+  [OPCODES.LDBL]: LOAD.LDBL,
+  [OPCODES.LDBHLm]: LOAD.LDBHLm,
+  [OPCODES.LDBA]: LOAD.LDBA,
+  [OPCODES.LDCB]: LOAD.LDCB,
+  [OPCODES.LDCC]: LOAD.LDCC,
+  [OPCODES.LDCD]: LOAD.LDCD,
+  [OPCODES.LDCE]: LOAD.LDCE,
+  [OPCODES.LDCH]: LOAD.LDCH,
+  [OPCODES.LDCL]: LOAD.LDCL,
+  [OPCODES.LDCHLm]: LOAD.LDCHLm,
+  [OPCODES.LDCA]: LOAD.LDCA,
 
   /* ------------------------ 0x5 ------------------------ */
-  [OPCODES.LDDB]: (cpu) => { cpu.D = cpu.B; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDDC]: (cpu) => { cpu.D = cpu.C; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDDD]: (cpu) => { cpu.D = cpu.D; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDDE]: (cpu) => { cpu.D = cpu.E; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDDH]: (cpu) => { cpu.D = cpu.H; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDDL]: (cpu) => { cpu.D = cpu.L; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDDHLm]: (cpu) => { cpu.D = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDDA]: (cpu) => { cpu.D = cpu.A; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDEB]: (cpu) => { cpu.E = cpu.B; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDEC]: (cpu) => { cpu.E = cpu.C; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDED]: (cpu) => { cpu.E = cpu.D; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDEE]: (cpu) => { cpu.E = cpu.E; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDEH]: (cpu) => { cpu.E = cpu.H; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDEL]: (cpu) => { cpu.E = cpu.L; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDEHLm]: (cpu) => { cpu.E = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDEA]: (cpu) => { cpu.E = cpu.A; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDDB]: LOAD.LDDB,
+  [OPCODES.LDDC]: LOAD.LDDC,
+  [OPCODES.LDDD]: LOAD.LDDD,
+  [OPCODES.LDDE]: LOAD.LDDE,
+  [OPCODES.LDDH]: LOAD.LDDH,
+  [OPCODES.LDDL]: LOAD.LDDL,
+  [OPCODES.LDDHLm]: LOAD.LDDHLm,
+  [OPCODES.LDDA]: LOAD.LDDA,
+  [OPCODES.LDEB]: LOAD.LDEB,
+  [OPCODES.LDEC]: LOAD.LDEC,
+  [OPCODES.LDED]: LOAD.LDED,
+  [OPCODES.LDEE]: LOAD.LDEE,
+  [OPCODES.LDEH]: LOAD.LDEH,
+  [OPCODES.LDEL]: LOAD.LDEL,
+  [OPCODES.LDEHLm]: LOAD.LDEHLm,
+  [OPCODES.LDEA]: LOAD.LDEA,
 
   /* ------------------------ 0x6 ------------------------ */
-  [OPCODES.LDHB]: (cpu) => { cpu.H = cpu.B; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDHC]: (cpu) => { cpu.H = cpu.C; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDHD]: (cpu) => { cpu.H = cpu.D; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDHE]: (cpu) => { cpu.H = cpu.E; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDHH]: (cpu) => { cpu.H = cpu.H; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDHL]: (cpu) => { cpu.H = cpu.L; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDHHLm]: (cpu) => { cpu.H = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDHA]: (cpu) => { cpu.H = cpu.A; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDLB]: (cpu) => { cpu.L = cpu.B; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDLC]: (cpu) => { cpu.L = cpu.C; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDLD]: (cpu) => { cpu.L = cpu.D; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDLE]: (cpu) => { cpu.L = cpu.E; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDLH]: (cpu) => { cpu.L = cpu.H; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDLL]: (cpu) => { cpu.L = cpu.L; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDLHLm]: (cpu) => { cpu.L = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDLA]: (cpu) => { cpu.L = cpu.A; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDHB]: LOAD.LDHB,
+  [OPCODES.LDHC]: LOAD.LDHC,
+  [OPCODES.LDHD]: LOAD.LDHD,
+  [OPCODES.LDHE]: LOAD.LDHE,
+  [OPCODES.LDHH]: LOAD.LDHH,
+  [OPCODES.LDHL]: LOAD.LDHL,
+  [OPCODES.LDHHLm]: LOAD.LDHHLm,
+  [OPCODES.LDHA]: LOAD.LDHA,
+  [OPCODES.LDLB]: LOAD.LDLB,
+  [OPCODES.LDLC]: LOAD.LDLC,
+  [OPCODES.LDLD]: LOAD.LDLD,
+  [OPCODES.LDLE]: LOAD.LDLE,
+  [OPCODES.LDLH]: LOAD.LDLH,
+  [OPCODES.LDLL]: LOAD.LDLL,
+  [OPCODES.LDLHLm]: LOAD.LDLHLm,
+  [OPCODES.LDLA]: LOAD.LDLA,
 
   /* ------------------------ 0x7 ------------------------ */
-  [OPCODES.LDHLmB]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.B); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDHLmC]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.C); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDHLmD]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.D); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDHLmE]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.E); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDHLmH]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.H); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDHLmL]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.L); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHLmB]: LOAD.LDHLmB,
+  [OPCODES.LDHLmC]: LOAD.LDHLmC,
+  [OPCODES.LDHLmD]: LOAD.LDHLmD,
+  [OPCODES.LDHLmE]: LOAD.LDHLmE,
+  [OPCODES.LDHLmH]: LOAD.LDHLmH,
+  [OPCODES.LDHLmL]: LOAD.LDHLmL,
   [OPCODES.HALT]: (cpu) => { cpu.HALT = 1; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDHLmA]: (cpu) => { cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, cpu.A); cpu.M = 2; cpu.T = 8; },
-  [OPCODES.LDAB]: (cpu) => { cpu.A = cpu.B; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDAC]: (cpu) => { cpu.A = cpu.C; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDAD]: (cpu) => { cpu.A = cpu.D; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDAE]: (cpu) => { cpu.A = cpu.E; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDAH]: (cpu) => { cpu.A = cpu.H; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDAL]: (cpu) => { cpu.A = cpu.L; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.LDAHLm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.M = 2; cpu.T = 8; if (cpu.A === undefined) console.log('A is undefined at 6'); },
-  [OPCODES.LDAA]: (cpu) => { cpu.A = cpu.A; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.LDHLmA]: LOAD.LDHLmA,
+  [OPCODES.LDAB]: LOAD.LDAB,
+  [OPCODES.LDAC]: LOAD.LDAC,
+  [OPCODES.LDAD]: LOAD.LDAD,
+  [OPCODES.LDAE]: LOAD.LDAE,
+  [OPCODES.LDAH]: LOAD.LDAH,
+  [OPCODES.LDAL]: LOAD.LDAL,
+  [OPCODES.LDAHLm]: LOAD.LDAHLm,
+  [OPCODES.LDAA]: LOAD.LDAA,
 
   /* ------------------------ 0x8 ------------------------ */
   [OPCODES.ADDAB]: ADD.ADDAB,
@@ -993,9 +1066,9 @@ const opcodes = {
   [OPCODES.RST28]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x28; cpu.M = 3; cpu.T = 12; },
 
   /* ------------------------ 0xf ------------------------ */
-  [OPCODES.LDHAnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; if (cpu.A === undefined) console.log('A is undefined at 7', (0xff00 | cpu.mmu.read8(cpu, cpu.PC - 1)).toString(16)); },
+  [OPCODES.LDHAnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; },
   [OPCODES.POPAF]: (cpu) => { cpu.F = cpu.mmu.read8(cpu, cpu.SP++) & 0xf0; cpu.A = cpu.mmu.read8(cpu, cpu.SP++); cpu.M = 3; cpu.T = 12; if (cpu.A === undefined) console.log('A is undefined at 8'); },
-  [OPCODES.LDAIOC]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 + cpu.C); cpu.M = 2; cpu.T = 8; if (cpu.A === undefined) console.log('A is undefined at 9'); },
+  [OPCODES.LDAIOC]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.C); cpu.M = 2; cpu.T = 8; },
   [OPCODES.DI]: (cpu) => { cpu.ime = 0; cpu.M = 1; cpu.T = 4; },
   [OPCODES.PUSHAF]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, (cpu.A << 8) | cpu.F); cpu.M = 3; cpu.T = 12; },
   [OPCODES.ORn]: (cpu) => { cpu.A |= cpu.mmu.read8(cpu, cpu.PC++); cpu.F = !cpu.A ? 0x80 : 0; cpu.M = 2; cpu.T = 8; },
@@ -1008,8 +1081,8 @@ const opcodes = {
     cpu.L = i & 0xff;
     cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.LDSPHL]: (cpu) => { cpu.SP = (cpu.H << 8) | cpu.L; },
-  [OPCODES.LDAnnm]: (cpu) => { const addr = cpu.mmu.read16(cpu, cpu.PC); cpu.A = cpu.mmu.read8(cpu, addr); cpu.PC += 2; cpu.M = 4; cpu.T = 16; if (cpu.A === undefined) console.log('A is undefined at 4', addr); },
+  [OPCODES.LDSPHL]: (cpu) => { cpu.SP = cpu.HL; cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDAnnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.mmu.read16(cpu, cpu.PC)); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
   [OPCODES.EI]: (cpu) => { cpu.ime = 1; cpu.M = 1; cpu.T = 4; },
   [OPCODES.CPn]: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); setFlags(cpu, cpu.A, val, 1); cpu.M = 2; cpu.T = 8; },
   [OPCODES.RST38]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x38; cpu.M = 3; cpu.T = 12; },
