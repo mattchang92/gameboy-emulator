@@ -880,12 +880,7 @@ const opcodes = {
     cpu.M = 5; cpu.T = 20;
   },
   [OPCODES.ADDHLBC]: ADD.ADDHLBC,
-  [OPCODES.LDABCm]: (cpu) => {
-    const address = (cpu.B << 8) + cpu.C;
-    cpu.A = cpu.mmu.read8(cpu, address);
-    if (cpu.A === undefined) console.log('A is undefined at 1', address);
-    cpu.M = 2; cpu.T = 8;
-  },
+  [OPCODES.LDABCm]: LOAD.LDABCm,
   [OPCODES.DECBC]: DECREMENT.DECBC,
   [OPCODES.INCC]: INCREMENT.INCC,
   [OPCODES.DECC]: DECREMENT.DECC,
@@ -905,12 +900,7 @@ const opcodes = {
   [OPCODES.RLA]: ROTATE.RLA,
   [OPCODES.JRn]: JUMP.JRn,
   [OPCODES.ADDHLDE]: ADD.ADDHLDE,
-  [OPCODES.LDADEm]: (cpu) => {
-    const address = (cpu.D << 8) | cpu.E;
-    cpu.A = cpu.mmu.read8(cpu, address);
-    if (cpu.A === undefined) console.log('A is undefined at 2', address);
-    cpu.M = 2; cpu.T = 8;
-  },
+  [OPCODES.LDADEm]: LOAD.LDADEm,
   [OPCODES.DECDE]: DECREMENT.DECDE,
   [OPCODES.INCE]: INCREMENT.INCE,
   [OPCODES.DECE]: DECREMENT.DECE,

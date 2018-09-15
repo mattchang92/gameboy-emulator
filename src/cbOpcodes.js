@@ -1,3 +1,8 @@
+const zFlag = 0x80;
+const nFlag = 0x40;
+const hFlag = 0x20;
+const cFlag = 0x10;
+
 const CBOPCODES = {
   RLCB: 0x00,
   RLCC: 0x01,
@@ -286,238 +291,186 @@ const testBit = (cpu, val) => {
   // if (val === 0) cpu.F |= 0x80;
 };
 
-const cbopcodes = {
-  /* ------------------------ 0x0------------------------ */
-  [CBOPCODES.RLCB]: (cpu) => { const c = cpu.B & 0x80 ? 1 : 0; cpu.B = (cpu.B << 1) | c; setFlags(cpu, cpu.B); cpu.B &= 0xff; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RLCC]: (cpu) => { const c = cpu.C & 0x80 ? 1 : 0; cpu.C = (cpu.C << 1) | c; setFlags(cpu, cpu.C); cpu.C &= 0xff; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RLCD]: (cpu) => { const c = cpu.D & 0x80 ? 1 : 0; cpu.D = (cpu.B << 1) | c; setFlags(cpu, cpu.D); cpu.D &= 0xff; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RLCE]: (cpu) => { const c = cpu.E & 0x80 ? 1 : 0; cpu.E = (cpu.B << 1) | c; setFlags(cpu, cpu.E); cpu.E &= 0xff; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RLCH]: (cpu) => { const c = cpu.H & 0x80 ? 1 : 0; cpu.H = (cpu.B << 1) | c; setFlags(cpu, cpu.H); cpu.H &= 0xff; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RLCL]: (cpu) => { const c = cpu.L & 0x80 ? 1 : 0; cpu.L = (cpu.B << 1) | c; setFlags(cpu, cpu.L); cpu.L &= 0xff; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RLCHLm]: (cpu) => { let val = cpu.mmu.read8(cpu, (cpu.H << 8) & cpu.L); const c = val & 0x80 ? 1 : 0; val = (val << 1) | c; setFlags(cpu, val); cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & 0xff); cpu.M = 4; cpu.T = 16; },
-  [CBOPCODES.RLCA]: (cpu) => { const c = cpu.A & 0x80 ? 1 : 0; cpu.A = (cpu.B << 1) | c; setFlags(cpu, cpu.A); cpu.A &= 0xff; cpu.M = 2; cpu.T = 8; },
-  [CBOPCODES.RRCB]: (cpu) => {
-    const c = cpu.B & 1 ? 0x80 : 0;
-    const o = cpu.B & 1 ? 0x10 : 1;
-    cpu.B = (cpu.B >> 1) | c;
-    setFlags(cpu, cpu.B);
-    cpu.B &= 0xff;
-    cpu.F = (cpu.F & 0xef) + o;
-    cpu.M = 2; cpu.T = 8;
+const swap = (cpu, n) => {
+  const result = n << 4 | n >> 4;
+  cpu.F = 0;
+  if ((result & 0xff) === 0) cpu.F |= cFlag;
+
+  return result;
+};
+
+const SWAP_n = (cpu, n) => {
+  cpu[n] = swap(cpu, cpu[n]);
+  cpu.M = 1; cpu.T = 4;
+};
+
+const SWAP = {
+  SWAPB: cpu => SWAP_n(cpu, 'B'),
+  SWAPC: cpu => SWAP_n(cpu, 'C'),
+  SWAPD: cpu => SWAP_n(cpu, 'D'),
+  SWAPE: cpu => SWAP_n(cpu, 'E'),
+  SWAPH: cpu => SWAP_n(cpu, 'H'),
+  SWAPL: cpu => SWAP_n(cpu, 'L'),
+  SWAPA: cpu => SWAP_n(cpu, 'A'),
+
+  SWAPHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, swap(cpu, n));
+    cpu.M = 3; cpu.T = 12;
   },
-  [CBOPCODES.RRCC]: (cpu) => {
-    const c = cpu.C & 1 ? 0x80 : 0;
-    const o = cpu.C & 1 ? 0x10 : 1;
-    cpu.C = (cpu.C >> 1) | c;
-    setFlags(cpu, cpu.C);
-    cpu.C &= 0xff;
-    cpu.F = (cpu.F & 0xef) + o;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRCD]: (cpu) => {
-    const c = cpu.D & 1 ? 0x80 : 0;
-    const o = cpu.D & 1 ? 0x10 : 1;
-    cpu.D = (cpu.D >> 1) | c;
-    setFlags(cpu, cpu.D);
-    cpu.D &= 0xff;
-    cpu.F = (cpu.F & 0xef) + o;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRCE]: (cpu) => {
-    const c = cpu.E & 1 ? 0x80 : 0;
-    const o = cpu.E & 1 ? 0x10 : 1;
-    cpu.E = (cpu.E >> 1) | c;
-    setFlags(cpu, cpu.E);
-    cpu.E &= 0xff;
-    cpu.F = (cpu.F & 0xef) + o;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRCH]: (cpu) => {
-    const c = cpu.H & 1 ? 0x80 : 0;
-    const o = cpu.H & 1 ? 0x10 : 1;
-    cpu.H = (cpu.H >> 1) | c;
-    setFlags(cpu, cpu.H);
-    cpu.H &= 0xff;
-    cpu.F = (cpu.F & 0xef) + o;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRCL]: (cpu) => {
-    const c = cpu.L & 1 ? 0x80 : 0;
-    const o = cpu.L & 1 ? 0x10 : 1;
-    cpu.L = (cpu.L >> 1) | c;
-    setFlags(cpu, cpu.L);
-    cpu.L &= 0xff;
-    cpu.F = (cpu.F & 0xef) + o;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRCHLm]: (cpu) => {
-    let val = cpu.mmu.read8(cpu, (cpu.H << 8) & cpu.L);
-    const c = val & 1 ? 0x80 : 0;
-    const o = val & 1 ? 0x10 : 1;
-    val = (val >> 1) | c;
-    setFlags(cpu, val);
-    cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & 0xff);
-    cpu.F = (cpu.F & 0xef) + o;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRCA]: (cpu) => {
-    const c = cpu.A & 1 ? 0x80 : 0;
-    const o = cpu.A & 1 ? 0x10 : 1;
-    cpu.A = (cpu.A >> 1) | c;
-    setFlags(cpu, cpu.A);
-    cpu.A &= 0xff;
-    cpu.F = (cpu.F & 0xef) + o;
-    cpu.M = 2; cpu.T = 8;
+};
+
+const rlc = (cpu, n) => {
+  const result = n << 1 | n >> 7;
+  cpu.F = 0;
+  if ((result & 0xff)) cpu.F |= zFlag;
+  if (n & 0x80 !== 0) cpu.F |= cFlag;
+
+  return result;
+};
+
+const RLC_n = (cpu, n) => {
+  cpu[n] = rlc(cpu, cpu[n]);
+  cpu.M = 2; cpu.T = 8;
+};
+
+const rl = (cpu, n) => {
+  const carry = cpu.F >> 4 & 1;
+  const result = n << 1 | carry;
+
+  cpu.F = 0;
+  if ((result & 0xff) === 0) cpu.F |= zFlag;
+  if ((n & 0x80) !== 0) cpu.F |= cFlag;
+
+  return result;
+};
+
+const RL_n = (cpu, n) => {
+  cpu[n] = rl(cpu, cpu[n]);
+  cpu.M = 2; cpu.T = 8;
+};
+
+const rrc = (cpu, n) => {
+  const result = n >> 1 | n << 7;
+
+  cpu.F = 0;
+  if ((result & 0xff) === 0) cpu.F |= zFlag;
+  if ((n & 1) !== 0) cpu.F |= cFlag;
+
+  return result;
+};
+
+const RRC_n = (cpu, n) => {
+  cpu[n] = rrc(cpu, cpu[n]);
+  cpu.M = 2; cpu.T = 8;
+};
+
+const rr = (cpu, n) => {
+  const carry = cpu.F >> 4 & 1;
+  const result = carry << 7 | n >> 1;
+
+  cpu.F = 0;
+  if ((result & 0xff) === 0) cpu.F |= zFlag;
+  if ((n & 1) !== 0) cpu.F |= cFlag;
+
+  return result;
+};
+
+const RR_n = (cpu, n) => {
+  cpu[n] = rr(cpu, cpu[n]);
+  cpu.M = 2; cpu.T = 8;
+};
+
+const ROTATE = {
+  RLCB: cpu => RLC_n(cpu, 'B'),
+  RLCC: cpu => RLC_n(cpu, 'C'),
+  RLCD: cpu => RLC_n(cpu, 'D'),
+  RLCE: cpu => RLC_n(cpu, 'E'),
+  RLCH: cpu => RLC_n(cpu, 'H'),
+  RLCL: cpu => RLC_n(cpu, 'L'),
+  RLCA: cpu => RLC_n(cpu, 'A'),
+  RLCHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, rlc(cpu, n));
+    cpu.M = 4; cpu.T = 16;
   },
 
+  RLB: cpu => RL_n(cpu, 'B'),
+  RLC: cpu => RL_n(cpu, 'C'),
+  RLD: cpu => RL_n(cpu, 'D'),
+  RLE: cpu => RL_n(cpu, 'E'),
+  RLH: cpu => RL_n(cpu, 'H'),
+  RLL: cpu => RL_n(cpu, 'L'),
+  RLA: cpu => RL_n(cpu, 'A'),
+  RLHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, rl(cpu, n));
+    cpu.M = 4; cpu.T = 16;
+  },
+
+  RRCB: cpu => RRC_n(cpu, 'B'),
+  RRCC: cpu => RRC_n(cpu, 'C'),
+  RRCD: cpu => RRC_n(cpu, 'D'),
+  RRCE: cpu => RRC_n(cpu, 'E'),
+  RRCH: cpu => RRC_n(cpu, 'H'),
+  RRCL: cpu => RRC_n(cpu, 'L'),
+  RRCA: cpu => RRC_n(cpu, 'A'),
+  RRCHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, rrc(cpu, n));
+    cpu.M = 4; cpu.T = 16;
+  },
+
+  RRB: cpu => RR_n(cpu, 'B'),
+  RRC: cpu => RR_n(cpu, 'C'),
+  RRD: cpu => RR_n(cpu, 'D'),
+  RRE: cpu => RR_n(cpu, 'E'),
+  RRH: cpu => RR_n(cpu, 'H'),
+  RRL: cpu => RR_n(cpu, 'L'),
+  RRA: cpu => RR_n(cpu, 'A'),
+  RRHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, rr(cpu, n));
+    cpu.M = 4; cpu.T = 16;
+  },
+};
+
+const cbopcodes = {
+  /* ------------------------ 0x0------------------------ */
+  [CBOPCODES.RLCB]: ROTATE.RLCB,
+  [CBOPCODES.RLCC]: ROTATE.RLCC,
+  [CBOPCODES.RLCD]: ROTATE.RLCD,
+  [CBOPCODES.RLCE]: ROTATE.RLCE,
+  [CBOPCODES.RLCH]: ROTATE.RLCH,
+  [CBOPCODES.RLCL]: ROTATE.RLCL,
+  [CBOPCODES.RLCHLm]: ROTATE.RLCHLm,
+  [CBOPCODES.RLCA]: ROTATE.RLCA,
+  [CBOPCODES.RRCB]: ROTATE.RRCB,
+  [CBOPCODES.RRCC]: ROTATE.RRCC,
+  [CBOPCODES.RRCD]: ROTATE.RRCD,
+  [CBOPCODES.RRCE]: ROTATE.RRCE,
+  [CBOPCODES.RRCH]: ROTATE.RRCHL,
+  [CBOPCODES.RRCL]: ROTATE.RRCA,
+  [CBOPCODES.RRCHLm]: ROTATE.RRCHLm,
+  [CBOPCODES.RRCA]: ROTATE.RRCA,
+
   /* ------------------------ 0x1------------------------ */
-  [CBOPCODES.RLB]: (cpu) => {
-    const c = cpu.F & 0x10 ? 1 : 0;
-    const overflow = cpu.B & 0x80 ? 0x10 : 0;
-    cpu.B = (cpu.B << 1) | c;
-    setFlags(cpu, cpu.B);
-    cpu.B &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RLC]: (cpu) => {
-    const c = cpu.F & 0x10 ? 1 : 0;
-    const overflow = cpu.C & 0x80 ? 0x10 : 0;
-    cpu.C = (cpu.C << 1) + c;
-    // setFlags(cpu, cpu.C);
-    cpu.C &= 0xff;
-    cpu.F = cpu.C ? 0 : 0x80;
-    cpu.F = (cpu.F & 0xef) + overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RLD]: (cpu) => {
-    const c = cpu.F & 0x10 ? 1 : 0;
-    const overflow = cpu.D & 0x80 ? 0x10 : 0;
-    cpu.D = (cpu.D << 1) | c;
-    setFlags(cpu, cpu.D);
-    cpu.D &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RLE]: (cpu) => {
-    const c = cpu.F & 0x10 ? 1 : 0;
-    const overflow = cpu.E & 0x80 ? 0x10 : 0;
-    cpu.E = (cpu.E << 1) | c;
-    setFlags(cpu, cpu.E);
-    cpu.E &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RLH]: (cpu) => {
-    const c = cpu.F & 0x10 ? 1 : 0;
-    const overflow = cpu.H & 0x80 ? 0x10 : 0;
-    cpu.H = (cpu.H << 1) | c;
-    setFlags(cpu, cpu.H);
-    cpu.H &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RLL]: (cpu) => {
-    const c = cpu.F & 0x10 ? 1 : 0;
-    const overflow = cpu.L & 0x80 ? 0x10 : 0;
-    cpu.L = (cpu.L << 1) | c;
-    setFlags(cpu, cpu.L);
-    cpu.L &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RLHLm]: (cpu) => {
-    let val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
-    const c = cpu.F & 0x10 ? 1 : 0;
-    const overflow = val & 0x80 ? 0x10 : 0;
-    val = (val << 1) | c;
-    setFlags(cpu, val);
-    cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & 0xff);
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RLA]: (cpu) => {
-    const c = cpu.F & 0x10 ? 1 : 0;
-    const overflow = cpu.A & 0x80 ? 0x10 : 0;
-    cpu.A = (cpu.A << 1) | c;
-    setFlags(cpu, cpu.A);
-    cpu.A &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRB]: (cpu) => {
-    const c = cpu.F & 0x10 ? 0x80 : 0;
-    const overflow = cpu.B & 1 ? 0x10 : 0;
-    cpu.B = (cpu.B >> 1) | c;
-    setFlags(cpu, cpu.B);
-    cpu.B &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRC]: (cpu) => {
-    const c = cpu.F & 0x10 ? 0x80 : 0;
-    const overflow = cpu.C & 1 ? 0x10 : 0;
-    cpu.C = (cpu.C >> 1) | c;
-    setFlags(cpu, cpu.C);
-    cpu.C &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRD]: (cpu) => {
-    const c = cpu.F & 0x10 ? 0x80 : 0;
-    const overflow = cpu.D & 1 ? 0x10 : 0;
-    cpu.D = (cpu.D >> 1) | c;
-    setFlags(cpu, cpu.D);
-    cpu.D &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRE]: (cpu) => {
-    const c = cpu.F & 0x10 ? 0x80 : 0;
-    const overflow = cpu.E & 1 ? 0x10 : 0;
-    cpu.E = (cpu.E >> 1) | c;
-    setFlags(cpu, cpu.E);
-    cpu.E &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRH]: (cpu) => {
-    const c = cpu.F & 0x10 ? 0x80 : 0;
-    const overflow = cpu.H & 1 ? 0x10 : 0;
-    cpu.H = (cpu.H >> 1) | c;
-    setFlags(cpu, cpu.H);
-    cpu.H &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRL]: (cpu) => {
-    const c = cpu.F & 0x10 ? 0x80 : 0;
-    const overflow = cpu.L & 1 ? 0x10 : 0;
-    cpu.L = (cpu.L >> 1) | c;
-    setFlags(cpu, cpu.L);
-    cpu.L &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRHLm]: (cpu) => {
-    let val = cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L);
-    const c = cpu.F & 0x10 ? 0x80 : 0;
-    const overflow = val & 1 ? 0x10 : 0;
-    val = (val >> 1) | c;
-    setFlags(cpu, val);
-    cpu.mmu.write8(cpu, (cpu.H << 8) | cpu.L, val & 0xff);
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
-  [CBOPCODES.RRA]: (cpu) => {
-    const c = cpu.F & 0x10 ? 0x80 : 0;
-    const overflow = cpu.A & 1 ? 0x10 : 0;
-    cpu.A = (cpu.A >> 1) | c;
-    setFlags(cpu, cpu.A);
-    cpu.A &= 0xff;
-    cpu.F = (cpu.F & 0xef) | overflow;
-    cpu.M = 2; cpu.T = 8;
-  },
+  [CBOPCODES.RLB]: ROTATE.RLB,
+  [CBOPCODES.RLC]: ROTATE.RLC,
+  [CBOPCODES.RLD]: ROTATE.RLD,
+  [CBOPCODES.RLE]: ROTATE.RLE,
+  [CBOPCODES.RLH]: ROTATE.RLH,
+  [CBOPCODES.RLL]: ROTATE.RLL,
+  [CBOPCODES.RLHLm]: ROTATE.RLHm,
+  [CBOPCODES.RLA]: ROTATE.RLA,
+  [CBOPCODES.RRB]: ROTATE.RRB,
+  [CBOPCODES.RRC]: ROTATE.RRC,
+  [CBOPCODES.RRD]: ROTATE.RRD,
+  [CBOPCODES.RRE]: ROTATE.RRE,
+  [CBOPCODES.RRH]: ROTATE.RRH,
+  [CBOPCODES.RRL]: ROTATE.RRL,
+  [CBOPCODES.RRHLm]: ROTATE.RRHLm,
+  [CBOPCODES.RRA]: ROTATE.RRA,
 
   /* ------------------------ 0x2------------------------ */
   [CBOPCODES.SLAB]: (cpu) => {
@@ -646,44 +599,14 @@ const cbopcodes = {
   },
 
   /* ------------------------ 0x3------------------------ */
-  [CBOPCODES.SWAPB]: (cpu) => {
-    cpu.B = ((cpu.B & 0xf) << 4) | ((cpu.B & 0xf0) >> 4);
-    setFlags(cpu, cpu.B);
-    cpu.M = 1; cpu.T = 4;
-  },
-  [CBOPCODES.SWAPC]: (cpu) => {
-    cpu.C = ((cpu.C & 0xf) << 4) | ((cpu.C & 0xf0) >> 4);
-    setFlags(cpu, cpu.C);
-    cpu.M = 1; cpu.T = 4;
-  },
-  [CBOPCODES.SWAPD]: (cpu) => {
-    cpu.D = ((cpu.D & 0xf) << 4) | ((cpu.D & 0xf0) >> 4);
-    setFlags(cpu, cpu.D);
-    cpu.M = 1; cpu.T = 4;
-  },
-  [CBOPCODES.SWAPE]: (cpu) => {
-    cpu.E = ((cpu.E & 0xf) << 4) | ((cpu.E & 0xf0) >> 4);
-    setFlags(cpu, cpu.E);
-    cpu.M = 1; cpu.T = 4;
-  },
-  [CBOPCODES.SWAPH]: (cpu) => {
-    cpu.H = ((cpu.H & 0xf) << 4) | ((cpu.H & 0xf0) >> 4);
-    setFlags(cpu, cpu.H);
-    cpu.M = 1; cpu.T = 4;
-  },
-  [CBOPCODES.SWAPL]: (cpu) => {
-    cpu.L = ((cpu.L & 0xf) << 4) | ((cpu.L & 0xf0) >> 4);
-    setFlags(cpu, cpu.L);
-    cpu.M = 1; cpu.T = 4;
-  },
-  [CBOPCODES.SWAPHLm]: () => {
-    console.log('Calling illegal opcode!');
-  },
-  [CBOPCODES.SWAPA]: (cpu) => {
-    cpu.A = ((cpu.A & 0xf) << 4) | ((cpu.A & 0xf0) >> 4);
-    setFlags(cpu, cpu.A);
-    cpu.M = 1; cpu.T = 4;
-  },
+  [CBOPCODES.SWAPB]: SWAP.SWAPB,
+  [CBOPCODES.SWAPC]: SWAP.SWAPC,
+  [CBOPCODES.SWAPD]: SWAP.SWAPD,
+  [CBOPCODES.SWAPE]: SWAP.SWAPEH,
+  [CBOPCODES.SWAPH]: SWAP.SWAPL,
+  [CBOPCODES.SWAPL]: SWAP.SWAP,
+  [CBOPCODES.SWAPHLm]: SWAP.SWAPHLm,
+  [CBOPCODES.SWAPA]: SWAP.SWAPA,
   [CBOPCODES.SRLB]: (cpu) => {
     const overflow = cpu.B & 1 ? 0x10 : 0;
     setFlags(cpu, cpu.B >> 1);
