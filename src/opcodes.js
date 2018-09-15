@@ -790,6 +790,61 @@ const JUMP = {
   JRCn: cpu => JR_cc_n(cpu, (cpu.F & cFlag)),
 };
 
+const CALL_cc_nn = (cpu, cc) => {
+  if (cc) {
+    cpu.SP -= 2;
+    cpu.mmu.write16(cpu, cpu.SP, cpu.PC + 2);
+    cpu.M = 6; cpu.T = 24;
+  } else {
+    cpu.PC += 2;
+    cpu.M = 3; cpu.T = 12;
+  }
+};
+
+const CALL = {
+  CALLnn: (cpu) => {
+    cpu.SP -= 2;
+    cpu.mmu.write16(cpu, cpu.SP, cpu.PC + 2);
+    cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
+    cpu.M = 5; cpu.T = 20;
+  },
+
+  CALLNZnn: cpu => CALL_cc_nn(cpu, !(cpu.F & zFlag)),
+  CALLNCnn: cpu => CALL_cc_nn(cpu, !(cpu.F & cFlag)),
+  CALLZnn: cpu => CALL_cc_nn(cpu, (cpu.F & zFlag)),
+  CALLCnn: cpu => CALL_cc_nn(cpu, (cpu.F & cFlag)),
+};
+
+const RET_cc = (cpu, cc) => {
+  if (cc) {
+    cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
+    cpu.SP += 2;
+    cpu.M = 5; cpu.T = 20;
+  } else {
+    cpu.M = 2; cpu.T = 8;
+  }
+};
+
+const RETURN = {
+  RET: (cpu) => {
+    cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
+    cpu.SP += 2;
+    cpu.M = 3; cpu.T = 12;
+  },
+
+  RETNZ: cpu => RET_cc(cpu, !(cpu.F & zFlag)),
+  RETNC: cpu => RET_cc(cpu, !(cpu.F & cFlag)),
+  RETZ: cpu => RET_cc(cpu, (cpu.F & zFlag)),
+  RETC: cpu => RET_cc(cpu, (cpu.F & cFlag)),
+
+  RETI: (cpu) => {
+    cpu.ime = 1;
+    cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
+    cpu.SP += 2;
+    cpu.M = 3; cpu.T = 12;
+  },
+};
+
 /* END REFACTOR ---------------------------------------------------------------------------------------------------------------------*/
 
 const RESTART = {
@@ -1084,28 +1139,11 @@ const opcodes = {
   [OPCODES.CPA]: LOGICAL.CPA,
 
   /* ------------------------ 0xc ------------------------ */
-  [OPCODES.RETNZ]: (cpu) => {
-    cpu.M = 1; cpu.T = 4;
-    if (!(cpu.F & 0x80)) {
-      cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
-      cpu.SP += 2;
-      cpu.M += 2; cpu.T += 8;
-    }
-  },
+  [OPCODES.RETNZ]: RETURN.RETNZ,
   [OPCODES.POPBC]: LOAD.POPBC,
   [OPCODES.JPNZnn]: JUMP.JPNZnn,
   [OPCODES.JPnn]: JUMP.JPnn,
-  [OPCODES.CALLNZnn]: (cpu) => {
-    cpu.M = 3; cpu.T = 12;
-    if (!(cpu.F & 0x80)) {
-      cpu.SP -= 2;
-      cpu.mmu.write16(cpu, cpu.SP, cpu.PC + 2);
-      cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
-      cpu.M += 2; cpu.T += 8;
-    } else {
-      cpu.PC += 2;
-    }
-  },
+  [OPCODES.CALLNZnn]: CALL.CALLNZnn,
   [OPCODES.PUSHBC]: LOAD.PUSHBC,
   [OPCODES.ADDAn]: ADD.ADDAn,
   [OPCODES.RST00]: (cpu) => {
@@ -1114,19 +1152,8 @@ const opcodes = {
     cpu.PC = 0x00;
     cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.RETZ]: (cpu) => {
-    cpu.M = 1; cpu.T = 4;
-    if (cpu.F & 0x80) {
-      cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
-      cpu.SP += 2;
-      cpu.M += 2; cpu.T += 8;
-    }
-  },
-  [OPCODES.RET]: (cpu) => {
-    cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
-    cpu.SP += 2;
-    cpu.M = 3; cpu.T = 12;
-  },
+  [OPCODES.RETZ]: RETURN.RETZ,
+  [OPCODES.RET]: RETURN.RET,
   [OPCODES.JPZnn]: JUMP.JPZnn,
   [OPCODES.EXTops]: (cpu) => {
     // cpu.F = 0; cpu.PC++;
@@ -1143,23 +1170,8 @@ const opcodes = {
       console.log('No CB opcode instruction found', op.toString(16));
     }
   },
-  [OPCODES.CALLZnn]: (cpu) => {
-    cpu.M = 3; cpu.T = 12;
-    if (cpu.F & 0x80) {
-      cpu.SP -= 2;
-      cpu.mmu.write16(cpu, cpu.SP, cpu.PC + 2);
-      cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
-      cpu.M += 2; cpu.T += 8;
-    } else {
-      cpu.PC += 2;
-    }
-  },
-  [OPCODES.CALLnn]: (cpu) => {
-    cpu.SP -= 2;
-    cpu.mmu.write16(cpu, cpu.SP, cpu.PC + 2);
-    cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
-    cpu.M = 5; cpu.T = 20;
-  },
+  [OPCODES.CALLZnn]: CALL.CALLZnn,
+  [OPCODES.CALLnn]: CALL.CALLnn,
   [OPCODES.ADCAn]: ADD.ADCAn,
   [OPCODES.RST08]: (cpu) => {
     cpu.SP -= 2;
@@ -1169,27 +1181,10 @@ const opcodes = {
   },
 
   /* ------------------------ 0xd ------------------------ */
-  [OPCODES.RETNC]: (cpu) => {
-    cpu.M = 1; cpu.T = 4;
-    if (!(cpu.F & 0x10)) {
-      cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
-      cpu.SP += 2;
-      cpu.M += 2; cpu.T += 8;
-    }
-  },
+  [OPCODES.RETNC]: RETURN.RETNC,
   [OPCODES.POPDE]: LOAD.POPDE,
   [OPCODES.JPNCnn]: JUMP.JPNCnn,
-  [OPCODES.CALLNCnn]: (cpu) => {
-    cpu.M = 3; cpu.T = 12;
-    if (!(cpu.F & 0x81)) {
-      cpu.SP -= 2;
-      cpu.mmu.write16(cpu, cpu.SP, cpu.PC + 2);
-      cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
-      cpu.M += 2; cpu.T += 8;
-    } else {
-      cpu.PC += 2;
-    }
-  },
+  [OPCODES.CALLNCnn]: CALL.CALLNCnn,
   [OPCODES.PUSHDE]: LOAD.PUSHDE,
   [OPCODES.SUBAn]: SUBTRACT.SUBAn,
   [OPCODES.RST10]: (cpu) => {
@@ -1198,32 +1193,10 @@ const opcodes = {
     cpu.PC = 0x10;
     cpu.M = 3; cpu.T = 12;
   },
-  [OPCODES.RETC]: (cpu) => {
-    cpu.M = 1; cpu.T = 4;
-    if (cpu.F & 0x10) {
-      cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
-      cpu.SP += 2;
-      cpu.M += 2; cpu.T += 8;
-    }
-  },
-  [OPCODES.RETI]: (cpu) => {
-    cpu.ime = 1;
-    cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
-    cpu.SP += 2;
-    cpu.M = 3; cpu.T = 12;
-  },
+  [OPCODES.RETC]: RETURN.RETC,
+  [OPCODES.RETI]: RETURN.RETI,
   [OPCODES.JPCnn]: JUMP.JPCnn,
-  [OPCODES.CALLCnn]: (cpu) => {
-    cpu.M = 3; cpu.T = 12;
-    if (cpu.F & 0x10) {
-      cpu.SP -= 2;
-      cpu.mmu.write16(cpu, cpu.SP, cpu.PC + 2);
-      cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
-      cpu.M += 2; cpu.T += 8;
-    } else {
-      cpu.PC += 2;
-    }
-  },
+  [OPCODES.CALLCnn]: CALL.CALLCnn,
   // 0xdd: (cpu) => { console.log('unmapped opcode'); },
   [OPCODES.SUBCAn]: SUBTRACT.SUBCAn,
   [OPCODES.RST18]: (cpu) => {
