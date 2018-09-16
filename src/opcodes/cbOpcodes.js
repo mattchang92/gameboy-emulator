@@ -1,7 +1,11 @@
-const zFlag = 0x80;
-const nFlag = 0x40;
-const hFlag = 0x20;
-const cFlag = 0x10;
+const {
+  testBit, swap,
+  rlc, rl, rrc, rr,
+  sla, sra, srl,
+  SWAP_n,
+  RLC_n, RL_n, RRC_n, RR_n,
+  SLA_n, SRA_n, SRL_n,
+} = require('./utils');
 
 const CBOPCODES = {
   RLCB: 0x00,
@@ -277,25 +281,6 @@ const CBOPCODES = {
   SET7A: 0xff,
 };
 
-const testBit = (cpu, val) => {
-  cpu.F &= ~0xe0;
-  if (val === 0) cpu.F |= zFlag;
-  cpu.F |= hFlag;
-};
-
-const swap = (cpu, n) => {
-  const result = n << 4 | n >> 4;
-  cpu.F = 0;
-  if ((result & 0xff) === 0) cpu.F |= cFlag;
-
-  return result;
-};
-
-const SWAP_n = (cpu, n) => {
-  cpu[n] = swap(cpu, cpu[n]);
-  cpu.M = 1; cpu.T = 4;
-};
-
 const SWAP = {
   SWAPB: cpu => SWAP_n(cpu, 'B'),
   SWAPC: cpu => SWAP_n(cpu, 'C'),
@@ -310,67 +295,6 @@ const SWAP = {
     cpu.mmu.write8(cpu, cpu.HL, swap(cpu, n));
     cpu.M = 3; cpu.T = 12;
   },
-};
-
-const rlc = (cpu, n) => {
-  const result = n << 1 | n >> 7;
-  cpu.F = 0;
-  if ((result & 0xff)) cpu.F |= zFlag;
-  if (n & 0x80 !== 0) cpu.F |= cFlag;
-
-  return result;
-};
-
-const RLC_n = (cpu, n) => {
-  cpu[n] = rlc(cpu, cpu[n]);
-  cpu.M = 2; cpu.T = 8;
-};
-
-const rl = (cpu, n) => {
-  const carry = cpu.F >> 4 & 1;
-  const result = n << 1 | carry;
-
-  cpu.F = 0;
-  if ((result & 0xff) === 0) cpu.F |= zFlag;
-  if ((n & 0x80) !== 0) cpu.F |= cFlag;
-
-  return result;
-};
-
-const RL_n = (cpu, n) => {
-  cpu[n] = rl(cpu, cpu[n]);
-  cpu.M = 2; cpu.T = 8;
-};
-
-const rrc = (cpu, n) => {
-  const result = n >> 1 | n << 7;
-
-  cpu.F = 0;
-  if ((result & 0xff) === 0) cpu.F |= zFlag;
-  if ((n & 1) !== 0) cpu.F |= cFlag;
-
-  return result;
-};
-
-const RRC_n = (cpu, n) => {
-  cpu[n] = rrc(cpu, cpu[n]);
-  cpu.M = 2; cpu.T = 8;
-};
-
-const rr = (cpu, n) => {
-  const carry = cpu.F >> 4 & 1;
-  const result = carry << 7 | n >> 1;
-
-  cpu.F = 0;
-  if ((result & 0xff) === 0) cpu.F |= zFlag;
-  if ((n & 1) !== 0) cpu.F |= cFlag;
-
-  return result;
-};
-
-const RR_n = (cpu, n) => {
-  cpu[n] = rr(cpu, cpu[n]);
-  cpu.M = 2; cpu.T = 8;
 };
 
 const ROTATE = {
@@ -427,50 +351,6 @@ const ROTATE = {
   },
 };
 
-const sla = (cpu, n) => {
-  const result = n << 1;
-
-  cpu.F = 0;
-  if ((result & 0xff) === 0) cpu.F |= zFlag;
-  if ((n & 0x80) !== 0) cpu.F |= cFlag;
-
-  return result;
-};
-
-const SLA_n = (cpu, n) => {
-  cpu[n] = sla(cpu, cpu[n]);
-  cpu.M = 2; cpu.T = 8;
-};
-
-const sra = (cpu, n) => {
-  const result = n & 0x80 | n >> 1;
-
-  cpu.F = 0;
-  if ((result & 0xff) === 0) cpu.F |= zFlag;
-  if ((n & 1) !== 0) cpu.F |= cFlag;
-
-  return result;
-};
-
-const SRA_n = (cpu, n) => {
-  cpu[n] = sra(cpu, cpu[n]);
-  cpu.M = 2; cpu.T = 8;
-};
-
-const srl = (cpu, n) => {
-  const result = n >> 1;
-
-  cpu.F = 0;
-  if ((result & 0xff) === 0) cpu.F |= zFlag;
-  if ((n & 1) !== 0) cpu.F |= cFlag;
-
-  return result;
-};
-
-const SRL_n = (cpu, n) => {
-  cpu[n] = srl(cpu, cpu[n]);
-  cpu.M = 2; cpu.T = 8;
-};
 
 const SHIFT = {
   SLAB: cpu => SLA_n(cpu, 'B'),

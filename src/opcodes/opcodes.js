@@ -1,9 +1,20 @@
 const { cbopcodes } = require('./cbOpcodes');
 
-const zFlag = 0x80;
-const nFlag = 0x40;
-const hFlag = 0x20;
-const cFlag = 0x10;
+const {
+  zFlag,
+  hFlag,
+  cFlag,
+} = require('../constants');
+
+const {
+  add, adc, sub, sbc, or, xor, inc, dec,
+  LD_r_n, LD_r1_r2, LD_r_HLm, LD_HLm_r, LD_A_nnm, LD_nm_A, LD_n_nn,
+  PUSH_nn, POP_nn,
+  ADD_A_n, ADC_A_n, ADD_HL_n, SUB_n, SBC_A_n,
+  OR_n, XOR_n, CP_n,
+  INC_n, INC_nn, DEC_n, DEC_nn,
+  JP_cc_nn, JR_cc_n, CALL_cc_nn, RET_cc,
+} = require('./utils');
 
 const OPCODES = {
   NOP: 0x00,
@@ -302,65 +313,6 @@ const setFlags = (cpu, a, b, isSub = 0, is16BitOp = 0) => {
   setHalfCarry(cpu, a, b, isSub, is16BitOp);
 };
 
-/* START REFACTOR -------------------------------------------------------------------------------------------------------------------*/
-
-// LOADS
-// 55
-const LD_r_n = (cpu, r) => {
-  cpu[r] = cpu.mmu.read8(cpu, cpu.PC++);
-  cpu.M = 2; cpu.T = 8;
-};
-
-// 139
-const LD_r1_r2 = (cpu, r1, r2) => {
-  cpu[r1] = cpu[r2];
-  cpu.M = 1; cpu.T = 4;
-};
-
-// 196
-const LD_r_HLm = (cpu, r) => {
-  cpu[r] = cpu.mmu.read8(cpu, cpu.HL);
-  cpu.M = 2; cpu.T = 8;
-};
-
-// 211
-const LD_HLm_r = (cpu, r) => {
-  cpu.mmu.write8(cpu, cpu.HL, cpu[r]);
-  cpu.M = 2; cpu.T = 8;
-};
-
-// 273
-const LD_A_nnm = (cpu, nn) => {
-  cpu.A = cpu.mmu.read8(cpu, cpu[nn]);
-  cpu.M = 2; cpu.T = 8;
-};
-
-// 338
-const LD_nm_A = (cpu, n) => {
-  cpu.mmu.write8(cpu, cpu[n], cpu.A);
-  cpu.M = 2; cpu.T = 8;
-};
-
-// 549
-const LD_n_nn = (cpu, n) => {
-  cpu[n] = cpu.mmu.read16(cpu, cpu.PC);
-  cpu.PC += 2;
-  cpu.M = 3; cpu.T = 12;
-};
-
-// 658
-const PUSH_nn = (cpu, nn) => {
-  cpu.SP -= 2;
-  cpu.mmu.write16(cpu, cpu.SP, cpu[nn]);
-  cpu.M = 4; cpu.T = 16;
-};
-
-const POP_nn = (cpu, nn) => {
-  cpu[nn] = cpu.mmu.read16(cpu, cpu.SP);
-  cpu.SP += 2;
-  cpu.M = 3; cpu.T = 12;
-};
-
 const LOAD = {
   // LD_r_n 55
   LDBn: cpu => LD_r_n(cpu, 'B'),
@@ -470,50 +422,6 @@ const LOAD = {
   POPHL: cpu => POP_nn(cpu, 'HL'),
   POPAF: cpu => POP_nn(cpu, 'AF'),
 };
-
-const add = (cpu, n) => {
-  const sum = cpu.A + n;
-
-  cpu.F = 0;
-  if ((sum & 0xff) === 0) cpu.F |= zFlag;
-  if (((cpu.a ^ n ^ sum) & 0x10) !== 0) cpu.F |= hFlag;
-  if ((sum & 0x100) !== 0) cpu.F |= cFlag;
-
-  return sum;
-};
-
-const ADD_A_n = (cpu, n) => {
-  cpu.A = add(cpu, cpu[n]);
-  cpu.M = 1; cpu.M = 4;
-};
-
-const adc = (cpu, n) => {
-  const carry = cpu.F >>> 4 & 1;
-  const sum = cpu.A + n + carry;
-
-  cpu.F = 0;
-  if ((sum & 0xff) === 0) cpu.F |= zFlag;
-  if (((cpu.a ^ n ^ sum) & 0x10) !== 0) cpu.F |= hFlag;
-  if ((sum & 0x100) !== 0) cpu.F |= cFlag;
-
-  return sum;
-};
-
-const ADC_A_n = (cpu, n) => {
-  cpu.A = adc(cpu, cpu[n]);
-  cpu.M = 1; cpu.T = 4;
-};
-
-const ADD_HL_n = (cpu, n) => {
-  const result = cpu.HL + cpu[n];
-  cpu.F &= ~0x70;
-  if (((cpu.HL ^ cpu[n] ^ result) & 0x1000) !== 0) cpu.F |= hFlag;
-  if ((result & 0x10000) !== 0) cpu.F |= cFlag;
-
-  cpu.HL = result;
-  cpu.M = 2; cpu.T = 8;
-};
-
 const ADD = {
   // 8 bit adds. Flag = (* 0 * *)
   ADDAB: cpu => ADD_A_n(cpu, 'B'),
@@ -550,39 +458,6 @@ const ADD = {
   },
 };
 
-const sub = (cpu, n) => {
-  const diff = cpu.A - n;
-
-  cpu.F = nFlag;
-  if ((diff & 0xff) === 0) cpu.F |= zFlag;
-  if (((cpu.a ^ n ^ diff) & 0x10) !== 0) cpu.F |= hFlag;
-  if ((diff & 0x100) !== 0) cpu.F |= cFlag;
-
-  return diff;
-};
-
-const SUB_n = (cpu, n) => {
-  cpu.A = sub(cpu, cpu[n]);
-  cpu.M = 1; cpu.T = 4;
-};
-
-const sbc = (cpu, n) => {
-  const carry = cpu.F >> 4 & 1;
-  const diff = cpu.A - n - carry;
-
-  cpu.F = nFlag;
-  if ((diff & 0xff) === 0) cpu.F |= zFlag;
-  if (((cpu.a ^ n ^ diff) & 0x10) !== 0) cpu.F |= hFlag;
-  if ((diff & 0x100) !== 0) cpu.F |= cFlag;
-
-  return diff;
-};
-
-const SBC_A_n = (cpu, n) => {
-  cpu.A = sbc(cpu, cpu[n]);
-  cpu.M = 1; cpu.T = 4;
-};
-
 const SUBTRACT = {
   // 8 bit subtract. Flag = (* 1 * *)
   SUBAB: cpu => SUB_n(cpu, 'B'),
@@ -605,37 +480,6 @@ const SUBTRACT = {
   SUBCAHLm: (cpu) => { cpu.A = sbc(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 2; cpu.T = 8; },
   SUBCAA: cpu => SBC_A_n(cpu, 'A'),
   SUBCAn: (cpu) => { cpu.A = sbc(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
-};
-
-const or = (cpu, n) => {
-  const result = cpu.A | n;
-  cpu.F = 0;
-  if ((result & 0xff) === 0) cpu.F |= zFlag;
-
-  return result;
-};
-
-const OR_n = (cpu, n) => {
-  cpu.A = or(cpu, cpu[n]);
-  cpu.M = 1; cpu.T = 4;
-};
-
-const xor = (cpu, n) => {
-  const result = cpu.A ^ n;
-  cpu.F = 0;
-  if ((result & 0xff) === 0) cpu.F |= zFlag;
-
-  return result;
-};
-
-const XOR_n = (cpu, n) => {
-  cpu.A = xor(cpu, cpu[n]);
-  cpu.M = 1; cpu.T = 4;
-};
-
-const CP_n = (cpu, n) => {
-  sub(cpu, cpu[n]);
-  cpu.M = 1; cpu.T = 4;
 };
 
 const LOGICAL = {
@@ -670,25 +514,6 @@ const LOGICAL = {
   CPn: (cpu) => { sub(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
 };
 
-const inc = (cpu, n) => {
-  const result = n + 1;
-  cpu.F &= ~0xe0;
-  if ((result & 0xff) === 0) cpu.F |= zFlag;
-  if ((n & 0xf) === 0xf) cpu.F |= hFlag;
-
-  return result;
-};
-
-const INC_n = (cpu, n) => {
-  cpu[n] = inc(cpu, cpu[n]);
-  cpu.M = 1; cpu.T = 4;
-};
-
-const INC_nn = (cpu, nn) => {
-  cpu[nn]++;
-  cpu.M = 2; cpu.T = 8;
-};
-
 const INCREMENT = {
   // 8 bit increments. Flag = (* 0 * -)
   INCB: cpu => INC_n(cpu, 'B'),
@@ -707,25 +532,6 @@ const INCREMENT = {
   INCSP: cpu => INC_nn(cpu, 'SP'),
 };
 
-const dec = (cpu, n) => {
-  const result = n - 1;
-  cpu.F &= ~0xe0;
-  if ((result & 0xff) === 0) cpu.F |= zFlag;
-  cpu.F |= nFlag;
-  if ((n & 0xf) === 0) cpu.F |= hFlag;
-
-  return result;
-};
-
-const DEC_n = (cpu, n) => {
-  cpu[n] = dec(cpu, cpu[n]);
-  cpu.M = 1; cpu.T = 4;
-};
-
-const DEC_nn = (cpu, nn) => {
-  cpu[nn]--;
-  cpu.M = 2; cpu.T = 8;
-};
 
 const DECREMENT = {
   // 8 bit decrements Flag = (* 1 * -)
@@ -743,28 +549,6 @@ const DECREMENT = {
   DECDE: cpu => DEC_nn(cpu, 'DE'),
   DECHL: cpu => DEC_nn(cpu, 'HL'),
   DECSP: cpu => DEC_nn(cpu, 'SP'),
-};
-
-const JP_cc_nn = (cpu, cc) => {
-  if (cc) {
-    cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
-    cpu.M = 4; cpu.T = 16;
-  } else {
-    cpu.PC += 2;
-    cpu.M = 3; cpu.T = 12;
-  }
-};
-
-const JR_cc_n = (cpu, cc) => {
-  if (cc) {
-    let val = cpu.mmu.read8(cpu, cpu.PC++);
-    if (val > 127) val = -((~val + 1) & 0xff);
-    cpu.PC += val;
-    cpu.M = 3; cpu.T = 12;
-  } else {
-    cpu.PC++;
-    cpu.M = 2; cpu.T = 8;
-  }
 };
 
 const JUMP = {
@@ -790,16 +574,6 @@ const JUMP = {
   JRCn: cpu => JR_cc_n(cpu, (cpu.F & cFlag)),
 };
 
-const CALL_cc_nn = (cpu, cc) => {
-  if (cc) {
-    cpu.SP -= 2;
-    cpu.mmu.write16(cpu, cpu.SP, cpu.PC + 2);
-    cpu.M = 6; cpu.T = 24;
-  } else {
-    cpu.PC += 2;
-    cpu.M = 3; cpu.T = 12;
-  }
-};
 
 const CALL = {
   CALLnn: (cpu) => {
@@ -813,16 +587,6 @@ const CALL = {
   CALLNCnn: cpu => CALL_cc_nn(cpu, !(cpu.F & cFlag)),
   CALLZnn: cpu => CALL_cc_nn(cpu, (cpu.F & zFlag)),
   CALLCnn: cpu => CALL_cc_nn(cpu, (cpu.F & cFlag)),
-};
-
-const RET_cc = (cpu, cc) => {
-  if (cc) {
-    cpu.PC = cpu.mmu.read16(cpu, cpu.SP);
-    cpu.SP += 2;
-    cpu.M = 5; cpu.T = 20;
-  } else {
-    cpu.M = 2; cpu.T = 8;
-  }
 };
 
 const RETURN = {
@@ -844,8 +608,6 @@ const RETURN = {
     cpu.M = 3; cpu.T = 12;
   },
 };
-
-/* END REFACTOR ---------------------------------------------------------------------------------------------------------------------*/
 
 const RESTART = {
   RST40: (cpu) => { cpu.rstCalled = true; cpu.ime = 0; cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x0040; cpu.M = 3; cpu.T = 12; },

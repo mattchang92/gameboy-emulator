@@ -3,7 +3,7 @@ const GPU = require('./gpu');
 const MMU = require('./mmu');
 const Timer = require('./timer');
 const Controller = require('./controller');
-const { opcodes, interrupts } = require('./opcodes');
+const { opcodes, interrupts } = require('./opcodes/opcodes');
 
 class CPU {
   constructor() {
