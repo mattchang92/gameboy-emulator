@@ -1,5 +1,6 @@
 class Controller {
-  constructor() {
+  constructor(mmu) {
+    this.mmu = mmu;
     this.rows = [0x0f, 0x0f];
     this.column = 0;
 
@@ -66,6 +67,7 @@ class Controller {
       case this.INPUT.DOWN: this.rows[0] &= 0x7; break;
       default: break;
     }
+    this.mmu.if |= (1 << 4);
   }
 
   keyUp(e) {
@@ -82,6 +84,7 @@ class Controller {
       case this.INPUT.DOWN: this.rows[0] |= 0x8; break;
       default: break;
     }
+    this.mmu.if |= (1 << 4);
   }
 }
 

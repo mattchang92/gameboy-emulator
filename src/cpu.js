@@ -51,7 +51,7 @@ class CPU {
     this.mmu = new MMU(this.ram);
     this.gpu = new GPU(this.mmu);
     this.timer = new Timer();
-    this.controller = new Controller();
+    this.controller = new Controller(this.mmu);
   }
 
   get A() { return this.registers.A; }
