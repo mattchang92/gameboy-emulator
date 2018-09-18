@@ -1,7 +1,10 @@
+require('../utils/number');
+
 const { cbopcodes } = require('./cbOpcodes');
 
 const {
   zFlag,
+  nFlag,
   hFlag,
   cFlag,
 } = require('../constants');
@@ -450,11 +453,16 @@ const ADD = {
   ADDHLSP: cpu => ADD_HL_n(cpu, 'SP'),
   // 16 bit SP add. Flag = (0 0 * *)
   ADDSPd: (cpu) => {
-    let i = cpu.mmu.read8(cpu, cpu.PC++);
-    if (i > 127) i = -((~i + 1) & 0xff);
-    setFlags(cpu, cpu.SP, i, 0, 1); // not sure if correct
-    cpu.SP += i;
-    cpu.M = 4; cpu.T = 16;
+    const i = cpu.mmu.readByte(cpu.pc + 1).signed();
+    const r = cpu.SP + i;
+
+    const op = cpu.SP ^ i ^ r;
+
+    cpu.F = 0;
+    if ((op & 0x10) !== 0) cpu.F |= hFlag;
+    if ((op & 0x100) !== 0) cpu.F |= cFlag;
+
+    cpu.SP = r;
   },
 };
 
@@ -562,8 +570,7 @@ const JUMP = {
   JPHLm: (cpu) => { cpu.PC = cpu.HL; cpu.M = 1; cpu.T = 4; },
 
   JRn: (cpu) => {
-    let val = cpu.mmu.read8(cpu, cpu.PC++);
-    if (val > 127) val = -((~val + 1) & 0xff);
+    const val = cpu.mmu.read8(cpu, cpu.PC++).signed();
     cpu.PC += val;
     cpu.M = 3; cpu.T = 12;
   },
@@ -678,20 +685,20 @@ const opcodes = {
   [OPCODES.DECH]: DECREMENT.DECH,
   [OPCODES.LDHn]: LOAD.LDHn,
   [OPCODES.DAA]: (cpu) => {
-    const isSub = (cpu.F & 0x40) ? 1 : 0;
-    const half = (cpu.F & 0x20) ? 1 : 0;
-    const carry = (cpu.F & 0x10) ? 1 : 0;
+    // const isSub = (cpu.F & 0x40) ? 1 : 0;
+    // const half = (cpu.F & 0x20) ? 1 : 0;
+    // const carry = (cpu.F & 0x10) ? 1 : 0;
 
-    if (isSub) {
-      if (carry || cpu.A > 0x99) { cpu.A = (cpu.A + 0x60) & 0xff; cpu.F |= 0x10; }
-      if (half || (cpu.A & 0x0f) > 0x09) { cpu.A = (cpu.A + 0x6) & 0xff; }
-    } else {
-      if (carry) { cpu.A = (cpu.A - 0x60) & 0xff; }
-      if (half) { cpu.A = (cpu.A - 0x6) & 0xff; }
-    }
+    // if (isSub) {
+    //   if (carry || cpu.A > 0x99) { cpu.A = (cpu.A + 0x60) & 0xff; cpu.F |= 0x10; }
+    //   if (half || (cpu.A & 0x0f) > 0x09) { cpu.A = (cpu.A + 0x6) & 0xff; }
+    // } else {
+    //   if (carry) { cpu.A = (cpu.A - 0x60) & 0xff; }
+    //   if (half) { cpu.A = (cpu.A - 0x6) & 0xff; }
+    // }
 
-    cpu.F |= (cpu.A === 0 ? 0x80 : 0);
-    cpu.F &= ~0x20;
+    // cpu.F |= (cpu.A === 0 ? 0x80 : 0);
+    // cpu.F &= ~0x20;
 
     // const sub = (cpu.F & 0x40) ? 1 : 0;
     // const half = (cpu.F & 0x20) ? 1 : 0;
@@ -711,6 +718,26 @@ const opcodes = {
 
     // if (cpu.A === 0) cpu.F |= 0x80;
     // if (carry) cpu.F |= 0x10;
+
+
+    let r;
+    let adjust = 0;
+
+    if (cpu.F & hFlag) adjust |= 0x06;
+    if (cpu.F & cFlag) adjust |= 0x60;
+
+    if (cpu.F & nFlag) r = cpu.A - adjust;
+    else {
+      if ((cpu.A & 0xf) > 0x9) adjust |= 0x06;
+      if (cpu.A > 0x99) adjust |= 0x60;
+      r = cpu.A + adjust;
+    }
+
+    cpu.F &= ~0xb0;
+    if ((r & 0xff) === 0) cpu.F |= zFlag;
+    if ((adjust & 0x60) !== 0) cpu.F |= cFlag;
+
+    cpu.A = r;
   },
   [OPCODES.JRZn]: JUMP.JRZn,
   [OPCODES.ADDHLHL]: ADD.ADDHLHL,
@@ -861,7 +888,7 @@ const opcodes = {
   [OPCODES.ANDE]: (cpu) => { cpu.A &= cpu.E; cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
   [OPCODES.ANDH]: (cpu) => { cpu.A &= cpu.H; cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
   [OPCODES.ANDL]: (cpu) => { cpu.A &= cpu.L; cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
-  [OPCODES.ANDHLm]: (cpu) => { cpu.A &= cpu.mmu.read8(cpu, (cpu.H << 8) | cpu.L); cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 2; cpu.T = 8; },
+  [OPCODES.ANDHLm]: (cpu) => { cpu.A &= cpu.mmu.read8(cpu, cpu.HL); cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 2; cpu.T = 8; },
   [OPCODES.ANDA]: (cpu) => { cpu.F = !cpu.A ? 0xa0 : 0x20; cpu.M = 1; cpu.T = 4; },
   [OPCODES.XORB]: LOGICAL.XORB,
   [OPCODES.XORC]: LOGICAL.XORC,
@@ -985,8 +1012,7 @@ const opcodes = {
   [OPCODES.ORn]: LOGICAL.ORn,
   [OPCODES.RST30]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x30; cpu.M = 3; cpu.T = 12; },
   [OPCODES.LDHLSPd]: (cpu) => {
-    let i = cpu.mmu.read8(cpu, cpu.PC++);
-    if (i > 127) i = -((~i + 1) & 0xff);
+    const i = cpu.mmu.read8(cpu, cpu.PC++).signed();
     const result = cpu.SP + i;
     const op = cpu.SP ^ i ^ result;
 

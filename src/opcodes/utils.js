@@ -5,6 +5,8 @@ const {
   cFlag,
 } = require('../constants');
 
+require('../utils/number');
+
 const testBit = (cpu, val) => {
   cpu.F &= ~0xe0;
   if (val === 0) cpu.F |= zFlag;
@@ -231,8 +233,7 @@ const JP_cc_nn = (cpu, cc) => {
 
 const JR_cc_n = (cpu, cc) => {
   if (cc) {
-    let val = cpu.mmu.read8(cpu, cpu.PC++);
-    if (val > 127) val = -((~val + 1) & 0xff);
+    const val = cpu.mmu.read8(cpu, cpu.PC++).signed();
     cpu.PC += val;
     cpu.M = 3; cpu.T = 12;
   } else {
@@ -245,6 +246,7 @@ const CALL_cc_nn = (cpu, cc) => {
   if (cc) {
     cpu.SP -= 2;
     cpu.mmu.write16(cpu, cpu.SP, cpu.PC + 2);
+    cpu.PC = cpu.mmu.read16(cpu, cpu.PC);
     cpu.M = 6; cpu.T = 24;
   } else {
     cpu.PC += 2;

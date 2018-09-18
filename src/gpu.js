@@ -69,7 +69,9 @@ class GPU {
     this.objEnable = 0; // bit 1
     this.bgEnable = 0; // bit 0
 
+
     // 0xff41 STAT
+    this.STAT = 0;
     this.lyInterrupt = 0; // bit 6
     this.oamInterrupt = 0; // bit 5
     this.vBLankInterrupt = 0; // bit 4
@@ -144,6 +146,7 @@ class GPU {
         this.gpuRam[addr] = val; break;
       case 0x1:
         this.setSTAT(val);
+        this.STAT = val;
         this.gpuRam[addr] = val; break;
       case 0x2:
         this.SCY = val; break;
@@ -215,6 +218,7 @@ class GPU {
         if (this.MODECLOCK >= 51) {
           if (this.LY === 143) {
             this.MODE = 1;
+            this._changeMode(1);
             this.ctx.putImageData(this.screen, 0, 0);
             this.mmu.if |= 1;
           } else {
@@ -232,6 +236,7 @@ class GPU {
           this.LY++;
 
           if (this.LY > 153) {
+            this._changeMode(2);
             this.MODE = 2;
             this.LY = 0;
           }
@@ -240,6 +245,7 @@ class GPU {
 
       case 2: // OAM read mode
         if (this.MODECLOCK >= 20) {
+          this._changeMode(3);
           this.MODECLOCK = 0;
           this.MODE = 3;
         }
@@ -247,6 +253,7 @@ class GPU {
 
       case 3: // VRAM read mode
         if (this.MODECLOCK >= 43) {
+          this._changeMode(0);
           this.renderScanline();
           this.MODECLOCK = 0;
           this.MODE = 0;
@@ -407,6 +414,17 @@ class GPU {
         default: break;
       }
     }
+  }
+
+  _changeMode(mode) {
+    let interrupt = false;
+    switch (mode) {
+      case 0: if (this.STAT & 8) interrupt = true; break;
+      case 1: if (this.STAT & 0x10) interrupt = true; break;
+      case 2: if (this.STAT & 0x20) interrupt = true; break;
+      default: break;
+    }
+    if (interrupt) this.mmu.if |= 2;
   }
 }
 

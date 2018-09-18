@@ -19,8 +19,8 @@ class MMU {
       0x21, 0x04, 0x01, 0x11, 0xA8, 0x00, 0x1A, 0x13, 0xBE, 0x20, 0xFE, 0x23, 0x7D, 0xFE, 0x34, 0x20,
       0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50,
     ];
-    // this.rom = require('../roms/tetris');
-    this.rom = require('../roms/dr_mario');
+    this.rom = require('../roms/tetris');
+    // this.rom = require('../roms/dr_mario');
     // this.rom = require('../roms/ttt');
     // this.rom = require('../roms/test/01-special');
     // this.rom = require('../roms/test/02-interrupts');
@@ -245,8 +245,14 @@ class MMU {
             }
 
             if (addr === 0xff01 && cpu.testMode) {
-              this.test += String.fromCharCode(`${val}`);
-              console.log(this.test);
+              const char = String.fromCharCode(`${val}`);
+              this.test += char;
+              // if (char === 'd') {
+              const keys = Object.keys(cpu.instructionsRan);
+              const ins = cpu.instructionsRan;
+              console.log(keys.length);
+              // }
+              // console.log(this.test);
             }
             if (addr === 0xff02) {
               // this.test2 += String.fromCharCode(`${val}`);

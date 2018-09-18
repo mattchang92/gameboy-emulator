@@ -29,6 +29,8 @@ class CPU {
       SP: 0,
     };
 
+    this.instructionsRan = {};
+
     // stack pointer
     this.T = 0;
 
@@ -62,7 +64,7 @@ class CPU {
   get L() { return this.registers.L; }
 
   set A(x) { this.registers.A = x & 0xff; }
-  set F(x) { this.registers.F = x & 0xff; }
+  set F(x) { this.registers.F = x & 0xf0; }
   set B(x) { this.registers.B = x & 0xff; }
   set C(x) { this.registers.C = x & 0xff; }
   set D(x) { this.registers.D = x & 0xff; }
@@ -147,6 +149,7 @@ class CPU {
           interruptProcessed = true;
           const mask = 1 << i;
           this.mmu.if &= (0xff - mask);
+          console.log('firing interrupt', i);
           interrupts[i](this);
           break;
         } else {
@@ -168,6 +171,12 @@ class CPU {
       //     console.log('property is undefined', key, op.toString(16));
       //   }
       // });
+      const registers = ['B', 'C', 'D', 'E', 'H', 'L', 'A', 'F'];
+      registers.forEach((r, i) => {
+        if (typeof this[r] !== 'number') {
+          console.log('not a number', r, i);
+        }
+      });
 
       if (this.FAIL) {
         const op = this.mmu.read8(this, this.PC - 1);
@@ -191,6 +200,12 @@ class CPU {
         if (typeof opcodes[op] !== 'function') {
           const prevOp = this.mmu.read8(this, this.PC - 2);
           console.log('not a function!!!', op, op.toString(16), opcodes[op], ' previous is ', prevOp.toString(16), ' pc is at ', this.PC);
+        }
+
+        if (!this.instructionsRan[op]) {
+          this.instructionsRan[op] = 1;
+        } else {
+          this.instructionsRan[op]++;
         }
         opcodes[op](this);
 
