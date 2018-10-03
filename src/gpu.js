@@ -219,7 +219,7 @@ class GPU {
           if (this.LY === 143) {
             this.MODE = 1;
             this._changeMode(1);
-            this.ctx.putImageData(this.screen, 0, 0);
+            // this.ctx.putImageData(this.screen, 0, 0);
             this.mmu.if |= 1;
           } else {
             this.MODE = 2;

@@ -154,13 +154,14 @@ class MMU {
     // const one = this.read8(cpu, addr);
     // const two = (this.read8(cpu, addr + 1) << 8);
 
-    return this.read8(cpu, addr) + (this.read8(cpu, addr + 1) << 8);
+    return ((this.read8(cpu, addr + 1) << 8) | this.read8(cpu, addr)) & 0xffff;
     // console.log('reading form addr ', addr, 'what are the vals', one, '  ', two);
     // console.log('reading 16 bit val from memory', one + two, ' from address ', addr);
     // return one + two;
   }
 
   write8(cpu, addr, val) {
+    val &= 0xff;
     if (addr === 0xff80) return;
     if (cpu === undefined || addr === undefined || val === undefined) {
       console.log('Missing required params for write byte');
@@ -250,9 +251,9 @@ class MMU {
               // if (char === 'd') {
               const keys = Object.keys(cpu.instructionsRan);
               const ins = cpu.instructionsRan;
-              console.log(keys.length);
+              // console.log(keys.length);
               // }
-              // console.log(this.test);
+              console.log(this.test);
             }
             if (addr === 0xff02) {
               // this.test2 += String.fromCharCode(`${val}`);
@@ -303,7 +304,7 @@ class MMU {
     addr &= 0xffff;
 
     const leastSigByte = val & 0xff;
-    const mostSigByte = (val >>> 8) & 0xff;
+    const mostSigByte = (val >> 8) & 0xff;
 
     this.write8(cpu, addr, leastSigByte);
     this.write8(cpu, addr + 1, mostSigByte);

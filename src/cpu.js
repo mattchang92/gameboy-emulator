@@ -199,7 +199,8 @@ class CPU {
 
         if (typeof opcodes[op] !== 'function') {
           const prevOp = this.mmu.read8(this, this.PC - 2);
-          console.log('not a function!!!', op, op.toString(16), opcodes[op], ' previous is ', prevOp.toString(16), ' pc is at ', this.PC);
+          console.log('num instructions implemented: ', Object.keys(opcodes).length);
+          console.log('not a function!!!', op, `0x${op.toString(16)}`, opcodes[op], ' previous is ', prevOp.toString(16), ' pc is at ', this.PC);
         }
 
         if (!this.instructionsRan[op]) {
