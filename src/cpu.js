@@ -219,7 +219,7 @@ class CPU {
         // console.log(F, pc, op.toString(16));
 
         if (this.writeLog && this.counter > this.offset && this.counter < (this.offset + this.limit)) {
-          const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${F.toString(2).slice(0, 4)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L},  A: ${A}\n`;
+          const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${F.toString(2).slice(0, 4)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L},  A: ${A}, M: ${this.M}\n`;
           fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', test);
         }
         this.counter++;

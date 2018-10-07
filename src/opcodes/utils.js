@@ -228,7 +228,7 @@ const CP_n = (cpu, n) => { sub(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
 const INC_n = (cpu, n) => { cpu[n] = inc(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
 const INC_nn = (cpu, nn) => { cpu[nn]++; cpu.M = 2; cpu.T = 8; };
 const DEC_n = (cpu, n) => { cpu[n] = dec(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
-// const DEC_nn = (cpu, nn) => { cpu[nn]--; cpu.M = 2; cpu.T = 8; };
+const DEC_nn = (cpu, nn) => { cpu[nn]--; cpu.M = 2; cpu.T = 8; };
 
 const JP_cc_nn = (cpu, cc) => {
   if (cc) {
@@ -324,7 +324,7 @@ module.exports = {
   INC_n,
   INC_nn,
   DEC_n,
-  // DEC_nn,
+  DEC_nn,
   JP_cc_nn,
   JR_cc_n,
   CALL_cc_nn,
