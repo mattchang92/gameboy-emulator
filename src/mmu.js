@@ -33,8 +33,8 @@ class MMU {
     // this.rom = require('../roms/test/07-jr,jp,call,ret,rst');
     // this.rom = require('../roms/test/08-misc instrs');
     // this.rom = require('../roms/test/09-op r,r');
-    // this.rom = require('../roms/test/10-bit ops');
-    this.rom = require('../roms/test/11-op a,(hl)');
+    this.rom = require('../roms/test/10-bit ops');
+    // this.rom = require('../roms/test/11-op a,(hl)');
     this.eram = new Array(0x2000).fill(0); // 0xa000 - 0xbfff
     this.oam = new Array(0xa0).fill(0); // 0xfe00 - 0xfe9f
     this.vram = new Array(0x2000).fill(0); // 0x8000 - 0x9fff
