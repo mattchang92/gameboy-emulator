@@ -28,11 +28,11 @@ class MMU {
     // this.rom = require('../roms/test/02-interrupts');
     // this.rom = require('../roms/test/03-op sp,hl');
     // this.rom = require('../roms/test/04-op r,imm');
-    this.rom = require('../roms/test/05-op rp');
+    // this.rom = require('../roms/test/05-op rp');
     // this.rom = require('../roms/test/06-ld r,r');
     // this.rom = require('../roms/test/07-jr,jp,call,ret,rst');
     // this.rom = require('../roms/test/08-misc instrs');
-    // this.rom = require('../roms/test/09-op r,r');
+    this.rom = require('../roms/test/09-op r,r');
     // this.rom = require('../roms/test/10-bit ops');
     // this.rom = require('../roms/test/11-op a,(hl)');
     this.eram = new Array(0x2000).fill(0); // 0xa000 - 0xbfff
@@ -183,7 +183,9 @@ class MMU {
     }
 
     if (cpu.writeLog && cpu.counter > cpu.offset && cpu.counter < (cpu.offset + cpu.limit)) {
+      // if (addr !== 0xff44) {
       fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', `reading byte from ram: addr: 0x${addr.toString(16)} with value: ${val}\n`);
+      // }
     }
     return val;
   }

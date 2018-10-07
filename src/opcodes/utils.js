@@ -21,14 +21,14 @@ const swap = (cpu, n) => {
   return result;
 };
 
-// const rlc = (cpu, n) => {
-//   const result = n << 1 | n >> 7;
-//   cpu.F = 0;
-//   if ((result & 0xff)) cpu.F |= zFlag;
-//   if (n & 0x80 !== 0) cpu.F |= cFlag;
+const rlc = (cpu, n) => {
+  const result = n << 1 | n >> 7;
+  cpu.F = 0;
+  if ((result & 0xff) === 0) cpu.F |= zFlag;
+  if ((n & 0x80) !== 0) cpu.F |= cFlag;
 
-//   return result;
-// };
+  return result;
+};
 
 const rl = (cpu, n) => {
   const carry = cpu.F >> 4 & 1;
@@ -41,15 +41,15 @@ const rl = (cpu, n) => {
   return result;
 };
 
-// const rrc = (cpu, n) => {
-//   const result = n >> 1 | n << 7;
+const rrc = (cpu, n) => {
+  const result = n >> 1 | n << 7;
 
-//   cpu.F = 0;
-//   if ((result & 0xff) === 0) cpu.F |= zFlag;
-//   if ((n & 1) !== 0) cpu.F |= cFlag;
+  cpu.F = 0;
+  if ((result & 0xff) === 0) cpu.F |= zFlag;
+  if ((n & 1) !== 0) cpu.F |= cFlag;
 
-//   return result;
-// };
+  return result;
+};
 
 const rr = (cpu, n) => {
   const carry = cpu.F >> 4 & 1;
@@ -62,25 +62,25 @@ const rr = (cpu, n) => {
   return result;
 };
 
-// const sla = (cpu, n) => {
-//   const result = n << 1;
+const sla = (cpu, n) => {
+  const result = n << 1;
 
-//   cpu.F = 0;
-//   if ((result & 0xff) === 0) cpu.F |= zFlag;
-//   if ((n & 0x80) !== 0) cpu.F |= cFlag;
+  cpu.F = 0;
+  if ((result & 0xff) === 0) cpu.F |= zFlag;
+  if ((n & 0x80) !== 0) cpu.F |= cFlag;
 
-//   return result;
-// };
+  return result;
+};
 
-// const sra = (cpu, n) => {
-//   const result = n & 0x80 | n >> 1;
+const sra = (cpu, n) => {
+  const result = n & 0x80 | n >> 1;
 
-//   cpu.F = 0;
-//   if ((result & 0xff) === 0) cpu.F |= zFlag;
-//   if ((n & 1) !== 0) cpu.F |= cFlag;
+  cpu.F = 0;
+  if ((result & 0xff) === 0) cpu.F |= zFlag;
+  if ((n & 1) !== 0) cpu.F |= cFlag;
 
-//   return result;
-// };
+  return result;
+};
 
 const srl = (cpu, n) => {
   const result = n >> 1;
@@ -94,12 +94,12 @@ const srl = (cpu, n) => {
 
 // // CB Opcodes
 const SWAP_n = (cpu, n) => { cpu[n] = swap(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
-// const RLC_n = (cpu, n) => { cpu[n] = rlc(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
+const RLC_n = (cpu, n) => { cpu[n] = rlc(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
 const RL_n = (cpu, n) => { cpu[n] = rl(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
-// const RRC_n = (cpu, n) => { cpu[n] = rrc(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
+const RRC_n = (cpu, n) => { cpu[n] = rrc(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
 const RR_n = (cpu, n) => { cpu[n] = rr(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
-// const SLA_n = (cpu, n) => { cpu[n] = sla(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
-// const SRA_n = (cpu, n) => { cpu[n] = sra(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
+const SLA_n = (cpu, n) => { cpu[n] = sla(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
+const SRA_n = (cpu, n) => { cpu[n] = sra(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
 const SRL_n = (cpu, n) => { cpu[n] = srl(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
 
 
@@ -132,23 +132,22 @@ const sub = (cpu, n) => {
   cpu.F = nFlag;
   if ((diff & 0xff) === 0) cpu.F |= zFlag;
   if (((cpu.A ^ n ^ diff) & 0x10) !== 0) cpu.F |= hFlag;
-  // if ((diff & 0xf) > (cpu.A & 0xf)) cpu.F |= hFlag;
   if ((diff & 0x100) !== 0) cpu.F |= cFlag;
 
   return diff;
 };
 
-// const sbc = (cpu, n) => {
-//   const carry = cpu.F >> 4 & 1;
-//   const diff = cpu.A - n - carry;
+const sbc = (cpu, n) => {
+  const carry = cpu.F >> 4 & 1;
+  const diff = cpu.A - n - carry;
 
-//   cpu.F = nFlag;
-//   if ((diff & 0xff) === 0) cpu.F |= zFlag;
-//   if (((cpu.A ^ n ^ diff) & 0x10) !== 0) cpu.F |= hFlag;
-//   if ((diff & 0x100) !== 0) cpu.F |= cFlag;
+  cpu.F = nFlag;
+  if ((diff & 0xff) === 0) cpu.F |= zFlag;
+  if (((cpu.A ^ n ^ diff) & 0x10) !== 0) cpu.F |= hFlag;
+  if ((diff & 0x100) !== 0) cpu.F |= cFlag;
 
-//   return diff;
-// };
+  return diff;
+};
 
 const and = (cpu, n) => {
   const result = cpu.A & n;
@@ -202,8 +201,8 @@ const LD_nm_A = (cpu, n) => { cpu.mmu.write8(cpu, cpu[n], cpu.A); cpu.M = 2; cpu
 const LD_n_nn = (cpu, n) => { cpu[n] = cpu.mmu.read16(cpu, cpu.PC); cpu.PC += 2; cpu.M = 3; cpu.T = 12; };
 const PUSH_nn = (cpu, nn) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu[nn]); cpu.M = 4; cpu.T = 16; };
 const POP_nn = (cpu, nn) => { cpu[nn] = cpu.mmu.read16(cpu, cpu.SP); cpu.SP += 2; cpu.M = 3; cpu.T = 12; };
-// const ADD_A_n = (cpu, n) => { cpu.A = add(cpu, cpu[n]); cpu.M = 1; cpu.M = 4; };
-// const ADC_A_n = (cpu, n) => { cpu.A = adc(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
+const ADD_A_n = (cpu, n) => { cpu.A = add(cpu, cpu[n]); cpu.M = 1; cpu.M = 4; };
+const ADC_A_n = (cpu, n) => { cpu.A = adc(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
 
 const ADD_HL_n = (cpu, n) => {
   const result = cpu.HL + cpu[n];
@@ -216,7 +215,7 @@ const ADD_HL_n = (cpu, n) => {
 };
 
 const SUB_n = (cpu, n) => { cpu.A = sub(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
-// const SBC_A_n = (cpu, n) => { cpu.A = sbc(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
+const SBC_A_n = (cpu, n) => { cpu.A = sbc(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
 
 const OR_n = (cpu, n) => {
   cpu.A = or(cpu, cpu[n]);
@@ -277,28 +276,28 @@ const RET_cc = (cpu, cc) => {
 module.exports = {
   // // cb opcodes
   testBit,
-  // swap,
-  // rlc,
-  // rl,
-  // rrc,
-  // rr,
-  // sla,
-  // sra,
-  // srl,
+  swap,
+  rlc,
+  rl,
+  rrc,
+  rr,
+  sla,
+  sra,
+  srl,
   SWAP_n,
-  // RLC_n,
+  RLC_n,
   RL_n,
-  // RRC_n,
+  RRC_n,
   RR_n,
-  // SLA_n,
-  // SRA_n,
+  SLA_n,
+  SRA_n,
   SRL_n,
 
   // // opcodes
   add,
   adc,
   sub,
-  // sbc,
+  sbc,
   and,
   or,
   xor,
@@ -313,11 +312,11 @@ module.exports = {
   LD_n_nn,
   PUSH_nn,
   POP_nn,
-  // ADD_A_n,
-  // ADC_A_n,
+  ADD_A_n,
+  ADC_A_n,
   ADD_HL_n,
   SUB_n,
-  // SBC_A_n,
+  SBC_A_n,
   OR_n,
   XOR_n,
   CP_n,

@@ -32,7 +32,7 @@ const {
 class GPU {
   constructor(mmu) {
     this.mmu = mmu;
-    this.MODE = 2;
+    this.MODE = 0;
     this.MODECLOCK = 0;
     this.backgroundOffsetX = 0;
     this.backgroundOffsetY = 0;
@@ -101,7 +101,7 @@ class GPU {
     this.vBLankInterrupt = val & 0x10;
     this.hBlankInterrupt = val & 0x08;
     this.lyFlag = val & 0x04;
-    this.mode = (val & 0x01) + (val & 0x02);
+    // this.mode = (val & 0x01) + (val & 0x02);
   }
 
   setPalette(val, palette) {
@@ -121,7 +121,7 @@ class GPU {
     addr -= 0xff40;
     switch (addr) {
       case 0x0: return this.gpuRam[addr];
-      case 0x1: return this.gpuRam[addr];
+      case 0x1: return this.STAT;
       case 0x2: return this.SCY;
       case 0x3: return this.SCX;
       case 0x4: return this.LY;
@@ -216,7 +216,9 @@ class GPU {
     switch (this.MODE) {
       case 0: // Hblank
         if (this.MODECLOCK >= 51) {
-          if (this.LY === 143) {
+          this.LY++;
+          this.MODECLOCK -= 51;
+          if (this.LY === 144) {
             this.MODE = 1;
             this._changeMode(1);
             // this.ctx.putImageData(this.screen, 0, 0);
@@ -224,15 +226,12 @@ class GPU {
           } else {
             this.MODE = 2;
           }
-
-          this.MODECLOCK = 0;
-          this.LY++;
         }
         break;
 
       case 1: // Vblank
         if (this.MODECLOCK >= 114) {
-          this.MODECLOCK = 0;
+          this.MODECLOCK -= 114;
           this.LY++;
 
           if (this.LY > 153) {
@@ -245,17 +244,17 @@ class GPU {
 
       case 2: // OAM read mode
         if (this.MODECLOCK >= 20) {
+          this.MODECLOCK -= 20;
           this._changeMode(3);
-          this.MODECLOCK = 0;
           this.MODE = 3;
         }
         break;
 
       case 3: // VRAM read mode
         if (this.MODECLOCK >= 43) {
+          this.MODECLOCK -= 43;
           this._changeMode(0);
           this.renderScanline();
-          this.MODECLOCK = 0;
           this.MODE = 0;
         }
         break;

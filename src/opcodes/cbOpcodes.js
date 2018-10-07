@@ -1,91 +1,91 @@
 const {
   testBit,
-  // swap,
-  // rlc,
-  // rl,
-  // rrc,
-  // rr,
-  // sla,
-  // sra,
-  // srl,
+  swap,
+  rlc,
+  rl,
+  rrc,
+  rr,
+  sla,
+  sra,
+  srl,
   SWAP_n,
-  // RLC_n,
+  RLC_n,
   RL_n,
-  // RRC_n,
+  RRC_n,
   RR_n,
-  // SLA_n,
-  // SRA_n,
+  SLA_n,
+  SRA_n,
   SRL_n,
 } = require('./utils');
 
 const CBOPCODES = {
-  // RLCB: 0x00,
-  // RLCC: 0x01,
-  // RLCD: 0x02,
-  // RLCE: 0x03,
-  // RLCH: 0x04,
-  // RLCL: 0x05,
-  // RLCHLm: 0x06,
-  // RLCA: 0x07,
-  // RRCB: 0x08,
-  // RRCC: 0x09,
-  // RRCD: 0x0a,
-  // RRCE: 0x0b,
-  // RRCH: 0x0c,
-  // RRCL: 0x0d,
-  // RRCHLm: 0x0e,
-  // RRCA: 0x0f,
+  RLCB: 0x00,
+  RLCC: 0x01,
+  RLCD: 0x02,
+  RLCE: 0x03,
+  RLCH: 0x04,
+  RLCL: 0x05,
+  RLCHLm: 0x06,
+  RLCA: 0x07,
+  RRCB: 0x08,
+  RRCC: 0x09,
+  RRCD: 0x0a,
+  RRCE: 0x0b,
+  RRCH: 0x0c,
+  RRCL: 0x0d,
+  RRCHLm: 0x0e,
+  RRCA: 0x0f,
 
-  // RLB: 0x10,
+  RLB: 0x10,
   RLC: 0x11,
-  // RLD: 0x12,
-  // RLE: 0x13,
-  // RLH: 0x14,
-  // RLL: 0x15,
-  // RLHLm: 0x16,
-  // RLA: 0x17,
-  // RRB: 0x18,
+  RLD: 0x12,
+  RLE: 0x13,
+  RLH: 0x14,
+  RLL: 0x15,
+  RLHLm: 0x16,
+  RLA: 0x17,
+  RRB: 0x18,
   RRC: 0x19,
   RRD: 0x1a,
   RRE: 0x1b,
-  // RRH: 0x1c,
-  // RRL: 0x1d,
-  // RRHLm: 0x1e,
-  // RRA: 0x1f,
+  RRH: 0x1c,
+  RRL: 0x1d,
+  RRHLm: 0x1e,
+  RRA: 0x1f,
 
-  // SLAB: 0x20,
-  // SLAC: 0x21,
-  // SLAD: 0x22,
-  // SLAE: 0x23,
-  // SLAH: 0x24,
-  // SLAL: 0x25,
-  // SLAHLm: 0x26,
-  // SLAA: 0x27,
-  // SRAB: 0x28,
-  // SRAC: 0x29,
-  // SRAD: 0x2a,
-  // SRAE: 0x2b,
-  // SRAH: 0x2c,
-  // SRAL: 0x2d,
-  // SRAHLm: 0x2e,
-  // SRAA: 0x2f,
+  SLAB: 0x20,
+  SLAC: 0x21,
+  SLAD: 0x22,
+  SLAE: 0x23,
+  SLAH: 0x24,
+  SLAL: 0x25,
+  SLAHLm: 0x26,
+  SLAA: 0x27,
+  SRAB: 0x28,
+  SRAC: 0x29,
+  SRAD: 0x2a,
+  SRAE: 0x2b,
+  SRAH: 0x2c,
+  SRAL: 0x2d,
+  SRAHLm: 0x2e,
+  SRAA: 0x2f,
 
-  // SWAPB: 0x30,
-  // SWAPC: 0x31,
-  // SWAPD: 0x32,
-  // SWAPE: 0x33,
-  // SWAPH: 0x34,
-  // SWAPL: 0x35,
-  // SWAPHLm: 0x36,
+  SWAPB: 0x30,
+  SWAPC: 0x31,
+  SWAPD: 0x32,
+  SWAPE: 0x33,
+  SWAPH: 0x34,
+  SWAPL: 0x35,
+  SWAPHLm: 0x36,
   SWAPA: 0x37,
   SRLB: 0x38,
-  // SRLC: 0x39,
-  // SRLD: 0x3a,
-  // SRLE: 0x3b,
-  // SRLH: 0x3c,
-  // SRLL: 0x3d,
-  // SRLHLm: 0x3e,
-  // SRLA: 0x3f,
+  SRLC: 0x39,
+  SRLD: 0x3a,
+  SRLE: 0x3b,
+  SRLH: 0x3c,
+  SRLL: 0x3d,
+  SRLHLm: 0x3e,
+  SRLA: 0x3f,
 
   // BIT0B: 0x40,
   // BIT0C: 0x41,
@@ -293,189 +293,189 @@ const CBOPCODES = {
 };
 
 const SWAP = {
-  // SWAPB: cpu => SWAP_n(cpu, 'B'),
-  // SWAPC: cpu => SWAP_n(cpu, 'C'),
-  // SWAPD: cpu => SWAP_n(cpu, 'D'),
-  // SWAPE: cpu => SWAP_n(cpu, 'E'),
-  // SWAPH: cpu => SWAP_n(cpu, 'H'),
-  // SWAPL: cpu => SWAP_n(cpu, 'L'),
+  SWAPB: cpu => SWAP_n(cpu, 'B'),
+  SWAPC: cpu => SWAP_n(cpu, 'C'),
+  SWAPD: cpu => SWAP_n(cpu, 'D'),
+  SWAPE: cpu => SWAP_n(cpu, 'E'),
+  SWAPH: cpu => SWAP_n(cpu, 'H'),
+  SWAPL: cpu => SWAP_n(cpu, 'L'),
   SWAPA: cpu => SWAP_n(cpu, 'A'),
 
-  // SWAPHLm: (cpu) => {
-  //   const n = cpu.mmu.read8(cpu, cpu.HL);
-  //   cpu.mmu.write8(cpu, cpu.HL, swap(cpu, n));
-  //   cpu.M = 3; cpu.T = 12;
-  // },
+  SWAPHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, swap(cpu, n));
+    cpu.M = 3; cpu.T = 12;
+  },
 };
 
 const ROTATE = {
-  // RLCB: cpu => RLC_n(cpu, 'B'),
-  // RLCC: cpu => RLC_n(cpu, 'C'),
-  // RLCD: cpu => RLC_n(cpu, 'D'),
-  // RLCE: cpu => RLC_n(cpu, 'E'),
-  // RLCH: cpu => RLC_n(cpu, 'H'),
-  // RLCL: cpu => RLC_n(cpu, 'L'),
-  // RLCA: cpu => RLC_n(cpu, 'A'),
-  // RLCHLm: (cpu) => {
-  //   const n = cpu.mmu.read8(cpu, cpu.HL);
-  //   cpu.mmu.write8(cpu, cpu.HL, rlc(cpu, n));
-  //   cpu.M = 4; cpu.T = 16;
-  // },
+  RLCB: cpu => RLC_n(cpu, 'B'),
+  RLCC: cpu => RLC_n(cpu, 'C'),
+  RLCD: cpu => RLC_n(cpu, 'D'),
+  RLCE: cpu => RLC_n(cpu, 'E'),
+  RLCH: cpu => RLC_n(cpu, 'H'),
+  RLCL: cpu => RLC_n(cpu, 'L'),
+  RLCA: cpu => RLC_n(cpu, 'A'),
+  RLCHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, rlc(cpu, n));
+    cpu.M = 4; cpu.T = 16;
+  },
 
-  // RLB: cpu => RL_n(cpu, 'B'),
+  RLB: cpu => RL_n(cpu, 'B'),
   RLC: cpu => RL_n(cpu, 'C'),
-  // RLD: cpu => RL_n(cpu, 'D'),
-  // RLE: cpu => RL_n(cpu, 'E'),
-  // RLH: cpu => RL_n(cpu, 'H'),
-  // RLL: cpu => RL_n(cpu, 'L'),
-  // RLA: cpu => RL_n(cpu, 'A'),
-  // RLHLm: (cpu) => {
-  //   const n = cpu.mmu.read8(cpu, cpu.HL);
-  //   cpu.mmu.write8(cpu, cpu.HL, rl(cpu, n));
-  //   cpu.M = 4; cpu.T = 16;
-  // },
+  RLD: cpu => RL_n(cpu, 'D'),
+  RLE: cpu => RL_n(cpu, 'E'),
+  RLH: cpu => RL_n(cpu, 'H'),
+  RLL: cpu => RL_n(cpu, 'L'),
+  RLA: cpu => RL_n(cpu, 'A'),
+  RLHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, rl(cpu, n));
+    cpu.M = 4; cpu.T = 16;
+  },
 
-  // RRCB: cpu => RRC_n(cpu, 'B'),
-  // RRCC: cpu => RRC_n(cpu, 'C'),
-  // RRCD: cpu => RRC_n(cpu, 'D'),
-  // RRCE: cpu => RRC_n(cpu, 'E'),
-  // RRCH: cpu => RRC_n(cpu, 'H'),
-  // RRCL: cpu => RRC_n(cpu, 'L'),
-  // RRCA: cpu => RRC_n(cpu, 'A'),
-  // RRCHLm: (cpu) => {
-  //   const n = cpu.mmu.read8(cpu, cpu.HL);
-  //   cpu.mmu.write8(cpu, cpu.HL, rrc(cpu, n));
-  //   cpu.M = 4; cpu.T = 16;
-  // },
+  RRCB: cpu => RRC_n(cpu, 'B'),
+  RRCC: cpu => RRC_n(cpu, 'C'),
+  RRCD: cpu => RRC_n(cpu, 'D'),
+  RRCE: cpu => RRC_n(cpu, 'E'),
+  RRCH: cpu => RRC_n(cpu, 'H'),
+  RRCL: cpu => RRC_n(cpu, 'L'),
+  RRCA: cpu => RRC_n(cpu, 'A'),
+  RRCHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, rrc(cpu, n));
+    cpu.M = 4; cpu.T = 16;
+  },
 
-  // RRB: cpu => RR_n(cpu, 'B'),
+  RRB: cpu => RR_n(cpu, 'B'),
   RRC: cpu => RR_n(cpu, 'C'),
   RRD: cpu => RR_n(cpu, 'D'),
   RRE: cpu => RR_n(cpu, 'E'),
-  // RRH: cpu => RR_n(cpu, 'H'),
-  // RRL: cpu => RR_n(cpu, 'L'),
-  // RRA: cpu => RR_n(cpu, 'A'),
-  // RRHLm: (cpu) => {
-  //   const n = cpu.mmu.read8(cpu, cpu.HL);
-  //   cpu.mmu.write8(cpu, cpu.HL, rr(cpu, n));
-  //   cpu.M = 4; cpu.T = 16;
-  // },
+  RRH: cpu => RR_n(cpu, 'H'),
+  RRL: cpu => RR_n(cpu, 'L'),
+  RRA: cpu => RR_n(cpu, 'A'),
+  RRHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, rr(cpu, n));
+    cpu.M = 4; cpu.T = 16;
+  },
 };
 
 
 const SHIFT = {
-  // SLAB: cpu => SLA_n(cpu, 'B'),
-  // SLAC: cpu => SLA_n(cpu, 'C'),
-  // SLAD: cpu => SLA_n(cpu, 'D'),
-  // SLAE: cpu => SLA_n(cpu, 'E'),
-  // SLAH: cpu => SLA_n(cpu, 'H'),
-  // SLAL: cpu => SLA_n(cpu, 'L'),
-  // SLAA: cpu => SLA_n(cpu, 'A'),
-  // SLAHLm: (cpu) => {
-  //   const n = cpu.mmu.read8(cpu, cpu.HL);
-  //   cpu.mmu.write8(cpu, cpu.HL, sla(cpu, n));
-  //   cpu.M = 4; cpu.T = 16;
-  // },
+  SLAB: cpu => SLA_n(cpu, 'B'),
+  SLAC: cpu => SLA_n(cpu, 'C'),
+  SLAD: cpu => SLA_n(cpu, 'D'),
+  SLAE: cpu => SLA_n(cpu, 'E'),
+  SLAH: cpu => SLA_n(cpu, 'H'),
+  SLAL: cpu => SLA_n(cpu, 'L'),
+  SLAA: cpu => SLA_n(cpu, 'A'),
+  SLAHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, sla(cpu, n));
+    cpu.M = 4; cpu.T = 16;
+  },
 
-  // SRAB: cpu => SRA_n(cpu, 'B'),
-  // SRAC: cpu => SRA_n(cpu, 'C'),
-  // SRAD: cpu => SRA_n(cpu, 'D'),
-  // SRAE: cpu => SRA_n(cpu, 'E'),
-  // SRAH: cpu => SRA_n(cpu, 'H'),
-  // SRAL: cpu => SRA_n(cpu, 'L'),
-  // SRAA: cpu => SRA_n(cpu, 'A'),
-  // SRAHLm: (cpu) => {
-  //   const n = cpu.mmu.read8(cpu, cpu.HL);
-  //   cpu.mmu.write8(cpu, cpu.HL, sra(cpu, n));
-  //   cpu.M = 4; cpu.T = 16;
-  // },
+  SRAB: cpu => SRA_n(cpu, 'B'),
+  SRAC: cpu => SRA_n(cpu, 'C'),
+  SRAD: cpu => SRA_n(cpu, 'D'),
+  SRAE: cpu => SRA_n(cpu, 'E'),
+  SRAH: cpu => SRA_n(cpu, 'H'),
+  SRAL: cpu => SRA_n(cpu, 'L'),
+  SRAA: cpu => SRA_n(cpu, 'A'),
+  SRAHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, sra(cpu, n));
+    cpu.M = 4; cpu.T = 16;
+  },
 
   SRLB: cpu => SRL_n(cpu, 'B'),
-  // SRLC: cpu => SRL_n(cpu, 'C'),
-  // SRLD: cpu => SRL_n(cpu, 'D'),
-  // SRLE: cpu => SRL_n(cpu, 'E'),
-  // SRLH: cpu => SRL_n(cpu, 'H'),
-  // SRLL: cpu => SRL_n(cpu, 'L'),
-  // SRLA: cpu => SRL_n(cpu, 'A'),
-  // SRLHLm: (cpu) => {
-  //   const n = cpu.mmu.read8(cpu, cpu.HL);
-  //   cpu.mmu.write8(cpu, cpu.HL, srl(cpu, n));
-  //   cpu.M = 4; cpu.T = 16;
-  // },
+  SRLC: cpu => SRL_n(cpu, 'C'),
+  SRLD: cpu => SRL_n(cpu, 'D'),
+  SRLE: cpu => SRL_n(cpu, 'E'),
+  SRLH: cpu => SRL_n(cpu, 'H'),
+  SRLL: cpu => SRL_n(cpu, 'L'),
+  SRLA: cpu => SRL_n(cpu, 'A'),
+  SRLHLm: (cpu) => {
+    const n = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, srl(cpu, n));
+    cpu.M = 4; cpu.T = 16;
+  },
 };
 
 const cbopcodes = {
   // /* ------------------------ 0x0------------------------ */
-  // [CBOPCODES.RLCB]: ROTATE.RLCB,
-  // [CBOPCODES.RLCC]: ROTATE.RLCC,
-  // [CBOPCODES.RLCD]: ROTATE.RLCD,
-  // [CBOPCODES.RLCE]: ROTATE.RLCE,
-  // [CBOPCODES.RLCH]: ROTATE.RLCH,
-  // [CBOPCODES.RLCL]: ROTATE.RLCL,
-  // [CBOPCODES.RLCHLm]: ROTATE.RLCHLm,
-  // [CBOPCODES.RLCA]: ROTATE.RLCA,
-  // [CBOPCODES.RRCB]: ROTATE.RRCB,
-  // [CBOPCODES.RRCC]: ROTATE.RRCC,
-  // [CBOPCODES.RRCD]: ROTATE.RRCD,
-  // [CBOPCODES.RRCE]: ROTATE.RRCE,
-  // [CBOPCODES.RRCH]: ROTATE.RRCHL,
-  // [CBOPCODES.RRCL]: ROTATE.RRCA,
-  // [CBOPCODES.RRCHLm]: ROTATE.RRCHLm,
-  // [CBOPCODES.RRCA]: ROTATE.RRCA,
+  [CBOPCODES.RLCB]: ROTATE.RLCB,
+  [CBOPCODES.RLCC]: ROTATE.RLCC,
+  [CBOPCODES.RLCD]: ROTATE.RLCD,
+  [CBOPCODES.RLCE]: ROTATE.RLCE,
+  [CBOPCODES.RLCH]: ROTATE.RLCH,
+  [CBOPCODES.RLCL]: ROTATE.RLCL,
+  [CBOPCODES.RLCHLm]: ROTATE.RLCHLm,
+  [CBOPCODES.RLCA]: ROTATE.RLCA,
+  [CBOPCODES.RRCB]: ROTATE.RRCB,
+  [CBOPCODES.RRCC]: ROTATE.RRCC,
+  [CBOPCODES.RRCD]: ROTATE.RRCD,
+  [CBOPCODES.RRCE]: ROTATE.RRCE,
+  [CBOPCODES.RRCH]: ROTATE.RRCH,
+  [CBOPCODES.RRCL]: ROTATE.RRCL,
+  [CBOPCODES.RRCHLm]: ROTATE.RRCHLm,
+  [CBOPCODES.RRCA]: ROTATE.RRCA,
 
   // /* ------------------------ 0x1------------------------ */
-  // [CBOPCODES.RLB]: ROTATE.RLB,
+  [CBOPCODES.RLB]: ROTATE.RLB,
   [CBOPCODES.RLC]: ROTATE.RLC,
-  // [CBOPCODES.RLD]: ROTATE.RLD,
-  // [CBOPCODES.RLE]: ROTATE.RLE,
-  // [CBOPCODES.RLH]: ROTATE.RLH,
-  // [CBOPCODES.RLL]: ROTATE.RLL,
-  // [CBOPCODES.RLHLm]: ROTATE.RLHLm,
-  // [CBOPCODES.RLA]: ROTATE.RLA,
-  // [CBOPCODES.RRB]: ROTATE.RRB,
+  [CBOPCODES.RLD]: ROTATE.RLD,
+  [CBOPCODES.RLE]: ROTATE.RLE,
+  [CBOPCODES.RLH]: ROTATE.RLH,
+  [CBOPCODES.RLL]: ROTATE.RLL,
+  [CBOPCODES.RLHLm]: ROTATE.RLHLm,
+  [CBOPCODES.RLA]: ROTATE.RLA,
+  [CBOPCODES.RRB]: ROTATE.RRB,
   [CBOPCODES.RRC]: ROTATE.RRC,
   [CBOPCODES.RRD]: ROTATE.RRD,
   [CBOPCODES.RRE]: ROTATE.RRE,
-  // [CBOPCODES.RRH]: ROTATE.RRH,
-  // [CBOPCODES.RRL]: ROTATE.RRL,
-  // [CBOPCODES.RRHLm]: ROTATE.RRHLm,
-  // [CBOPCODES.RRA]: ROTATE.RRA,
+  [CBOPCODES.RRH]: ROTATE.RRH,
+  [CBOPCODES.RRL]: ROTATE.RRL,
+  [CBOPCODES.RRHLm]: ROTATE.RRHLm,
+  [CBOPCODES.RRA]: ROTATE.RRA,
 
   // /* ------------------------ 0x2------------------------ */
-  // [CBOPCODES.SLAB]: SHIFT.SLAB,
-  // [CBOPCODES.SLAC]: SHIFT.SLAC,
-  // [CBOPCODES.SLAD]: SHIFT.SLAD,
-  // [CBOPCODES.SLAE]: SHIFT.SLAE,
-  // [CBOPCODES.SLAH]: SHIFT.SLAH,
-  // [CBOPCODES.SLAL]: SHIFT.SLAL,
-  // [CBOPCODES.SLAHLm]: SHIFT.SLAHLm,
-  // [CBOPCODES.SLAA]: SHIFT.SLAA,
-  // [CBOPCODES.SRAB]: SHIFT.SRAB,
-  // [CBOPCODES.SRAC]: SHIFT.SRAC,
-  // [CBOPCODES.SRAD]: SHIFT.SRAD,
-  // [CBOPCODES.SRAE]: SHIFT.SRAE,
-  // [CBOPCODES.SRAH]: SHIFT.SRAH,
-  // [CBOPCODES.SRAL]: SHIFT.SRAL,
-  // [CBOPCODES.SRAHLm]: SHIFT.SRAHLm,
-  // [CBOPCODES.SRAA]: SHIFT.SRAA,
+  [CBOPCODES.SLAB]: SHIFT.SLAB,
+  [CBOPCODES.SLAC]: SHIFT.SLAC,
+  [CBOPCODES.SLAD]: SHIFT.SLAD,
+  [CBOPCODES.SLAE]: SHIFT.SLAE,
+  [CBOPCODES.SLAH]: SHIFT.SLAH,
+  [CBOPCODES.SLAL]: SHIFT.SLAL,
+  [CBOPCODES.SLAHLm]: SHIFT.SLAHLm,
+  [CBOPCODES.SLAA]: SHIFT.SLAA,
+  [CBOPCODES.SRAB]: SHIFT.SRAB,
+  [CBOPCODES.SRAC]: SHIFT.SRAC,
+  [CBOPCODES.SRAD]: SHIFT.SRAD,
+  [CBOPCODES.SRAE]: SHIFT.SRAE,
+  [CBOPCODES.SRAH]: SHIFT.SRAH,
+  [CBOPCODES.SRAL]: SHIFT.SRAL,
+  [CBOPCODES.SRAHLm]: SHIFT.SRAHLm,
+  [CBOPCODES.SRAA]: SHIFT.SRAA,
 
   // /* ------------------------ 0x3------------------------ */
-  // [CBOPCODES.SWAPB]: SWAP.SWAPB,
-  // [CBOPCODES.SWAPC]: SWAP.SWAPC,
-  // [CBOPCODES.SWAPD]: SWAP.SWAPD,
-  // [CBOPCODES.SWAPE]: SWAP.SWAPE,
-  // [CBOPCODES.SWAPH]: SWAP.SWAPL,
-  // [CBOPCODES.SWAPL]: SWAP.SWAP,
-  // [CBOPCODES.SWAPHLm]: SWAP.SWAPHLm,
+  [CBOPCODES.SWAPB]: SWAP.SWAPB,
+  [CBOPCODES.SWAPC]: SWAP.SWAPC,
+  [CBOPCODES.SWAPD]: SWAP.SWAPD,
+  [CBOPCODES.SWAPE]: SWAP.SWAPE,
+  [CBOPCODES.SWAPH]: SWAP.SWAPH,
+  [CBOPCODES.SWAPL]: SWAP.SWAPL,
+  [CBOPCODES.SWAPHLm]: SWAP.SWAPHLm,
   [CBOPCODES.SWAPA]: SWAP.SWAPA,
   [CBOPCODES.SRLB]: SHIFT.SRLB,
-  // [CBOPCODES.SRLC]: SHIFT.SRLC,
-  // [CBOPCODES.SRLD]: SHIFT.SRLD,
-  // [CBOPCODES.SRLE]: SHIFT.SRLE,
-  // [CBOPCODES.SRLH]: SHIFT.SRLH,
-  // [CBOPCODES.SRLL]: SHIFT.SRLL,
-  // [CBOPCODES.SRLHLm]: SHIFT.SRLHLm,
-  // [CBOPCODES.SRLA]: SHIFT.SRLA,
+  [CBOPCODES.SRLC]: SHIFT.SRLC,
+  [CBOPCODES.SRLD]: SHIFT.SRLD,
+  [CBOPCODES.SRLE]: SHIFT.SRLE,
+  [CBOPCODES.SRLH]: SHIFT.SRLH,
+  [CBOPCODES.SRLL]: SHIFT.SRLL,
+  [CBOPCODES.SRLHLm]: SHIFT.SRLHLm,
+  [CBOPCODES.SRLA]: SHIFT.SRLA,
 
   // /* ------------------------ 0x4------------------------ */
   // [CBOPCODES.BIT0B]: (cpu) => { testBit(cpu, cpu.B & 0x01); cpu.M = 2; cpu.T = 8; },

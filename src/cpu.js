@@ -15,9 +15,9 @@ class CPU {
     this.initialCounter = 0;
     this.logsEnabled = false;
     this.counter = 0;
-    this.offset = 0;
+    this.offset = 120000;
     this.limit = 40000;
-    this.writeLog = false;
+    this.writeLog = true;
 
     this.registers = {
       A: 0,
@@ -194,6 +194,10 @@ class CPU {
         const sp = this.SP;
         const op = this.mmu.read8(this, this.PC++);
 
+        // if (this.writeLog && this.counter > this.offset && this.counter < (this.offset + this.limit)) {
+        //   fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', `Initial flag: ${this.F.toString(2)}\n`);
+        // }
+
         this.initialCounter++;
         if (this.initialCounter > this.offset) {
           // this.logsEnabled = true;
@@ -217,9 +221,12 @@ class CPU {
           F, B, C, D, E, H, L, A,
         } = this;
         // console.log(F, pc, op.toString(16));
+        const getFlags = val => [val >> 7 & 1, val >> 6 & 1, val >> 5 & 1, val >> 4 & 1];
 
         if (this.writeLog && this.counter > this.offset && this.counter < (this.offset + this.limit)) {
-          const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${F.toString(2).slice(0, 4)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L},  A: ${A}, M: ${this.M}\n`;
+          // const test = `PC: ${pc},  OP: ${op.toString(16)}, F: ${getFlags(F)}, LY: ${this.gpu.LY}, CLOCK: ${this.gpu.MODECLOCK}, M: ${this.M}\n`;
+          // const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${F.toString(2).slice(0, 4)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L}, M: ${this.M}\n`;
+          const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${getFlags(F)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L}, A: ${A}, M: ${this.M}\n`;
           fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', test);
         }
         this.counter++;
