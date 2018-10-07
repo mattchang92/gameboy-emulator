@@ -104,7 +104,7 @@ const OPCODES = {
   INCSP: 0x33,
   INCHLm: 0x34,
   DECHLm: 0x35,
-  // LDHLmn: 0x36,
+  LDHLmn: 0x36,
   SCF: 0x37,
   JRCn: 0x38,
   ADDHLSP: 0x39,
@@ -279,7 +279,7 @@ const OPCODES = {
   RETI: 0xd9,
   JPCnn: 0xda,
   CALLCnn: 0xdc,
-  // SUBCAn: 0xde,
+  SUBCAn: 0xde,
   RST18: 0xdf,
 
   LDHnmA: 0xe0,
@@ -299,7 +299,7 @@ const OPCODES = {
   LDAIOC: 0xf2, // NOTE copy pasted from other repo. docs say is invalid
   DI: 0xf3,
   PUSHAF: 0xf5,
-  // ORn: 0xf6,
+  ORn: 0xf6,
   RST30: 0xf7,
   // LDHLSPd: 0xf8,
   LDSPHL: 0xf9,
@@ -500,7 +500,7 @@ const LOGICAL = {
   ORL: cpu => OR_n(cpu, 'L'),
   ORA: cpu => OR_n(cpu, 'A'),
   ORHLm: (cpu) => { cpu.A = or(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 1; cpu.T = 4; },
-  // ORn: (cpu) => { cpu.A = or(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
+  ORn: (cpu) => { cpu.A = or(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
 
   XORB: cpu => XOR_n(cpu, 'B'),
   XORC: cpu => XOR_n(cpu, 'C'),
@@ -788,7 +788,7 @@ const opcodes = {
   [OPCODES.INCSP]: INCREMENT.INCSP,
   [OPCODES.INCHLm]: INCREMENT.INCHLm,
   [OPCODES.DECHLm]: DECREMENT.DECHLm,
-  // [OPCODES.LDHLmn]: (cpu) => { cpu.mmu.write8(cpu, cpu.HL, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; },
+  [OPCODES.LDHLmn]: (cpu) => { cpu.mmu.write8(cpu, cpu.HL, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; },
   [OPCODES.SCF]: (cpu) => { cpu.F &= ~0x60; cpu.F |= cFlag; cpu.M = 1; cpu.T = 4; },
   [OPCODES.JRCn]: JUMP.JRCn,
   [OPCODES.ADDHLSP]: ADD.ADDHLSP,
@@ -1002,7 +1002,7 @@ const opcodes = {
   [OPCODES.RETI]: RETURN.RETI,
   [OPCODES.JPCnn]: JUMP.JPCnn,
   [OPCODES.CALLCnn]: CALL.CALLCnn,
-  // [OPCODES.SUBCAn]: SUBTRACT.SUBCAn,
+  [OPCODES.SUBCAn]: SUBTRACT.SUBCAn,
   [OPCODES.RST18]: (cpu) => {
     cpu.SP -= 2;
     cpu.mmu.write16(cpu, cpu.SP, cpu.PC);
@@ -1034,7 +1034,7 @@ const opcodes = {
   [OPCODES.LDAIOC]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.C); cpu.M = 2; cpu.T = 8; },
   [OPCODES.DI]: (cpu) => { cpu.ime = 0; cpu.M = 1; cpu.T = 4; },
   [OPCODES.PUSHAF]: LOAD.PUSHAF,
-  // [OPCODES.ORn]: LOGICAL.ORn,
+  [OPCODES.ORn]: LOGICAL.ORn,
   [OPCODES.RST30]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x30; cpu.M = 3; cpu.T = 12; },
   // [OPCODES.LDHLSPd]: (cpu) => {
   //   const i = cpu.mmu.read8(cpu, cpu.PC++).signed();
