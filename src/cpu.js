@@ -15,9 +15,10 @@ class CPU {
     this.initialCounter = 0;
     this.logsEnabled = false;
     this.counter = 0;
-    this.offset = 120000;
-    this.limit = 40000;
-    this.writeLog = true;
+    this.offset = 2100000;
+    // this.offset = 2199852;
+    this.limit = 60000;
+    this.writeLog = false;
 
     this.registers = {
       A: 0,

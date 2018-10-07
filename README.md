@@ -17,4 +17,4 @@ CPU instruction set accuracy test results (Blargg's test ROMs):
 - [x] 08-misc instrs
 - [ ] 09-op r,r (issues)
 - [ ] 10-bit ops
-- [ ] 11-op a,(hl)
+- [ ] 11-op a,(hl) (0x34 failing)

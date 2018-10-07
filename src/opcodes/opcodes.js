@@ -17,7 +17,7 @@ const {
   and,
   or,
   xor,
-  // inc,
+  inc,
   dec,
   LD_r_n,
   LD_r1_r2,
@@ -49,7 +49,7 @@ const {
 const OPCODES = {
   NOP: 0x00,
   LDBCnn: 0x01,
-  // LDBCmA: 0x02,
+  LDBCmA: 0x02,
   INCBC: 0x03,
   INCB: 0x04,
   DECB: 0x05,
@@ -57,7 +57,7 @@ const OPCODES = {
   RLCA: 0x07,
   LDnnSP: 0x08,
   ADDHLBC: 0x09,
-  // LDABCm: 0x0a,
+  LDABCm: 0x0a,
   DECBC: 0x0b,
   INCC: 0x0c,
   DECC: 0x0d,
@@ -102,13 +102,13 @@ const OPCODES = {
   LDSPnn: 0x31,
   LDDHLmA: 0x32,
   INCSP: 0x33,
-  // INCHLm: 0x34,
+  INCHLm: 0x34,
   DECHLm: 0x35,
   // LDHLmn: 0x36,
   SCF: 0x37,
   JRCn: 0x38,
   ADDHLSP: 0x39,
-  // LDDAHLm: 0x3a,
+  LDDAHLm: 0x3a,
   DECSP: 0x3b,
   INCA: 0x3c,
   DECA: 0x3d,
@@ -499,7 +499,7 @@ const LOGICAL = {
   ORH: cpu => OR_n(cpu, 'H'),
   ORL: cpu => OR_n(cpu, 'L'),
   ORA: cpu => OR_n(cpu, 'A'),
-  ORHLm: (cpu) => { cpu.A = or(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 2; cpu.T = 8; },
+  ORHLm: (cpu) => { cpu.A = or(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 1; cpu.T = 4; },
   // ORn: (cpu) => { cpu.A = or(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
 
   XORB: cpu => XOR_n(cpu, 'B'),
@@ -531,7 +531,11 @@ const INCREMENT = {
   INCE: cpu => INC_n(cpu, 'E'),
   INCH: cpu => INC_n(cpu, 'H'),
   INCL: cpu => INC_n(cpu, 'L'),
-  // INCHLm: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.HL); cpu.mmu.write8(cpu, cpu.HL, inc(val)); cpu.M = 3; cpu.T = 12; },
+  INCHLm: (cpu) => {
+    const val = cpu.mmu.read8(cpu, cpu.HL);
+    cpu.mmu.write8(cpu, cpu.HL, inc(val));
+    cpu.M = 3; cpu.T = 12;
+  },
   INCA: cpu => INC_n(cpu, 'A'),
 
   // // 16 bit increments Flag = (- - - -)
@@ -659,7 +663,7 @@ const opcodes = {
   /* ------------------------ 0x0 ------------------------ */
   [OPCODES.NOP]: (cpu) => { cpu.M = 1; cpu.T = 4; },
   [OPCODES.LDBCnn]: LOAD.LDBCnn,
-  // [OPCODES.LDBCmA]: LOAD.LDBCmA,
+  [OPCODES.LDBCmA]: LOAD.LDBCmA,
   [OPCODES.INCBC]: INCREMENT.INCBC,
   [OPCODES.INCB]: INCREMENT.INCB,
   [OPCODES.DECB]: DECREMENT.DECB,
@@ -671,7 +675,7 @@ const opcodes = {
     cpu.M = 5; cpu.T = 20;
   },
   [OPCODES.ADDHLBC]: ADD.ADDHLBC,
-  // [OPCODES.LDABCm]: LOAD.LDABCm,
+  [OPCODES.LDABCm]: LOAD.LDABCm,
   [OPCODES.DECBC]: DECREMENT.DECBC,
   [OPCODES.INCC]: INCREMENT.INCC,
   [OPCODES.DECC]: DECREMENT.DECC,
@@ -782,13 +786,13 @@ const opcodes = {
     cpu.M = 2; cpu.T = 8;
   },
   [OPCODES.INCSP]: INCREMENT.INCSP,
-  // [OPCODES.INCHLm]: INCREMENT.INCHLm,
+  [OPCODES.INCHLm]: INCREMENT.INCHLm,
   [OPCODES.DECHLm]: DECREMENT.DECHLm,
   // [OPCODES.LDHLmn]: (cpu) => { cpu.mmu.write8(cpu, cpu.HL, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; },
   [OPCODES.SCF]: (cpu) => { cpu.F &= ~0x60; cpu.F |= cFlag; cpu.M = 1; cpu.T = 4; },
   [OPCODES.JRCn]: JUMP.JRCn,
   [OPCODES.ADDHLSP]: ADD.ADDHLSP,
-  // [OPCODES.LDDAHLm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.HL--); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDDAHLm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.HL--); cpu.M = 2; cpu.T = 8; },
   [OPCODES.DECSP]: DECREMENT.DECSP,
   [OPCODES.INCA]: INCREMENT.INCA,
   [OPCODES.DECA]: DECREMENT.DECA,

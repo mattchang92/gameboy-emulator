@@ -301,7 +301,7 @@ module.exports = {
   and,
   or,
   xor,
-  // inc,
+  inc,
   dec,
   LD_r_n,
   LD_r1_r2,
