@@ -25,12 +25,12 @@ class MMU {
     // this.rom = require('../roms/tetris');
     // this.rom = require('../roms/dr_mario');
     // this.rom = require('../roms/ttt');
-    this.rom = require('../roms/test/01-special');
+    // this.rom = require('../roms/test/01-special');
     // this.rom = require('../roms/test/02-interrupts');
     // this.rom = require('../roms/test/03-op sp,hl');
     // this.rom = require('../roms/test/04-op r,imm');
     // this.rom = require('../roms/test/05-op rp');
-    // this.rom = require('../roms/test/06-ld r,r');
+    this.rom = require('../roms/test/06-ld r,r');
     // this.rom = require('../roms/test/07-jr,jp,call,ret,rst');
     // this.rom = require('../roms/test/08-misc instrs');
     // this.rom = require('../roms/test/09-op r,r');
@@ -301,7 +301,7 @@ class MMU {
               const ins = cpu.instructionsRan;
               // console.log(keys.length);
               // }
-              // console.log(this.test);
+              console.log(this.test);
             }
             if (addr === 0xff02) {
               // this.test2 += String.fromCharCode(`${val}`);
