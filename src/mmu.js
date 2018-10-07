@@ -1,6 +1,9 @@
+const fs = require('fs');
+
+const test = [];
 class MMU {
   constructor() {
-    this.biosExecuted = true;
+    this.biosExecuted = false;
     this.bios = [
       0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0x20, 0xFB, 0x21, 0x26, 0xFF, 0x0E,
       0x11, 0x3E, 0x80, 0x32, 0xE2, 0x0C, 0x3E, 0xF3, 0xE2, 0x32, 0x3E, 0x77, 0x77, 0x3E, 0xFC, 0xE0,
@@ -38,6 +41,7 @@ class MMU {
     this.vram = new Array(0x2000).fill(0); // 0x8000 - 0x9fff
     this.wram = new Array(0x3e00).fill(0); // 0xc000 - 0xdfff (shadow copy)
     this.zram = new Array(0x7f).fill(0);
+    this.io = new Array(0x80).fill(0);
 
     this.ie = 0; // interrupt enabled
     this.if = 0xe0; // interrupt flag (top 3 bits always set)
@@ -50,6 +54,8 @@ class MMU {
 
 
   read8(cpu, addr) {
+    let val;
+
     if (cpu === undefined || addr === undefined) {
       console.log('Missing required params for read byte');
       if (!cpu) console.log('missing cpu');
@@ -57,47 +63,47 @@ class MMU {
       cpu.FAIL = true;
     }
     addr &= 0xffff;
-    if (cpu.counter < cpu.limit && cpu.logsEnabled) {
-      // console.log(`Reading byte from address ${addr}`);
-    }
+
     switch (addr & 0xf000) {
       // Bios (256 B) /ROM0 (16K)
       // 0x0104-0x0133
 
       case 0x0000:
         if (!this.biosExecuted) {
-          if (addr < 0x100) return this.bios[addr];
+          if (addr < 0x100) {
+            val = this.bios[addr]; break;
+          }
         }
-        return this.rom[addr];
+        val = this.rom[addr]; break;
 
       // ROM0
       case 0x1000:
       case 0x2000:
       case 0x3000:
-        return this.rom[addr];
+        val = this.rom[addr]; break;
 
       // ROM1 (16K)
       case 0x4000:
       case 0x5000:
       case 0x6000:
       case 0x7000:
-        return this.rom[addr];
+        val = this.rom[addr]; break;
 
       // VRAM (Graphics 8K)
       case 0x8000:
       case 0x9000:
-        return this.vram[addr & 0x1fff];
+        val = this.vram[addr & 0x1fff]; break;
 
       // External RAM (8K)
       case 0xa000:
       case 0xb000:
-        return this.eram[addr & 0x1fff];
+        val = this.eram[addr & 0x1fff]; break;
 
       // Working RAM (8K)
       case 0xc000:
       case 0xd000:
       case 0xe000:
-        return this.wram[addr & 0x1fff];
+        val = this.wram[addr & 0x1fff]; break;
 
       // 0xf000:
       case 0xf000: {
@@ -105,35 +111,68 @@ class MMU {
           // Working RAM shadow
           case 0x000: case 0x100: case 0x200: case 0x300: case 0x400: case 0x500: case 0x600:
           case 0x700: case 0x800: case 0x900: case 0xa00: case 0xb00: case 0xc00: case 0xd00:
-            return this.wram[addr & 0x1fff];
+            val = this.wram[addr & 0x1fff]; break;
 
           // Object Attribute Memory (OAM 160B)
           case 0xe00:
-            return addr < 0xfea0 ? this.oam[addr & 0xff] : 0;
+            val = addr < 0xfea0 ? this.oam[addr & 0xff] : 0; break;
 
           // 0xf00 Zero Page RAM (128 B)
           case 0xf00:
-            if (addr === 0xffff) return this.ie;
-            if (addr === 0xff0f) return this.if;
-            if (addr >= 0xff80) {
-              return this.zram[addr & 0x7f];
-            } else if (addr >= 0xff40) {
-              return cpu.gpu.read(addr);
-            } else if (addr < 0xff10) {
-              switch (addr & 0xf) {
-                case 0:
-                  return cpu.controller.read();
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                  return cpu.timer.read(cpu, addr);
-                default:
-                  return 0;
-              }
+            if (addr === 0xffff) {
+              val = this.ie; break;
             }
-
-            return 0;
+            if (addr === 0xff0f) {
+              val = this.if; break;
+            }
+            if (addr >= 0xff80) {
+              val = this.zram[addr & 0x7f]; break;
+            }
+            switch (addr & 0xf0) {
+              case 0x00:
+                switch (addr & 0xf) {
+                  case 0:
+                    val = cpu.controller.read(); break;
+                  case 1:
+                  case 2:
+                    // TODO: Implement serial I/O later
+                    val = this.io[addr & 0x7f]; break;
+                  case 4:
+                  case 5:
+                  case 6:
+                  case 7:
+                    val = cpu.timer.read(cpu, addr); break;
+                  default:
+                    val = this.io[addr & 0x7f]; break;
+                }
+                break;
+              case 0x10:
+              case 0x20:
+                // TODO implement sound later
+                val = this.io[addr & 0x7f]; break;
+              case 0x40:
+                switch (addr & 0xf) {
+                  case 0x0:
+                  case 0x1:
+                  case 0x2:
+                  case 0x3:
+                  case 0x4:
+                  case 0x5:
+                  case 0x6:
+                  case 0x7:
+                  case 0x8:
+                  case 0x9:
+                  case 0xa:
+                  case 0xb:
+                    val = cpu.gpu.read(addr); break;
+                  default:
+                    val = this.io[addr & 0x7f]; break;
+                }
+                break;
+              default:
+                val = this.io[addr & 0x7f]; break;
+            }
+            break;
           default:
             break;
         }
@@ -143,6 +182,11 @@ class MMU {
       default:
         break;
     }
+
+    if (cpu.writeLog && cpu.counter > cpu.offset && cpu.counter < (cpu.offset + cpu.limit)) {
+      fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', `reading byte from ram: addr: 0x${addr.toString(16)} with value: ${val}\n`);
+    }
+    return val;
   }
 
   read16(cpu, addr) {
@@ -162,7 +206,11 @@ class MMU {
 
   write8(cpu, addr, val) {
     val &= 0xff;
-    if (addr === 0xff80) return;
+
+    if (cpu.writeLog && cpu.counter > cpu.offset && cpu.counter < (cpu.offset + cpu.limit)) {
+      fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', `writing byte to ram: addr: 0x${addr.toString(16)}, val: ${val}\n`);
+    }
+
     if (cpu === undefined || addr === undefined || val === undefined) {
       console.log('Missing required params for write byte');
       if (!cpu === undefined) console.log('missing cpu');
@@ -253,34 +301,63 @@ class MMU {
               const ins = cpu.instructionsRan;
               // console.log(keys.length);
               // }
-              console.log(this.test);
+              // console.log(this.test);
             }
             if (addr === 0xff02) {
               // this.test2 += String.fromCharCode(`${val}`);
               // console.log(this.test2);
+              // console.log('test mode');
             }
             // if (addr === 0xff02) console.log('writing to 0xff02', val);
             if (addr >= 0xff80) {
               this.zram[addr & 0x7f] = val; break;
-            } else if (addr >= 0xff40) {
-              cpu.gpu.write(cpu, addr, val); break;
-            } else if (addr < 0xff10) {
-              switch (addr & 0xf) {
-                case 0:
-                  cpu.controller.write(val); break;
-                case 4:
-                case 5:
-                case 6:
-                case 7:
-                  cpu.timer.write(cpu, addr, val); break;
-                default:
-                  break;
-              }
+            }
+
+            switch (addr & 0xf0) {
+              case 0:
+                switch (addr & 0xf) {
+                  case 0:
+                    cpu.controller.write(val); break;
+                  case 1:
+                  case 2:
+                    // TODO: Implement serial I/O later
+                    this.io[addr & 0x7f] = val; break;
+                  case 4:
+                  case 5:
+                  case 6:
+                  case 7:
+                    cpu.timer.write(cpu, addr, val); break;
+                  default:
+                    this.io[addr & 0x7f] = val; break;
+                }
+                break;
+              case 1:
+              case 2:
+                // TODO implement sound later
+                this.io[addr & 0x7f] = val; break;
+              case 4:
+                switch (addr & 0xf) {
+                  case 0x0:
+                  case 0x1:
+                  case 0x2:
+                  case 0x3:
+                  case 0x4:
+                  case 0x5:
+                  case 0x6:
+                  case 0x7:
+                  case 0x8:
+                  case 0x9:
+                  case 0xa:
+                  case 0xb:
+                    cpu.gpu.write(cpu, addr, val); break;
+                  default:
+                    this.io[addr & 0x7f] = val; break;
+                }
+                break;
+              default:
+                this.io[addr & 0x7f] = val; break;
             }
             break;
-
-            // implement other registers later
-            // break;
           default:
             break;
         }

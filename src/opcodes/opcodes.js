@@ -31,7 +31,7 @@ const {
   // ADD_A_n,
   // ADC_A_n,
   ADD_HL_n,
-  // SUB_n,
+  SUB_n,
   // SBC_A_n,
   OR_n,
   XOR_n,
@@ -69,16 +69,16 @@ const OPCODES = {
   LDDEmA: 0x12,
   INCDE: 0x13,
   INCD: 0x14,
-  // DECD: 0x15,
-  // LDDn: 0x16,
-  // RLA: 0x17,
+  DECD: 0x15,
+  LDDn: 0x16,
+  RLA: 0x17,
   JRn: 0x18,
   // ADDHLDE: 0x19,
   LDADEm: 0x1a,
   // DECDE: 0x1b,
   INCE: 0x1c,
   DECE: 0x1d,
-  // LDEn: 0x1e,
+  LDEn: 0x1e,
   RRA: 0x1f,
 
   JRNZn: 0x20,
@@ -95,7 +95,7 @@ const OPCODES = {
   // DECHL: 0x2b,
   INCL: 0x2c,
   DECL: 0x2d,
-  // LDLn: 0x2e,
+  LDLn: 0x2e,
   CMPL: 0x2f,
 
   JRNCn: 0x30,
@@ -189,7 +189,7 @@ const OPCODES = {
   // ADDAE: 0x83,
   // ADDAH: 0x84,
   // ADDAL: 0x85,
-  // ADDAHLm: 0x86,
+  ADDAHLm: 0x86,
   // ADDAA: 0x87,
   // ADCAB: 0x88,
   // ADCAC: 0x89,
@@ -200,7 +200,7 @@ const OPCODES = {
   // ADCAHLm: 0x8e,
   // ADCAA: 0x8f,
 
-  // SUBAB: 0x90,
+  SUBAB: 0x90,
   // SUBAC: 0x91,
   // SUBAD: 0x92,
   // SUBAE: 0x93,
@@ -232,7 +232,7 @@ const OPCODES = {
   // XORH: 0xac,
   // XORL: 0xad,
   XORHLm: 0xae,
-  // XORA: 0xaf,
+  XORA: 0xaf,
 
   // ORB: 0xb0,
   ORC: 0xb1,
@@ -242,13 +242,13 @@ const OPCODES = {
   // ORL: 0xb5,
   ORHLm: 0xb6,
   ORA: 0xb7,
-  // CPB: 0xb8,
-  // CPC: 0xb9,
-  // CPD: 0xba,
+  CPB: 0xb8,
+  CPC: 0xb9,
+  CPD: 0xba,
   CPE: 0xbb,
   // CPH: 0xbc,
   // CPL: 0xbd,
-  // CPHLm: 0xbe,
+  CPHLm: 0xbe,
   // CPA: 0xbf,
 
   // RETNZ: 0xc0,
@@ -284,7 +284,7 @@ const OPCODES = {
 
   LDHnmA: 0xe0,
   POPHL: 0xe1,
-  // LDHCmA: 0xe2,
+  LDHCmA: 0xe2,
   PUSHHL: 0xe5,
   ANDn: 0xe6,
   // RST20: 0xe7,
@@ -296,7 +296,7 @@ const OPCODES = {
 
   LDHAnm: 0xf0,
   POPAF: 0xf1,
-  // LDAIOC: 0xf2, // NOTE copy pasted from other repo. docs say is invalid
+  LDAIOC: 0xf2, // NOTE copy pasted from other repo. docs say is invalid
   DI: 0xf3,
   PUSHAF: 0xf5,
   // ORn: 0xf6,
@@ -321,10 +321,10 @@ const LOAD = {
   // // LD_r_n 55
   LDBn: cpu => LD_r_n(cpu, 'B'),
   LDCn: cpu => LD_r_n(cpu, 'C'),
-  // LDDn: cpu => LD_r_n(cpu, 'D'),
-  // LDEn: cpu => LD_r_n(cpu, 'E'),
+  LDDn: cpu => LD_r_n(cpu, 'D'),
+  LDEn: cpu => LD_r_n(cpu, 'E'),
   LDHn: cpu => LD_r_n(cpu, 'H'),
-  // LDLn: cpu => LD_r_n(cpu, 'L'),
+  LDLn: cpu => LD_r_n(cpu, 'L'),
 
   // // LD_r1_r2 139
   // LDBB: cpu => LD_r1_r2(cpu, 'B', 'B'),
@@ -434,7 +434,7 @@ const ADD = {
   // ADDAE: cpu => ADD_A_n(cpu, 'E'),
   // ADDAH: cpu => ADD_A_n(cpu, 'H'),
   // ADDAL: cpu => ADD_A_n(cpu, 'L'),
-  // ADDAHLm: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.HL); cpu.A = add(cpu, val); cpu.M = 2; cpu.T = 8; },
+  ADDAHLm: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.HL); cpu.A = add(cpu, val); cpu.M = 2; cpu.T = 8; },
   // ADDAA: cpu => ADD_A_n(cpu, 'A'),
   ADDAn: (cpu) => { const val = cpu.mmu.read8(cpu, cpu.PC++); cpu.A = add(cpu, val); cpu.M = 2; cpu.T = 8; },
   // // 8 bit add with carry. Same flag as adds
@@ -469,7 +469,7 @@ const ADD = {
 
 const SUBTRACT = {
   // // 8 bit subtract. Flag = (* 1 * *)
-  // SUBAB: cpu => SUB_n(cpu, 'B'),
+  SUBAB: cpu => SUB_n(cpu, 'B'),
   // SUBAC: cpu => SUB_n(cpu, 'C'),
   // SUBAD: cpu => SUB_n(cpu, 'D'),
   // SUBAE: cpu => SUB_n(cpu, 'E'),
@@ -508,18 +508,18 @@ const LOGICAL = {
   // XORE: cpu => XOR_n(cpu, 'E'),
   // XORH: cpu => XOR_n(cpu, 'H'),
   // XORL: cpu => XOR_n(cpu, 'L'),
-  // XORA: cpu => XOR_n(cpu, 'A'),
+  XORA: (cpu) => { XOR_n(cpu, 'A'); },
   XORHLm: (cpu) => { cpu.A = xor(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 2; cpu.T = 8; },
   XORn: (cpu) => { cpu.A = xor(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
 
-  // CPB: cpu => CP_n(cpu, 'B'),
-  // CPC: cpu => CP_n(cpu, 'C'),
-  // CPD: cpu => CP_n(cpu, 'D'),
+  CPB: cpu => CP_n(cpu, 'B'),
+  CPC: cpu => CP_n(cpu, 'C'),
+  CPD: cpu => CP_n(cpu, 'D'),
   CPE: cpu => CP_n(cpu, 'E'),
   // CPH: cpu => CP_n(cpu, 'H'),
   // CPL: cpu => CP_n(cpu, 'L'),
   // CPA: cpu => CP_n(cpu, 'A'),
-  // CPHLm: (cpu) => { sub(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 2; cpu.T = 8; },
+  CPHLm: (cpu) => { sub(cpu, cpu.mmu.read8(cpu, cpu.HL)); cpu.M = 2; cpu.T = 8; },
   CPn: (cpu) => { sub(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
 };
 
@@ -546,7 +546,7 @@ const DECREMENT = {
   // // 8 bit decrements Flag = (* 1 * -)
   DECB: cpu => DEC_n(cpu, 'B'),
   DECC: cpu => DEC_n(cpu, 'C'),
-  // DECD: cpu => DEC_n(cpu, 'D'),
+  DECD: cpu => DEC_n(cpu, 'D'),
   DECE: cpu => DEC_n(cpu, 'E'),
   DECH: cpu => DEC_n(cpu, 'H'),
   DECL: cpu => DEC_n(cpu, 'L'),
@@ -629,7 +629,13 @@ const RESTART = {
 const ROTATE = {
   // Flag = (0 0 0 *)
   // RLCA: (cpu) => { const carry = cpu.A & 0x80 ? 1 : 0; cpu.F = cpu.A & 0x80 ? 0x10 : 0; cpu.A = ((cpu.A << 1) | carry) & 0xff; cpu.M = 1; cpu.T = 4; },
-  // RLA: (cpu) => { const carry = cpu.F & 0x10 ? 1 : 0; const overflow = cpu.A & 0x80 ? 0x10 : 0; cpu.A = ((cpu.A << 1) | carry) & 0xff; cpu.F = (cpu.F & 0xef) | overflow; cpu.M = 1; cpu.T = 4; }, // verified
+  RLA: (cpu) => {
+    const carry = cpu.F & 0x10 ? 1 : 0;
+    const overflow = cpu.A & 0x80 ? cFlag : 0;
+    cpu.A = (cpu.A << 1) | carry;
+    cpu.F = overflow;
+    cpu.M = 1; cpu.T = 4;
+  }, // verified
   // RRCA: (cpu) => { const carry = cpu.A & 1 ? 0x80 : 0; cpu.F = cpu.A & 1 ? 0x10 : 0; cpu.A = ((cpu.A >> 1) | carry) & 0xff; cpu.M = 1; cpu.T = 4; },
   RRA: (cpu) => {
     const carry = cpu.F & cFlag ? 0x80 : 0;
@@ -670,16 +676,16 @@ const opcodes = {
   [OPCODES.LDDEmA]: LOAD.LDDEmA,
   [OPCODES.INCDE]: INCREMENT.INCDE,
   [OPCODES.INCD]: INCREMENT.INCD,
-  // [OPCODES.DECD]: DECREMENT.DECD,
-  // [OPCODES.LDDn]: LOAD.LDDn,
-  // [OPCODES.RLA]: ROTATE.RLA,
+  [OPCODES.DECD]: DECREMENT.DECD,
+  [OPCODES.LDDn]: LOAD.LDDn,
+  [OPCODES.RLA]: ROTATE.RLA,
   [OPCODES.JRn]: JUMP.JRn,
   // [OPCODES.ADDHLDE]: ADD.ADDHLDE,
   [OPCODES.LDADEm]: LOAD.LDADEm,
   // [OPCODES.DECDE]: DECREMENT.DECDE,
   [OPCODES.INCE]: INCREMENT.INCE,
   [OPCODES.DECE]: DECREMENT.DECE,
-  // [OPCODES.LDEn]: LOAD.LDEn,
+  [OPCODES.LDEn]: LOAD.LDEn,
   [OPCODES.RRA]: ROTATE.RRA,
 
   /* ------------------------ 0x2------------------------ */
@@ -751,7 +757,7 @@ const opcodes = {
   // [OPCODES.DECHL]: DECREMENT.DECHL,
   [OPCODES.INCL]: INCREMENT.INCL,
   [OPCODES.DECL]: DECREMENT.DECL,
-  // [OPCODES.LDLn]: LOAD.LDLn,
+  [OPCODES.LDLn]: LOAD.LDLn,
   [OPCODES.CMPL]: (cpu) => {
     cpu.A ^= 0xff;
     cpu.F |= 0x60;
@@ -858,7 +864,7 @@ const opcodes = {
   // [OPCODES.ADDAE]: ADD.ADDAE,
   // [OPCODES.ADDAH]: ADD.ADDAH,
   // [OPCODES.ADDAL]: ADD.ADDAL,
-  // [OPCODES.ADDAHLm]: ADD.ADDAHLm,
+  [OPCODES.ADDAHLm]: ADD.ADDAHLm,
   // [OPCODES.ADDAA]: ADD.ADDAA,
   // [OPCODES.ADCAB]: ADD.ADCAB,
   // [OPCODES.ADCAC]: ADD.ADCAC,
@@ -870,7 +876,7 @@ const opcodes = {
   // [OPCODES.ADCAA]: ADD.ADCAA,
 
   /* ------------------------ 0x9 ------------------------ */
-  // [OPCODES.SUBAB]: SUBTRACT.SUBAB,
+  [OPCODES.SUBAB]: SUBTRACT.SUBAB,
   // [OPCODES.SUBAC]: SUBTRACT.SUBAC,
   // [OPCODES.SUBAD]: SUBTRACT.SUBAD,
   // [OPCODES.SUBAE]: SUBTRACT.SUBAE,
@@ -903,7 +909,7 @@ const opcodes = {
   // [OPCODES.XORH]: LOGICAL.XORH,
   // [OPCODES.XORL]: LOGICAL.XORL,
   [OPCODES.XORHLm]: LOGICAL.XORHLm,
-  // [OPCODES.XORA]: LOGICAL.XORA,
+  [OPCODES.XORA]: LOGICAL.XORA,
 
   /* ------------------------ 0xb ------------------------ */
   // [OPCODES.ORB]: LOGICAL.ORB,
@@ -914,13 +920,13 @@ const opcodes = {
   // [OPCODES.ORL]: LOGICAL.ORL,
   [OPCODES.ORHLm]: LOGICAL.ORHLm,
   [OPCODES.ORA]: LOGICAL.ORA,
-  // [OPCODES.CPB]: LOGICAL.CPB,
-  // [OPCODES.CPC]: LOGICAL.CPC,
-  // [OPCODES.CPD]: LOGICAL.CPD,
+  [OPCODES.CPB]: LOGICAL.CPB,
+  [OPCODES.CPC]: LOGICAL.CPC,
+  [OPCODES.CPD]: LOGICAL.CPD,
   [OPCODES.CPE]: LOGICAL.CPE,
   // [OPCODES.CPH]: LOGICAL.CPH,
   // [OPCODES.CPL]: LOGICAL.CPL,
-  // [OPCODES.CPHLm]: LOGICAL.CPHLm,
+  [OPCODES.CPHLm]: LOGICAL.CPHLm,
   // [OPCODES.CPA]: LOGICAL.CPA,
 
   /* ------------------------ 0xc ------------------------ */
@@ -993,7 +999,7 @@ const opcodes = {
   /* ------------------------ 0xe ------------------------ */
   [OPCODES.LDHnmA]: (cpu) => { cpu.mmu.write8(cpu, 0xff00 | cpu.mmu.read8(cpu, cpu.PC++), cpu.A); cpu.M = 3; cpu.T = 12; },
   [OPCODES.POPHL]: LOAD.POPHL,
-  // [OPCODES.LDHCmA]: (cpu) => { cpu.mmu.write8(cpu, 0xff00 | cpu.C, cpu.A); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDHCmA]: (cpu) => { cpu.mmu.write8(cpu, 0xff00 | cpu.C, cpu.A); cpu.M = 2; cpu.T = 8; },
   [OPCODES.PUSHHL]: LOAD.PUSHHL,
   [OPCODES.ANDn]: (cpu) => { cpu.A = and(cpu, cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 2; cpu.T = 8; },
   // [OPCODES.RST20]: (cpu) => {
@@ -1011,7 +1017,7 @@ const opcodes = {
   // /* ------------------------ 0xf ------------------------ */
   [OPCODES.LDHAnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.mmu.read8(cpu, cpu.PC++)); cpu.M = 3; cpu.T = 12; },
   [OPCODES.POPAF]: LOAD.POPAF,
-  // [OPCODES.LDAIOC]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.C); cpu.M = 2; cpu.T = 8; },
+  [OPCODES.LDAIOC]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, 0xff00 | cpu.C); cpu.M = 2; cpu.T = 8; },
   [OPCODES.DI]: (cpu) => { cpu.ime = 0; cpu.M = 1; cpu.T = 4; },
   [OPCODES.PUSHAF]: LOAD.PUSHAF,
   // [OPCODES.ORn]: LOGICAL.ORn,

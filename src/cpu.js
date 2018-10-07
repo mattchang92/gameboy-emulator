@@ -5,16 +5,19 @@ const Timer = require('./timer');
 const Controller = require('./controller');
 const { opcodes, interrupts } = require('./opcodes/opcodes');
 
+const fs = require('fs');
+
 class CPU {
   constructor() {
     // general use registers
     this.testMode = true;
     this.rstCalled = false;
-    this.counter = 0;
     this.initialCounter = 0;
     this.logsEnabled = false;
-    this.offset = 15000;
-    this.limit = 30000;
+    this.counter = 0;
+    this.offset = 0;
+    this.limit = 40000;
+    this.writeLog = false;
 
     this.registers = {
       A: 0,
@@ -25,7 +28,7 @@ class CPU {
       E: 0,
       H: 0,
       L: 0,
-      PC: 0x100,
+      PC: 0,
       SP: 0,
     };
 
@@ -194,7 +197,7 @@ class CPU {
         this.initialCounter++;
         if (this.initialCounter > this.offset) {
           // this.logsEnabled = true;
-          this.counter++;
+          // this.counter++;
         }
 
         if (typeof opcodes[op] !== 'function') {
@@ -210,9 +213,20 @@ class CPU {
         }
         opcodes[op](this);
 
-        if (this.counter < this.limit && this.logsEnabled) {
-          console.log('PC:', pc, ' OP:', op.toString(16), ' F:', this.F.toString(2).slice(0, 4), ' SP:', sp, ' B:', this.B, ' C:', this.C, ' D:', this.D, ' E:', this.E, ' H:', this.H, ' L:', this.L, ' A:', this.A);
+        const {
+          F, B, C, D, E, H, L, A,
+        } = this;
+        // console.log(F, pc, op.toString(16));
+
+        if (this.writeLog && this.counter > this.offset && this.counter < (this.offset + this.limit)) {
+          const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${F.toString(2).slice(0, 4)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L},  A: ${A}\n`;
+          fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', test);
         }
+        this.counter++;
+
+        // if (this.counter < this.limit && this.logsEnabled) {
+        // console.log('PC:', pc, ' OP:', op.toString(16), ' F:', this.F.toString(2).slice(0, 4), ' SP:', sp, ' B:', this.B, ' C:', this.C, ' D:', this.D, ' E:', this.E, ' H:', this.H, ' L:', this.L, ' A:', this.A);
+        // }
 
         this.PC &= 0xffff;
       }

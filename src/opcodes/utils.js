@@ -7,11 +7,11 @@ const {
 
 require('../utils/number');
 
-// const testBit = (cpu, val) => {
-//   cpu.F &= ~0xe0;
-//   if (val === 0) cpu.F |= zFlag;
-//   cpu.F |= hFlag;
-// };
+const testBit = (cpu, val) => {
+  cpu.F &= ~0xe0;
+  if (val === 0) cpu.F |= zFlag;
+  cpu.F |= hFlag;
+};
 
 const swap = (cpu, n) => {
   const result = n << 4 | n >> 4;
@@ -30,16 +30,16 @@ const swap = (cpu, n) => {
 //   return result;
 // };
 
-// const rl = (cpu, n) => {
-//   const carry = cpu.F >> 4 & 1;
-//   const result = n << 1 | carry;
+const rl = (cpu, n) => {
+  const carry = cpu.F >> 4 & 1;
+  const result = n << 1 | carry;
 
-//   cpu.F = 0;
-//   if ((result & 0xff) === 0) cpu.F |= zFlag;
-//   if ((n & 0x80) !== 0) cpu.F |= cFlag;
+  cpu.F = 0;
+  if ((result & 0xff) === 0) cpu.F |= zFlag;
+  if ((n & 0x80) !== 0) cpu.F |= cFlag;
 
-//   return result;
-// };
+  return result;
+};
 
 // const rrc = (cpu, n) => {
 //   const result = n >> 1 | n << 7;
@@ -95,7 +95,7 @@ const srl = (cpu, n) => {
 // // CB Opcodes
 const SWAP_n = (cpu, n) => { cpu[n] = swap(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
 // const RLC_n = (cpu, n) => { cpu[n] = rlc(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
-// const RL_n = (cpu, n) => { cpu[n] = rl(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
+const RL_n = (cpu, n) => { cpu[n] = rl(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
 // const RRC_n = (cpu, n) => { cpu[n] = rrc(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
 const RR_n = (cpu, n) => { cpu[n] = rr(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
 // const SLA_n = (cpu, n) => { cpu[n] = sla(cpu, cpu[n]); cpu.M = 2; cpu.T = 8; };
@@ -215,7 +215,7 @@ const ADD_HL_n = (cpu, n) => {
   cpu.M = 2; cpu.T = 8;
 };
 
-// const SUB_n = (cpu, n) => { cpu.A = sub(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
+const SUB_n = (cpu, n) => { cpu.A = sub(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
 // const SBC_A_n = (cpu, n) => { cpu.A = sbc(cpu, cpu[n]); cpu.M = 1; cpu.T = 4; };
 
 const OR_n = (cpu, n) => {
@@ -276,7 +276,7 @@ const RET_cc = (cpu, cc) => {
 
 module.exports = {
   // // cb opcodes
-  // testBit,
+  testBit,
   // swap,
   // rlc,
   // rl,
@@ -287,7 +287,7 @@ module.exports = {
   // srl,
   SWAP_n,
   // RLC_n,
-  // RL_n,
+  RL_n,
   // RRC_n,
   RR_n,
   // SLA_n,
@@ -316,7 +316,7 @@ module.exports = {
   // ADD_A_n,
   // ADC_A_n,
   ADD_HL_n,
-  // SUB_n,
+  SUB_n,
   // SBC_A_n,
   OR_n,
   XOR_n,
