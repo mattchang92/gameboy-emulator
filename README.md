@@ -11,7 +11,7 @@ CPU instruction set accuracy test results (Blargg's test ROMs):
 - [ ] 02-interrupts
 - [ ] 03-op sp,hl
 - [ ] 04-op r,imm
-- [ ] 05-op rp
+- [x] 05-op rp
 - [x] 06-ld r,r
 - [x] 07-jr,jp,call,ret,rst
 - [x] 08-misc instrs
