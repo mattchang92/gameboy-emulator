@@ -304,7 +304,7 @@ const OPCODES = {
   // LDHLSPd: 0xf8,
   LDSPHL: 0xf9,
   LDAnnm: 0xfa,
-  // EI: 0xfb,
+  EI: 0xfb,
   CPn: 0xfe,
   RST38: 0xff,
 };
@@ -1049,7 +1049,7 @@ const opcodes = {
   // },
   [OPCODES.LDSPHL]: (cpu) => { cpu.SP = cpu.HL; cpu.M = 2; cpu.T = 8; },
   [OPCODES.LDAnnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.mmu.read16(cpu, cpu.PC)); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
-  // [OPCODES.EI]: (cpu) => { cpu.ime = 1; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.EI]: (cpu) => { cpu.ime = 1; cpu.M = 1; cpu.T = 4; },
   [OPCODES.CPn]: LOGICAL.CPn,
   [OPCODES.RST38]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x38; cpu.M = 3; cpu.T = 12; },
 };

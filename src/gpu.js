@@ -17,6 +17,7 @@ Full frame (scans and vblank) |                 |      70224
 9800-9BFF	 |    Tile map #0
 9C00-9FFF	 |    Tile map #1
 */
+const constants = require('./constants');
 
 const {
   NUM_TILES,
@@ -27,7 +28,22 @@ const {
   NUM_SPRITES,
   CANVAS_ELEMENTS_PER_PIXEL,
   TILES_IN_SCREEN_WIDTH,
-} = require('./constants');
+} = constants;
+
+const {
+  LCDC,
+  STAT,
+  SCY,
+  SCX,
+  LY,
+  LYC,
+  DMA,
+  BGP,
+  OBP0,
+  OBP1,
+  WY,
+  WX,
+} = constants.gpu;
 
 class GPU {
   constructor(mmu) {
@@ -60,14 +76,15 @@ class GPU {
     this.WX = 0; // Window X Position (R/W)
 
     // 0xff40 LCDC
-    this.LCDEnable = 0; // bit 7
+    this.LCDC = 0;
+    this.LCDEnable = 1; // bit 7
     this.windowTileAddress = 0; // bit 6
     this.windowEnable = 0; // bit 5
-    this.bgAndWindowTileData = 0; // bit 4
+    this.bgAndWindowTileData = 1; // bit 4
     this.bgTileMapAddress = 0; // bit 3
     this.objSize = 0; // bit 2
-    this.objEnable = 0; // bit 1
-    this.bgEnable = 0; // bit 0
+    this.objEnable = 1; // bit 1
+    this.bgEnable = 1; // bit 0
 
 
     // 0xff41 STAT
@@ -118,64 +135,65 @@ class GPU {
   }
 
   read(addr) {
-    addr -= 0xff40;
     switch (addr) {
-      case 0x0: return this.gpuRam[addr];
-      case 0x1: return this.STAT;
-      case 0x2: return this.SCY;
-      case 0x3: return this.SCX;
-      case 0x4: return this.LY;
-      case 0x5: return this.LYC;
-      case 0x6: return this.DMA;
-      case 0x7: return this.BGP;
-      case 0x8: return this.OBP0;
-      case 0x9: return this.OBP1;
-      case 0xa: return this.WY;
-      case 0xb: return this.WX;
-      default: return this.gpuRam[addr];
+      case LCDC: return this.LCDC;
+      case STAT: return this.STAT;
+      case SCY: return this.SCY;
+      case SCX: return this.SCX;
+      case LY: return this.LY;
+      case LYC: return this.LYC;
+      case DMA: return this.DMA;
+      case BGP: return this.BGP;
+      case OBP0: return this.OBP0;
+      case OBP1: return this.OBP1;
+      case WY: return this.WY;
+      case WX: return this.WX;
+      default: return this.gpuRam[addr - 0xff40];
     }
   }
 
   write(cpu, addr, val) {
-    addr -= 0xff40;
     val &= 0xff;
-    this.gpuRam[addr] = val;
+    this.gpuRam[addr - 0xff40] = val;
     switch (addr) {
-      case 0x0:
+      case LCDC:
         this.setLCDC(val);
-        this.gpuRam[addr] = val; break;
-      case 0x1:
+        this.LCDC = val;
+        this.gpuRam[addr - 0xff40] = val; break;
+      case STAT:
         this.setSTAT(val);
-        this.STAT = val;
-        this.gpuRam[addr] = val; break;
-      case 0x2:
+        // this.STAT = val;
+        this.STAT = this.STAT & ~0x78 | (val & 0xf8);
+        this.gpuRam[addr - 0xff40] = val; break;
+      case SCY:
         this.SCY = val; break;
-      case 0x3:
+      case SCX:
         this.SCX = val; break;
       case 0x4:
+        this.LY = 0;
         console.log('should not be writing to LY'); break;
         // this.LY = val; break;
-      case 0x5:
+      case LYC:
         this.LYC = val; break;
-      case 0x6:
+      case DMA:
         for (let i = 0; i < 160; i++) {
           const newVal = this.mmu.read8(cpu, (val << 8) + i);
           this.mmu.oam[i] = newVal;
           this._updateOam(0xfe00 + i, newVal);
         }
         this.DMA = val; break;
-      case 0x7:
+      case BGP:
         this.setPalette(val, this.bgPalette);
         this.BGP = val; break;
-      case 0x8:
+      case OBP0:
         this.setPalette(val, this.objPalette0);
         this.OBP0 = val; break;
-      case 0x9:
+      case OBP1:
         this.setPalette(val, this.objPalette1);
         this.OBP1 = val; break;
-      case 0xa:
+      case WY:
         this.WY = val; break;
-      case 0xb:
+      case WX:
         this.WX = val; break;
       default:
         break;
@@ -201,12 +219,16 @@ class GPU {
   }
 
   renderScanline() {
+    // const tileSet = 1;
     const tileMapAddress = this.bgTileMapAddress ? 0x1c00 : 0x1800;
-    const tileSet = this.bgAndWindowTileData ? 1 : 2;
+    const tileSet = this.bgAndWindowTileData;
+    // const tileSet = this.bgAndWindowTileData ? 1 : 2;
     const scanRow = [];
 
     // if (!this.LCDEnable) return;
 
+    this._renderBackgroundLine(tileMapAddress, tileSet, scanRow);
+    this._renderSpritesLine(scanRow);
     // if (this.bgEnable) this._renderBackgroundLine(tileMapAddress, tileSet, scanRow);
     // if (this.objEnable) this._renderSpritesLine(scanRow);
   }
@@ -220,8 +242,8 @@ class GPU {
           this.MODECLOCK -= 51;
           if (this.LY === 144) {
             this.MODE = 1;
-            this._changeMode(1);
-            // this.ctx.putImageData(this.screen, 0, 0);
+            // this._changeMode(1);
+            this.ctx.putImageData(this.screen, 0, 0);
             this.mmu.if |= 1;
           } else {
             this.MODE = 2;
@@ -235,7 +257,8 @@ class GPU {
           this.LY++;
 
           if (this.LY > 153) {
-            this._changeMode(2);
+            // console.log(this.SCY, this.SCX);
+            // this._changeMode(2);
             this.MODE = 2;
             this.LY = 0;
           }
@@ -245,7 +268,7 @@ class GPU {
       case 2: // OAM read mode
         if (this.MODECLOCK >= 20) {
           this.MODECLOCK -= 20;
-          this._changeMode(3);
+          // this._changeMode(3);
           this.MODE = 3;
         }
         break;
@@ -253,7 +276,7 @@ class GPU {
       case 3: // VRAM read mode
         if (this.MODECLOCK >= 43) {
           this.MODECLOCK -= 43;
-          this._changeMode(0);
+          // this._changeMode(0);
           this.renderScanline();
           this.MODE = 0;
         }
@@ -266,26 +289,26 @@ class GPU {
 
   reset() {
     /* eslint-disable-next-line */
-    // const canvas = document.getElementById('game-screen');
+    const canvas = document.getElementById('game-screen');
 
     this.tileset = new Array(NUM_TILES).fill(null)
       .map(() => new Array(ROWS_IN_TILE).fill([])
         .map(() => new Array(COLS_IN_TILE).fill(0)));
 
-    // if (canvas) {
-    //   this.ctx = canvas.getContext('2d');
-    //   this.screen = this.ctx.createImageData(SCREEN_WIDTH, SCREEN_HEIGHT);
-    //   const color = 0;
-    //   const data = new Array(SCREEN_WIDTH * SCREEN_HEIGHT).fill(null)
-    //     .map(() => [color, color, color, 255])
-    //     .join()
-    //     .split(',')
-    //     .map(num => parseInt(num, 10));
+    if (canvas) {
+      this.ctx = canvas.getContext('2d');
+      this.screen = this.ctx.createImageData(SCREEN_WIDTH, SCREEN_HEIGHT);
+      const color = 0;
+      const data = new Array(SCREEN_WIDTH * SCREEN_HEIGHT).fill(null)
+        .map(() => [color, color, color, 255])
+        .join()
+        .split(',')
+        .map(num => parseInt(num, 10));
 
-    //   this.screen.data.set(data);
+      this.screen.data.set(data);
 
-    //   this.ctx.putImageData(this.screen, 0, 0);
-    // }
+      this.ctx.putImageData(this.screen, 0, 0);
+    }
 
     this.bgPalette = [[255, 255, 255, 255], [192, 192, 192, 255], [96, 96, 96, 255], [0, 0, 0, 255]];
     this.objPalette0 = [[255, 255, 255, 255], [192, 192, 192, 255], [96, 96, 96, 255], [0, 0, 0, 255]];
@@ -328,65 +351,67 @@ class GPU {
   }
 
   _renderBackgroundLine(tileMapAddress, tileSet, scanRow) {
-    // for (let col = 0; col < SCREEN_WIDTH; col++) {
-    //   let tile;
-    //   const actualRow = this.LY + this.SCY;
-    //   const actualCol = col + this.SCX;
-    //   const tileIdRow = Math.floor(actualRow / ROWS_IN_TILE);
-    //   const tileIdCol = Math.floor(actualCol / COLS_IN_TILE);
-    //   const tileIndex = (tileIdRow * TILES_IN_SCREEN_WIDTH) + tileIdCol;
-    //   const tileId = this.vram[tileMapAddress + tileIndex];
+    for (let col = 0; col < SCREEN_WIDTH; col++) {
+      // let tile;
+      const actualRow = this.LY + this.SCY;
+      const actualCol = col + this.SCX;
+      const tileIdRow = Math.floor(actualRow / ROWS_IN_TILE);
+      const tileIdCol = Math.floor(actualCol / COLS_IN_TILE);
+      const tileIndex = (tileIdRow * TILES_IN_SCREEN_WIDTH) + tileIdCol;
+      const tileId = this.vram[tileMapAddress + tileIndex];
 
-    //   if (tileSet === 1 || tileId > 127) {
-    //     tile = this.tileset[tileId];
-    //   } else {
-    //     tile = this.tileset[256 + tileId];
-    //   }
 
-    //   if (tile) {
-    //     const colorId = tile[actualRow % ROWS_IN_TILE][actualCol % COLS_IN_TILE];
-    //     const colorArr = this.bgPalette[colorId];
+      const tile = tileSet ? this.tileset[tileId] : this.tileset[256 + tileId.signed()];
+      // if (tileSet === 1 || tileId > 127) {
+      //   tile = this.tileset[tileId];
+      // } else {
+      //   tile = this.tileset[256 + tileId];
+      // }
 
-    //     const baseIndex = ((this.LY * SCREEN_WIDTH) + col) * CANVAS_ELEMENTS_PER_PIXEL;
-    //     for (let i = 0; i < CANVAS_ELEMENTS_PER_PIXEL; i++) {
-    //       this.screen.data[baseIndex + i] = colorArr[i];
-    //     }
-    //     scanRow[col] = colorId;
-    //   } else {
-    //     console.log('tile not found', this.LY, this.SCY, col, this.SCX);
-    //   }
-    // }
+      if (tile) {
+        const colorId = tile[actualRow % ROWS_IN_TILE][actualCol % COLS_IN_TILE];
+        const colorArr = this.bgPalette[colorId];
+
+        const baseIndex = ((this.LY * SCREEN_WIDTH) + col) * CANVAS_ELEMENTS_PER_PIXEL;
+        for (let i = 0; i < CANVAS_ELEMENTS_PER_PIXEL; i++) {
+          this.screen.data[baseIndex + i] = colorArr[i];
+        }
+        scanRow[col] = colorId;
+      } else {
+        console.log('tile not found', this.LY, this.SCY, col, this.SCX);
+      }
+    }
   }
 
   _renderSpritesLine(scanRow) {
-    // const isOnScreen = (obj, x) => ((obj.x + x) >= 0) && ((obj.x + x) < 160);
-    // const isNotTransparent = (tileRow, x) => tileRow[x];
-    // const isDisplayed = (obj, x) => obj.zIndex || !scanRow[obj.x + x];
+    const isOnScreen = (obj, x) => ((obj.x + x) >= 0) && ((obj.x + x) < 160);
+    const isNotTransparent = (tileRow, x) => tileRow[x];
+    const isDisplayed = (obj, x) => obj.zIndex || !scanRow[obj.x + x];
 
-    // for (let i = 0; i < NUM_SPRITES; i++) {
-    //   const obj = this.objectData[i];
-    //   if (obj.y <= this.LY && (obj.y + 8) > this.LY) {
-    //     const palette = obj.palette ? this.objPalette1 : this.objPalette0;
-    //     const baseIndex = ((this.LY * SCREEN_WIDTH) + obj.x) * CANVAS_ELEMENTS_PER_PIXEL;
-    //     let tileRow;
+    for (let i = 0; i < NUM_SPRITES; i++) {
+      const obj = this.objectData[i];
+      if (obj.y <= this.LY && (obj.y + 8) > this.LY) {
+        const palette = obj.palette ? this.objPalette1 : this.objPalette0;
+        const baseIndex = ((this.LY * SCREEN_WIDTH) + obj.x) * CANVAS_ELEMENTS_PER_PIXEL;
+        let tileRow;
 
-    //     if (obj.yFlip) {
-    //       tileRow = this.tileset[obj.tile][7 - (this.LY - obj.y)];
-    //     } else {
-    //       tileRow = this.tileset[obj.tile][this.LY - obj.y];
-    //     }
+        if (obj.yFlip) {
+          tileRow = this.tileset[obj.tile][7 - (this.LY - obj.y)];
+        } else {
+          tileRow = this.tileset[obj.tile][this.LY - obj.y];
+        }
 
-    //     for (let x = 0; x < 8; x++) {
-    //       if (isOnScreen(obj, x) && isNotTransparent(tileRow, x) && isDisplayed(obj, x)) {
-    //         const colorArr = palette[tileRow[obj.xFlip ? (7 - x) : x]];
-    //         for (let j = 0; j < CANVAS_ELEMENTS_PER_PIXEL; j++) {
-    //           const offset = baseIndex + (x * 4);
-    //           this.screen.data[offset + j] = colorArr[j];
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
+        for (let x = 0; x < 8; x++) {
+          if (isOnScreen(obj, x) && isNotTransparent(tileRow, x) && isDisplayed(obj, x)) {
+            const colorArr = palette[tileRow[obj.xFlip ? (7 - x) : x]];
+            for (let j = 0; j < CANVAS_ELEMENTS_PER_PIXEL; j++) {
+              const offset = baseIndex + (x * 4);
+              this.screen.data[offset + j] = colorArr[j];
+            }
+          }
+        }
+      }
+    }
   }
 
   _updateOam(addr, val) {

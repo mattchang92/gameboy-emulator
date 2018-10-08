@@ -5,12 +5,12 @@ const Timer = require('./timer');
 const Controller = require('./controller');
 const { opcodes, interrupts } = require('./opcodes/opcodes');
 
-const fs = require('fs');
+// const fs = require('fs');
 
 class CPU {
   constructor() {
     // general use registers
-    this.testMode = true;
+    this.testMode = false;
     this.rstCalled = false;
     this.initialCounter = 0;
     this.logsEnabled = false;
@@ -153,7 +153,7 @@ class CPU {
           interruptProcessed = true;
           const mask = 1 << i;
           this.mmu.if &= (0xff - mask);
-          console.log('firing interrupt', i);
+          // console.log('firing interrupt', i);
           interrupts[i](this);
           break;
         } else {
@@ -228,7 +228,7 @@ class CPU {
           // const test = `PC: ${pc},  OP: ${op.toString(16)}, F: ${getFlags(F)}, LY: ${this.gpu.LY}, CLOCK: ${this.gpu.MODECLOCK}, M: ${this.M}\n`;
           // const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${F.toString(2).slice(0, 4)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L}, M: ${this.M}\n`;
           const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${getFlags(F)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L}, A: ${A}, M: ${this.M}\n`;
-          fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', test);
+          // fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', test);
         }
         this.counter++;
 
