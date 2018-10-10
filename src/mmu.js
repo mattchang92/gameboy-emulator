@@ -48,7 +48,6 @@ class MMU {
     this.printed = false;
 
     this.test = '';
-    this.test2 = '';
   }
 
 
@@ -305,7 +304,7 @@ class MMU {
               // console.log(keys.length);
               // }
               // console.log(cpu.counter);
-              console.log(this.test);
+              console.log(this.test, this.test.length);
             }
             if (addr === 0xff02) {
               // this.test2 += String.fromCharCode(`${val}`);
