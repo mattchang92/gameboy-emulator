@@ -76,15 +76,23 @@ class GPU {
     this.WX = 0; // Window X Position (R/W)
 
     // 0xff40 LCDC
+    // Bit 7 - LCD Display Enable             (0=Off, 1=On)
+    // Bit 6 - Window Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
+    // Bit 5 - Window Display Enable          (0=Off, 1=On)
+    // Bit 4 - BG & Window Tile Data Select   (0=8800-97FF, 1=8000-8FFF)
+    // Bit 3 - BG Tile Map Display Select     (0=9800-9BFF, 1=9C00-9FFF)
+    // Bit 2 - OBJ (Sprite) Size              (0=8x8, 1=8x16)
+    // Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
+    // Bit 0 - BG Display (for CGB see below) (0=Off, 1=On)
     this.LCDC = 0;
-    this.LCDEnable = 1; // bit 7
-    this.windowTileAddress = 0; // bit 6
-    this.windowEnable = 0; // bit 5
-    this.bgAndWindowTileData = 1; // bit 4
-    this.bgTileMapAddress = 0; // bit 3
-    this.objSize = 0; // bit 2
-    this.objEnable = 1; // bit 1
-    this.bgEnable = 1; // bit 0
+    this.LCDEnable = 1;
+    this.windowTileAddress = 0;
+    this.windowEnable = 0;
+    this.bgAndWindowTileData = 1;
+    this.bgTileMapAddress = 0;
+    this.objSize = 0;
+    this.objEnable = 1;
+    this.bgEnable = 1;
 
 
     // 0xff41 STAT
@@ -102,14 +110,14 @@ class GPU {
   }
 
   setLCDC(val) {
-    this.LCDEnable = val & 0x80;
-    this.windowTileAddress = val & 0x40;
-    this.windowEnable = val & 0x20;
-    this.bgAndWindowTileData = val & 0x10;
-    this.bgTileMapAddress = val & 0x08;
-    this.objSize = val & 0x04;
-    this.objEnable = val & 0x02;
-    this.bgEnable = val & 0x01;
+    this.LCDEnable = (val >> 7) & 1;
+    this.windowTileAddress = (val >> 6) & 1;
+    this.windowEnable = (val >> 5) & 1;
+    this.bgAndWindowTileData = (val >> 4) & 1;
+    this.bgTileMapAddress = (val >> 3) & 1;
+    this.objSize = (val >> 2) & 1;
+    this.objEnable = (val >> 1) & 1;
+    this.bgEnable = val & 1;
   }
 
   setSTAT(val) {
@@ -220,17 +228,15 @@ class GPU {
 
   renderScanline() {
     // const tileSet = 1;
-    const tileMapAddress = this.bgTileMapAddress ? 0x1c00 : 0x1800;
-    const tileSet = this.bgAndWindowTileData;
+    const tileMapAddress = this.bgTileMapAddress ? 0x1c00 : 0x1800; // (0=8800-97FF, 1=8000-8FFF)
+    const tileSet = this.bgAndWindowTileData; // (0=9800-9BFF, 1=9C00-9FFF)
     // const tileSet = this.bgAndWindowTileData ? 1 : 2;
     const scanRow = [];
 
     // if (!this.LCDEnable) return;
 
-    this._renderBackgroundLine(tileMapAddress, tileSet, scanRow);
-    this._renderSpritesLine(scanRow);
-    // if (this.bgEnable) this._renderBackgroundLine(tileMapAddress, tileSet, scanRow);
-    // if (this.objEnable) this._renderSpritesLine(scanRow);
+    if (this.bgEnable) this._renderBackgroundLine(tileMapAddress, tileSet, scanRow);
+    if (this.objEnable) this._renderSpritesLine(scanRow);
   }
 
   step(cpu) {
