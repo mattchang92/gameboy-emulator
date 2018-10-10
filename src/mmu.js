@@ -26,7 +26,7 @@ class MMU {
     // this.rom = require('../roms/ttt');
     // this.rom = require('../roms/test/01-special');
     // this.rom = require('../roms/test/02-interrupts');
-    this.rom = require('../roms/test/03-op sp,hl');
+    // this.rom = require('../roms/test/03-op sp,hl');
     // this.rom = require('../roms/test/04-op r,imm');
     // this.rom = require('../roms/test/05-op rp');
     // this.rom = require('../roms/test/06-ld r,r');
@@ -48,7 +48,6 @@ class MMU {
     this.printed = false;
 
     this.test = '';
-    this.test2 = '';
   }
 
 
@@ -305,7 +304,7 @@ class MMU {
               // console.log(keys.length);
               // }
               // console.log(cpu.counter);
-              console.log(this.test);
+              console.log(this.test, this.test.length);
             }
             if (addr === 0xff02) {
               // this.test2 += String.fromCharCode(`${val}`);

@@ -533,7 +533,7 @@ const INCREMENT = {
   INCL: cpu => INC_n(cpu, 'L'),
   INCHLm: (cpu) => {
     const val = cpu.mmu.read8(cpu, cpu.HL);
-    cpu.mmu.write8(cpu, cpu.HL, inc(val));
+    cpu.mmu.write8(cpu, cpu.HL, inc(cpu, val));
     cpu.M = 3; cpu.T = 12;
   },
   INCA: cpu => INC_n(cpu, 'A'),
