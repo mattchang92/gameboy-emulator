@@ -1,4 +1,4 @@
-const fs = require('fs');
+// const fs = require('fs');
 
 class MMU {
   constructor() {
@@ -26,8 +26,8 @@ class MMU {
     // this.rom = require('../roms/ttt');
     // this.rom = require('../roms/test/01-special');
     // this.rom = require('../roms/test/02-interrupts');
-    // this.rom = require('../roms/test/03-op sp,hl');
-    this.rom = require('../roms/test/04-op r,imm');
+    this.rom = require('../roms/test/03-op sp,hl');
+    // this.rom = require('../roms/test/04-op r,imm');
     // this.rom = require('../roms/test/05-op rp');
     // this.rom = require('../roms/test/06-ld r,r');
     // this.rom = require('../roms/test/07-jr,jp,call,ret,rst');
@@ -150,23 +150,23 @@ class MMU {
                 // TODO implement sound later
                 val = this.io[addr & 0x7f]; break;
               case 0x40:
-                switch (addr & 0xf) {
-                  case 0x0:
-                  case 0x1:
-                  case 0x2:
-                  case 0x3:
-                  case 0x4:
-                  case 0x5:
-                  case 0x6:
-                  case 0x7:
-                  case 0x8:
-                  case 0x9:
-                  case 0xa:
-                  case 0xb:
-                    val = cpu.gpu.read(addr); break;
-                  default:
-                    val = this.io[addr & 0x7f]; break;
-                }
+                // switch (addr & 0xf) {
+                //   case 0x0:
+                //   case 0x1:
+                //   case 0x2:
+                //   case 0x3:
+                //   case 0x4:
+                //   case 0x5:
+                //   case 0x6:
+                //   case 0x7:
+                //   case 0x8:
+                //   case 0x9:
+                //   case 0xa:
+                //   case 0xb:
+                val = cpu.gpu.read(addr); break;
+                // default:
+                //   val = this.io[addr & 0x7f]; break;
+                // }
                 break;
               default:
                 val = this.io[addr & 0x7f]; break;
@@ -184,7 +184,7 @@ class MMU {
 
     if (cpu.writeLog && cpu.counter > cpu.offset && cpu.counter < (cpu.offset + cpu.limit)) {
       // if (addr !== 0xff44) {
-      fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', `reading byte from ram: addr: 0x${addr.toString(16)} with value: ${val}\n`);
+      // fs.appendFileSync('/Userss/matthewchang/Desktop/mine.txt', `reading byte from ram: addr: 0x${addr.toString(16)} with value: ${val}\n`);
       // }
     }
     return val;
@@ -208,9 +208,9 @@ class MMU {
   write8(cpu, addr, val) {
     val &= 0xff;
 
-    if (cpu.writeLog && cpu.counter > cpu.offset && cpu.counter < (cpu.offset + cpu.limit)) {
-      fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', `writing byte to ram: addr: 0x${addr.toString(16)}, val: ${val}\n`);
-    }
+    // if (cpu.writeLog && cpu.counter > cpu.offset && cpu.counter < (cpu.offset + cpu.limit)) {
+    //   fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', `writing byte to ram: addr: 0x${addr.toString(16)}, val: ${val}\n`);
+    // }
 
     if (cpu === undefined || addr === undefined || val === undefined) {
       console.log('Missing required params for write byte');
@@ -222,7 +222,9 @@ class MMU {
     if (addr === 0xff50 && !this.biosExecuted) {
       this.printed = true;
       this.biosExecuted = true;
-      // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+      // fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', this.vram.join('\n'));
+
+      // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!s!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     }
     if (cpu.counter < cpu.limit && cpu.logsEnabled) {
       // console.log(`Writing byte to address ${addr} with value ${val}`);
@@ -316,7 +318,7 @@ class MMU {
             }
 
             switch (addr & 0xf0) {
-              case 0:
+              case 0x00:
                 switch (addr & 0xf) {
                   case 0:
                     cpu.controller.write(val); break;
@@ -333,29 +335,29 @@ class MMU {
                     this.io[addr & 0x7f] = val; break;
                 }
                 break;
-              case 1:
-              case 2:
+              case 0x10:
+              case 0x20:
                 // TODO implement sound later
                 this.io[addr & 0x7f] = val; break;
-              case 4:
-                switch (addr & 0xf) {
-                  case 0x0:
-                  case 0x1:
-                  case 0x2:
-                  case 0x3:
-                  case 0x4:
-                  case 0x5:
-                  case 0x6:
-                  case 0x7:
-                  case 0x8:
-                  case 0x9:
-                  case 0xa:
-                  case 0xb:
-                    cpu.gpu.write(cpu, addr, val); break;
-                  default:
-                    this.io[addr & 0x7f] = val; break;
-                }
-                break;
+              case 0x40:
+                // switch (addr & 0xf) {
+                //   case 0x0:
+                //   case 0x1:
+                //   case 0x2:
+                //   case 0x3:
+                //   case 0x4:
+                //   case 0x5:
+                //   case 0x6:
+                //   case 0x7:
+                //   case 0x8:
+                //   case 0x9:
+                //   case 0xa:
+                //   case 0xb:
+                cpu.gpu.write(cpu, addr, val); break;
+                //   default:
+                //     this.io[addr & 0x7f] = val; break;
+                // }
+                // break;
               default:
                 this.io[addr & 0x7f] = val; break;
             }
