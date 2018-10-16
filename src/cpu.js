@@ -10,7 +10,6 @@ const { opcodes, interrupts } = require('./opcodes/opcodes');
 class CPU {
   constructor() {
     // general use registers
-    this.testMode = false;
     this.rstCalled = false;
     this.initialCounter = 0;
     this.logsEnabled = false;
@@ -169,12 +168,6 @@ class CPU {
     const frameEnd = this.clock.m + 17556 * 1;
 
     while (this.clock.m < frameEnd) {
-      // Object.keys(this).forEach((key) => {
-      //   if (this[key] === undefined) {
-      //     const op = this.mmu.read8(this, this.PC - 1);
-      //     console.log('property is undefined', key, op.toString(16));
-      //   }
-      // });
       const registers = ['B', 'C', 'D', 'E', 'H', 'L', 'A', 'F'];
       registers.forEach((r, i) => {
         if (typeof this[r] !== 'number') {
@@ -227,7 +220,7 @@ class CPU {
         if (this.writeLog && this.counter > this.offset && this.counter < (this.offset + this.limit)) {
           // const test = `PC: ${pc},  OP: ${op.toString(16)}, F: ${getFlags(F)}, LY: ${this.gpu.LY}, CLOCK: ${this.gpu.MODECLOCK}, M: ${this.M}\n`;
           // const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${F.toString(2).slice(0, 4)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L}, M: ${this.M}\n`;
-          const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${getFlags(F)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L}, A: ${A}, M: ${this.M}\n`;
+          // const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${getFlags(F)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L}, A: ${A}, M: ${this.M}\n`;
           // fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', test);
         }
         this.counter++;

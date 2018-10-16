@@ -187,7 +187,7 @@ class GPU {
         for (let i = 0; i < 160; i++) {
           const newVal = this.mmu.read8(cpu, (val << 8) + i);
           this.mmu.oam[i] = newVal;
-          this._updateOam(0xfe00 + i, newVal);
+          if (process.env.NODE_ENV !== 'test') this._updateOam(0xfe00 + i, newVal);
         }
         this.DMA = val; break;
       case BGP:
@@ -209,6 +209,8 @@ class GPU {
   }
 
   buildObjectData(addr, val) {
+    if (process.env.NODE_ENV === 'test') return;
+
     const obj = addr >> 2;
     if (obj >= 40) console.log('Address given for object is not valid', obj);
 
@@ -227,6 +229,8 @@ class GPU {
   }
 
   renderScanline() {
+    if (process.env.NODE_ENV === 'test') return;
+
     // const tileSet = 1;
     const tileMapAddress = this.bgTileMapAddress ? 0x1c00 : 0x1800; // (0=8800-97FF, 1=8000-8FFF)
     const tileSet = this.bgAndWindowTileData; // (0=9800-9BFF, 1=9C00-9FFF)
@@ -249,7 +253,8 @@ class GPU {
           if (this.LY === 144) {
             this.MODE = 1;
             // this._changeMode(1);
-            this.ctx.putImageData(this.screen, 0, 0);
+            if (process.env.NODE_ENV !== 'test') this.ctx.putImageData(this.screen, 0, 0);
+
             this.mmu.if |= 1;
           } else {
             this.MODE = 2;
@@ -263,7 +268,6 @@ class GPU {
           this.LY++;
 
           if (this.LY > 153) {
-            // console.log(this.SCY, this.SCX);
             // this._changeMode(2);
             this.MODE = 2;
             this.LY = 0;
@@ -294,6 +298,7 @@ class GPU {
   }
 
   reset() {
+    if (process.env.NODE_ENV === 'test') return;
     /* eslint-disable-next-line */
     const canvas = document.getElementById('game-screen');
 
@@ -338,8 +343,7 @@ class GPU {
   updateTileBasedOnMemory(addr) {
     /* Get the address of the least significant
      byte in the tile row that was updated */
-    // console.log('updating tile based on memory', addr, addr.toString(16));
-    if (addr >= 0x17ff) return;
+    if (addr >= 0x17ff || process.env.NODE_ENV === 'test') return;
 
     const tile = (addr >> 4) & 0x1ff;
     const y = (addr >> 1) & 0x7;
@@ -349,8 +353,6 @@ class GPU {
       bitIndex = 1 << (7 - i);
       const leastSigBit = (this.vram[addr] & bitIndex) ? 1 : 0;
       const mostSigBit = (this.vram[addr + 1] & bitIndex) ? 2 : 0;
-      // console.log(leastSigBit, mostSigBit);
-      // console.log(tile, this.tileset[tile]);
 
       this.tileset[tile][y][i] = leastSigBit + mostSigBit;
     }
