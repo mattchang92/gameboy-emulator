@@ -139,26 +139,21 @@ class CPU {
       3 Serial
       4 Joypad
     */
-    if (this.ime && this.mmu.ie && this.mmu.if) {
-      let interruptProcessed = false;
-      this.HALT = 0;
-      this.ime = 0;
-      // console.log(this.mmu.ie.toString(2), this.mmu.if.toString(2))
-      let ifired = this.mmu.ie & this.mmu.if;
-      for (let i = 0; i < 5; i++) {
-        if (ifired & 0x01) {
-          interruptProcessed = true;
-          const mask = 1 << i;
-          this.mmu.if &= (0xff - mask);
-          // console.log('firing interrupt', i);
-          interrupts[i](this);
-          break;
-        } else {
-          ifired >>= 1;
-        }
-      }
+    let interrupt = this.mmu.ie & this.mmu.if;
+    if (interrupt) this.HALT = 0;
 
-      if (!interruptProcessed) this.ime = 1;
+    if (this.ime && interrupt) {
+      this.ime = 0;
+      for (let i = 0; i < 5; i++) {
+        if (interrupt & 0x01) {
+          const mask = 1 << i;
+          this.mmu.if &= ~mask;
+          interrupts[i](this);
+          this.ime = 1;
+          return;
+        }
+        interrupt >>= 1;
+      }
     }
   }
 

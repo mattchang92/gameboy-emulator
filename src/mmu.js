@@ -33,8 +33,9 @@ class MMU {
         return require(`../roms/test/${testRom}`);
       }
     } else {
-      // return require('../roms/tetris');
-      return require('../roms/dr_mario');
+      return require('../roms/tetris');
+      // return require('../roms/dr_mario');
+      // return require('../roms/super_mario_land');
     }
   }
 

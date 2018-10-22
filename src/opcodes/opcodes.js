@@ -860,7 +860,12 @@ const opcodes = {
   [OPCODES.LDHLmE]: LOAD.LDHLmE,
   [OPCODES.LDHLmH]: LOAD.LDHLmH,
   [OPCODES.LDHLmL]: LOAD.LDHLmL,
-  [OPCODES.HALT]: (cpu) => { cpu.HALT = 1; cpu.M = 1; cpu.T = 4; },
+  [OPCODES.HALT]: (cpu) => {
+    if (cpu.ime || !(cpu.mmu.if & cpu.mmu.ie)) {
+      cpu.HALT = 1;
+    }
+    cpu.M = 1; cpu.T = 4;
+  },
   [OPCODES.LDHLmA]: LOAD.LDHLmA,
   [OPCODES.LDAB]: LOAD.LDAB,
   [OPCODES.LDAC]: LOAD.LDAC,
