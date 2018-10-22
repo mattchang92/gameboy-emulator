@@ -252,7 +252,7 @@ class GPU {
           this.MODECLOCK -= 51;
           if (this.LY === 144) {
             this.MODE = 1;
-            // this._changeMode(1);
+            this._changeMode(1);
             if (process.env.NODE_ENV !== 'test') this.ctx.putImageData(this.screen, 0, 0);
 
             this.mmu.if |= 1;
@@ -268,7 +268,7 @@ class GPU {
           this.LY++;
 
           if (this.LY > 153) {
-            // this._changeMode(2);
+            this._changeMode(2);
             this.MODE = 2;
             this.LY = 0;
           }
@@ -278,7 +278,7 @@ class GPU {
       case 2: // OAM read mode
         if (this.MODECLOCK >= 20) {
           this.MODECLOCK -= 20;
-          // this._changeMode(3);
+          this._changeMode(3);
           this.MODE = 3;
         }
         break;
@@ -286,7 +286,7 @@ class GPU {
       case 3: // VRAM read mode
         if (this.MODECLOCK >= 43) {
           this.MODECLOCK -= 43;
-          // this._changeMode(0);
+          this._changeMode(0);
           this.renderScanline();
           this.MODE = 0;
         }
@@ -344,6 +344,7 @@ class GPU {
     /* Get the address of the least significant
      byte in the tile row that was updated */
     if (addr >= 0x17ff || process.env.NODE_ENV === 'test') return;
+    addr &= 0x1ffe;
 
     const tile = (addr >> 4) & 0x1ff;
     const y = (addr >> 1) & 0x7;
@@ -441,7 +442,7 @@ class GPU {
           this.objectData[obj].palette = (val & 0x10) ? 1 : 0;
           this.objectData[obj].xFlip = (val & 0x20) ? 1 : 0;
           this.objectData[obj].yFlip = (val & 0x40) ? 1 : 0;
-          this.objectData[obj].zIndex = (val & 0x80) ? 1 : 0;
+          this.objectData[obj].zIndex = (val & 0x80) ? 0 : 1;
           break;
         default: break;
       }

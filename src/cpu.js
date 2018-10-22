@@ -32,8 +32,6 @@ class CPU {
       SP: 0,
     };
 
-    this.instructionsRan = {};
-
     // stack pointer
     this.T = 0;
 
@@ -184,8 +182,8 @@ class CPU {
       if (this.HALT) {
         this.M = 1;
       } else {
-        const pc = this.PC;
-        const sp = this.SP;
+        // const pc = this.PC;
+        // const sp = this.SP;
         const op = this.mmu.read8(this, this.PC++);
 
         // if (this.writeLog && this.counter > this.offset && this.counter < (this.offset + this.limit)) {
@@ -204,18 +202,13 @@ class CPU {
           console.log('not a function!!!', op, `0x${op.toString(16)}`, opcodes[op], ' previous is ', prevOp.toString(16), ' pc is at ', this.PC);
         }
 
-        if (!this.instructionsRan[op]) {
-          this.instructionsRan[op] = 1;
-        } else {
-          this.instructionsRan[op]++;
-        }
         opcodes[op](this);
 
-        const {
-          F, B, C, D, E, H, L, A,
-        } = this;
+        // const {
+        //   F, B, C, D, E, H, L, A,
+        // } = this;
         // console.log(F, pc, op.toString(16));
-        const getFlags = val => [val >> 7 & 1, val >> 6 & 1, val >> 5 & 1, val >> 4 & 1];
+        // const getFlags = val => [val >> 7 & 1, val >> 6 & 1, val >> 5 & 1, val >> 4 & 1];
 
         if (this.writeLog && this.counter > this.offset && this.counter < (this.offset + this.limit)) {
           // const test = `PC: ${pc},  OP: ${op.toString(16)}, F: ${getFlags(F)}, LY: ${this.gpu.LY}, CLOCK: ${this.gpu.MODECLOCK}, M: ${this.M}\n`;

@@ -137,24 +137,7 @@ class MMU {
                 // TODO implement sound later
                 val = this.io[addr & 0x7f]; break;
               case 0x40:
-                // switch (addr & 0xf) {
-                //   case 0x0:
-                //   case 0x1:
-                //   case 0x2:
-                //   case 0x3:
-                //   case 0x4:
-                //   case 0x5:
-                //   case 0x6:
-                //   case 0x7:
-                //   case 0x8:
-                //   case 0x9:
-                //   case 0xa:
-                //   case 0xb:
                 val = cpu.gpu.read(addr); break;
-                // default:
-                //   val = this.io[addr & 0x7f]; break;
-                // }
-                break;
               default:
                 val = this.io[addr & 0x7f]; break;
             }
@@ -315,24 +298,7 @@ class MMU {
                 // TODO implement sound later
                 this.io[addr & 0x7f] = val; break;
               case 0x40:
-                // switch (addr & 0xf) {
-                //   case 0x0:
-                //   case 0x1:
-                //   case 0x2:
-                //   case 0x3:
-                //   case 0x4:
-                //   case 0x5:
-                //   case 0x6:
-                //   case 0x7:
-                //   case 0x8:
-                //   case 0x9:
-                //   case 0xa:
-                //   case 0xb:
                 cpu.gpu.write(cpu, addr, val); break;
-                //   default:
-                //     this.io[addr & 0x7f] = val; break;
-                // }
-                // break;
               default:
                 this.io[addr & 0x7f] = val; break;
             }
