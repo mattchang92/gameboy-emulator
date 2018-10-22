@@ -301,7 +301,7 @@ const OPCODES = {
   PUSHAF: 0xf5,
   ORn: 0xf6,
   RST30: 0xf7,
-  // LDHLSPd: 0xf8,
+  LDHLSPd: 0xf8,
   LDSPHL: 0xf9,
   LDAnnm: 0xfa,
   EI: 0xfb,
@@ -454,7 +454,7 @@ const ADD = {
   ADDHLSP: cpu => ADD_HL_n(cpu, 'SP'),
   // // 16 bit SP add. Flag = (0 0 * *)
   ADDSPd: (cpu) => {
-    const i = cpu.mmu.read8(cpu, cpu.PC).signed();
+    const i = cpu.mmu.read8(cpu, cpu.PC++).signed();
     const r = cpu.SP + i;
 
     const op = cpu.SP ^ i ^ r;
@@ -1036,17 +1036,17 @@ const opcodes = {
   [OPCODES.PUSHAF]: LOAD.PUSHAF,
   [OPCODES.ORn]: LOGICAL.ORn,
   [OPCODES.RST30]: (cpu) => { cpu.SP -= 2; cpu.mmu.write16(cpu, cpu.SP, cpu.PC); cpu.PC = 0x30; cpu.M = 3; cpu.T = 12; },
-  // [OPCODES.LDHLSPd]: (cpu) => {
-  //   const i = cpu.mmu.read8(cpu, cpu.PC++).signed();
-  //   const result = cpu.SP + i;
-  //   const op = cpu.SP ^ i ^ result;
+  [OPCODES.LDHLSPd]: (cpu) => {
+    const i = cpu.mmu.read8(cpu, cpu.PC++).signed();
+    const result = cpu.SP + i;
+    const op = cpu.SP ^ i ^ result;
 
-  //   cpu.F = 0;
-  //   if ((op & 0x10) !== 0) cpu.F |= hFlag;
-  //   if ((op & 0x100) !== 0) cpu.F |= cFlag;
-  //   cpu.HL = result;
-  //   cpu.M = 3; cpu.T = 12;
-  // },
+    cpu.F = 0;
+    if ((op & 0x10) !== 0) cpu.F |= hFlag;
+    if ((op & 0x100) !== 0) cpu.F |= cFlag;
+    cpu.HL = result;
+    cpu.M = 3; cpu.T = 12;
+  },
   [OPCODES.LDSPHL]: (cpu) => { cpu.SP = cpu.HL; cpu.M = 2; cpu.T = 8; },
   [OPCODES.LDAnnm]: (cpu) => { cpu.A = cpu.mmu.read8(cpu, cpu.mmu.read16(cpu, cpu.PC)); cpu.PC += 2; cpu.M = 4; cpu.T = 16; },
   [OPCODES.EI]: (cpu) => { cpu.ime = 1; cpu.M = 1; cpu.T = 4; },
