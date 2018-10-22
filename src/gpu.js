@@ -50,9 +50,6 @@ class GPU {
     this.mmu = mmu;
     this.MODE = 0;
     this.MODECLOCK = 0;
-    this.backgroundOffsetX = 0;
-    this.backgroundOffsetY = 0;
-    this.LY = 0;
     this.gpuRam = new Array(0xff80 - 0xff40).fill(0);
     this.tileset = [];
     this.objectData = [];
@@ -249,6 +246,7 @@ class GPU {
       case 0: // Hblank
         if (this.MODECLOCK >= 51) {
           this.LY++;
+          this._checkLYC();
           this.MODECLOCK -= 51;
           if (this.LY === 144) {
             this.MODE = 1;
@@ -272,6 +270,7 @@ class GPU {
             this.MODE = 2;
             this.LY = 0;
           }
+          this._checkLYC();
         }
         break;
 
@@ -362,8 +361,8 @@ class GPU {
   _renderBackgroundLine(tileMapAddress, tileSet, scanRow) {
     for (let col = 0; col < SCREEN_WIDTH; col++) {
       // let tile;
-      const actualRow = this.LY + this.SCY;
-      const actualCol = col + this.SCX;
+      const actualRow = (this.LY + this.SCY) % 256;
+      const actualCol = (col + this.SCX) % 256;
       const tileIdRow = Math.floor(actualRow / ROWS_IN_TILE);
       const tileIdCol = Math.floor(actualCol / COLS_IN_TILE);
       const tileIndex = (tileIdRow * TILES_IN_SCREEN_WIDTH) + tileIdCol;
@@ -458,6 +457,15 @@ class GPU {
       default: break;
     }
     if (interrupt) this.mmu.if |= 2;
+  }
+
+  _checkLYC() {
+    if (this.LYC === this.LY) {
+      this.STAT |= 1 << 2;
+      if (this.STAT & 0x40) this.mmu.if |= 2;
+    } else {
+      this.STAT &= ~(1 << 2);
+    }
   }
 }
 

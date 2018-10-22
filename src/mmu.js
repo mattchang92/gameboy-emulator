@@ -16,6 +16,13 @@ class MMU {
     this.ie = 0; // interrupt enabled
     this.if = 0xe0; // interrupt flag (top 3 bits always set)
 
+    this.mbc = [
+      {},
+      { rombank: 0, mode: 0 },
+    ];
+    this.romOffset = 0x4000;
+    this.cartridgeType = this.rom[0x147];
+
     this.printed = false;
 
     this.testOutput = '';
@@ -33,9 +40,9 @@ class MMU {
         return require(`../roms/test/${testRom}`);
       }
     } else {
-      return require('../roms/tetris');
+      // return require('../roms/tetris');
       // return require('../roms/dr_mario');
-      // return require('../roms/super_mario_land');
+      return require('../roms/super_mario_land');
     }
   }
 
@@ -74,7 +81,7 @@ class MMU {
       case 0x5000:
       case 0x6000:
       case 0x7000:
-        val = this.rom[addr]; break;
+        val = this.rom[this.romOffset + (addr & 0x3fff)]; break;
 
       // VRAM (Graphics 8K)
       case 0x8000:
@@ -205,20 +212,38 @@ class MMU {
     switch (addr & 0xf000) {
       // Bios (256 B) /ROM0 (16K)
       case 0x0000:
+      case 0x1000:
         if (!this.biosExecuted && addr < 0x100) return;
         this.rom[addr] = val; break;
 
-      // ROM0
-      case 0x1000:
       case 0x2000:
       case 0x3000:
-        this.rom[addr] = val; break;
+        switch (this.cartridgeType) {
+          case 1:
+          case 2:
+          case 3:
+            val &= 0x1f;
+            if (!val) val = 1;
+            this.mbc[1].rombank = (this.mbc[1].rombank & 0x60) + val;
+            this.romOffset = this.mbc[1].rombank * 0x4000;
+            break;
+          default:
+            this.rom[addr] = val; break;
+        }
+        break;
 
       // ROM1 (16K)
       case 0x4000:
       case 0x5000:
+        this.rom[addr] = val; break;
+
       case 0x6000:
       case 0x7000:
+        switch (this.cartridgeType) {
+          case 2:
+          case 3:
+            this.mbc[1].mode = val & 1; break;
+        }
         this.rom[addr] = val; break;
 
       // VRAM (Graphics 8K)
