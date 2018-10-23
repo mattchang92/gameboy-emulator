@@ -360,9 +360,8 @@ class GPU {
 
   _renderBackgroundLine(tileMapAddress, tileSet, scanRow) {
     for (let col = 0; col < SCREEN_WIDTH; col++) {
-      // let tile;
-      const actualRow = (this.LY + this.SCY) % 256;
-      const actualCol = (col + this.SCX) % 256;
+      const actualRow = (this.LY + this.SCY) & 0xff;
+      const actualCol = (col + this.SCX) & 0xff;
       const tileIdRow = Math.floor(actualRow / ROWS_IN_TILE);
       const tileIdCol = Math.floor(actualCol / COLS_IN_TILE);
       const tileIndex = (tileIdRow * TILES_IN_SCREEN_WIDTH) + tileIdCol;
@@ -398,20 +397,17 @@ class GPU {
 
     for (let i = 0; i < NUM_SPRITES; i++) {
       const obj = this.objectData[i];
-      if (obj.y <= this.LY && (obj.y + 8) > this.LY) {
+      const height = this.objSize ? 16 : 8;
+      if (obj.y <= this.LY && (obj.y + height) > this.LY) {
         const palette = obj.palette ? this.objPalette1 : this.objPalette0;
         const baseIndex = ((this.LY * SCREEN_WIDTH) + obj.x) * CANVAS_ELEMENTS_PER_PIXEL;
-        let tileRow;
-
-        if (obj.yFlip) {
-          tileRow = this.tileset[obj.tile][7 - (this.LY - obj.y)];
-        } else {
-          tileRow = this.tileset[obj.tile][this.LY - obj.y];
-        }
+        const row = obj.yFlip ? (height - 1) - (this.LY - obj.y) : this.LY - obj.y;
+        const tileRow = this.tileset[obj.tile][row];
 
         for (let x = 0; x < 8; x++) {
-          if (isOnScreen(obj, x) && isNotTransparent(tileRow, x) && isDisplayed(obj, x)) {
-            const colorArr = palette[tileRow[obj.xFlip ? (7 - x) : x]];
+          const pixel = obj.xFlip ? (7 - x) : x;
+          if (isOnScreen(obj, x) && isNotTransparent(tileRow, pixel) && isDisplayed(obj, pixel)) {
+            const colorArr = palette[tileRow[pixel]];
             for (let j = 0; j < CANVAS_ELEMENTS_PER_PIXEL; j++) {
               const offset = baseIndex + (x * 4);
               this.screen.data[offset + j] = colorArr[j];
