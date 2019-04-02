@@ -19,6 +19,8 @@ class CPU {
     this.limit = 60000;
     this.writeLog = false;
 
+    this.timeStamp = 0;
+
     this.registers = {
       A: 0,
       F: 0,
@@ -39,6 +41,8 @@ class CPU {
     this.HALT = 0;
 
     this.RUN = 0;
+
+    this.USE_ACTUAL_SPEED = false;
 
     this.clock = {
       m: 0,
@@ -158,6 +162,20 @@ class CPU {
   }
 
   frame() {
+    const currentTime = new Date().getTime();
+    const timeDiff = currentTime - this.timeStamp;
+
+    if (timeDiff < 16 && this.USE_ACTUAL_SPEED) {
+      setTimeout(() => {
+        this.executeCycle.bind(this);
+      }, 16 - timeDiff);
+    } else {
+      this.executeCycle();
+    }
+  }
+
+  executeCycle() {
+    this.timeStamp = new Date().getTime();
     const frameEnd = this.clock.m + 17556 * 1;
 
     while (this.clock.m < frameEnd) {

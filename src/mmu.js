@@ -43,6 +43,7 @@ class MMU {
       // return require('../roms/tetris');
       // return require('../roms/dr_mario');
       return require('../roms/super_mario_land');
+      // return require('../roms/test/cpu_instrs');
     }
   }
 
