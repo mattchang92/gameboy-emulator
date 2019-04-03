@@ -5,7 +5,8 @@ class MMU {
   constructor() {
     this.biosExecuted = false;
     this.bios = bios;
-    this.rom = this._loadRom();
+    this.rom;
+
     this.eram = new Array(0x2000).fill(0); // 0xa000 - 0xbfff
     this.oam = new Array(0xa0).fill(0); // 0xfe00 - 0xfe9f
     this.vram = new Array(0x2000).fill(0); // 0x8000 - 0x9fff
@@ -20,15 +21,22 @@ class MMU {
       {},
       { rombank: 0, mode: 0 },
     ];
-    this.romOffset = 0x4000;
-    this.cartridgeType = this.rom[0x147];
 
+    this.romOffset = 0x4000;
     this.printed = false;
 
     this.testOutput = '';
+
+    this.loadRom();
+
+    this.cartridgeType = this.rom[0x147];
   }
 
-  _loadRom() {
+  loadRom(gameData) {
+    if (gameData) {
+      return this.rom = gameData;
+    }
+
     if (process.env.NODE_ENV === 'test') {
       const testNumber = process.argv[2];
       const testRom = testRoms[testNumber];
@@ -37,12 +45,12 @@ class MMU {
         console.log(`Test number ${testNumber} not found. Exiting process`);
         process.exit(1);
       } else {
-        return require(`../roms/test/${testRom}`);
+        this.rom = require(`../roms/test/${testRom}`);
       }
     } else {
       // return require('../roms/tetris');
       // return require('../roms/dr_mario');
-      return require('../roms/super_mario_land');
+      this.rom = require('../roms/super_mario_land');
       // return require('../roms/test/cpu_instrs');
     }
   }
@@ -357,10 +365,6 @@ class MMU {
 
     this.write8(cpu, addr, leastSigByte);
     this.write8(cpu, addr + 1, mostSigByte);
-  }
-
-  loadRom(data) {
-    this.rom = data;
   }
 }
 

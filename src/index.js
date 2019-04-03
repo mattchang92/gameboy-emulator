@@ -12,6 +12,11 @@ let gameLoop;
   // fs.writeFileSync('/Users/matthewchang/Desktop/mine.txt', '');
 // }
 
+const bindController = (cou) => {
+  window.onkeydown = cpu.controller.keyDown.bind(cpu.controller);
+  window.onkeyup = cpu.controller.keyUp.bind(cpu.controller);
+}
+
 if (process.env.NODE_ENV === 'test') {
   gameLoop = setInterval(cpu.frame.bind(cpu), 1);
 } else {
@@ -24,8 +29,9 @@ if (process.env.NODE_ENV === 'test') {
   };
 
   document.getElementById('reset').onclick = () => {
+    clearInterval(gameLoop);
     cpu.reset();
-    cpu.gpu.reset();
+    bindController(cpu);
   };
 
   document.getElementById('stop').onclick = () => {
@@ -33,9 +39,19 @@ if (process.env.NODE_ENV === 'test') {
     clearInterval(gameLoop);
   };
 
+  document.getElementById("rom-upload").addEventListener("change", function() {
+    const reader = new FileReader();
+
+    reader.onload = function() {
+      const romDataBuffer = this.result;
+      const romAsIntArray = new Uint8Array(romDataBuffer);
+
+      cpu.mmu.loadRom(romAsIntArray);
+    }
+    reader.readAsArrayBuffer(this.files[0]);
+  }, false);
+
   cpu.dispatch();
 
-  window.onkeydown = cpu.controller.keyDown.bind(cpu.controller);
-
-  window.onkeyup = cpu.controller.keyUp.bind(cpu.controller);
+  bindController(cpu);
 }

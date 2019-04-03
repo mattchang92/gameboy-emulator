@@ -1,4 +1,3 @@
-const CPUMemory = require('./cpuMemory');
 const GPU = require('./gpu');
 const MMU = require('./mmu');
 const Timer = require('./timer');
@@ -52,8 +51,7 @@ class CPU {
     this.ime = 1;
 
     // components
-    this.ram = new CPUMemory();
-    this.mmu = new MMU(this.ram);
+    this.mmu = new MMU();
     this.gpu = new GPU(this.mmu);
     this.timer = new Timer();
     this.controller = new Controller(this.mmu);
@@ -108,12 +106,21 @@ class CPU {
     };
     this.M = 0;
     this.T = 0;
+    this.HALT = 0;
+    this.RUN = 0;
+    this.timeStamp = 0;
+
     this.ime = 1;
     this.clock = {
       m: 0,
       t: 0,
     };
     this.mmu.biosExecuted = false;
+
+    this.mmu = new MMU();
+    this.gpu = new GPU(this.mmu);
+    this.timer = new Timer();
+    this.controller = new Controller(this.mmu);
   }
 
   disableInterrupt() {

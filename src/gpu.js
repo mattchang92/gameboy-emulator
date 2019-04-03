@@ -296,49 +296,6 @@ class GPU {
     }
   }
 
-  reset() {
-    if (process.env.NODE_ENV === 'test') return;
-    /* eslint-disable-next-line */
-    const canvas = document.getElementById('game-screen');
-
-    this.tileset = new Array(NUM_TILES).fill(null)
-      .map(() => new Array(ROWS_IN_TILE).fill([])
-        .map(() => new Array(COLS_IN_TILE).fill(0)));
-
-    if (canvas) {
-      this.ctx = canvas.getContext('2d');
-      this.screen = this.ctx.createImageData(SCREEN_WIDTH, SCREEN_HEIGHT);
-      const color = 0;
-      const data = new Array(SCREEN_WIDTH * SCREEN_HEIGHT).fill(null)
-        .map(() => [color, color, color, 255])
-        .join()
-        .split(',')
-        .map(num => parseInt(num, 10));
-
-      this.screen.data.set(data);
-
-      this.ctx.putImageData(this.screen, 0, 0);
-    }
-
-    this.bgPalette = [[255, 255, 255, 255], [192, 192, 192, 255], [96, 96, 96, 255], [0, 0, 0, 255]];
-    this.objPalette0 = [[255, 255, 255, 255], [192, 192, 192, 255], [96, 96, 96, 255], [0, 0, 0, 255]];
-    this.objPalette1 = [[255, 255, 255, 255], [192, 192, 192, 255], [96, 96, 96, 255], [0, 0, 0, 255]];
-
-    for (let i = 0; i < 40; i++) {
-      this.objectData[i] = {
-        y: -16,
-        x: -8,
-        tile: 0,
-        palette: 0,
-        xFlip: 0,
-        yFlip: 0,
-        xIndex: 0,
-        num: i,
-      };
-    }
-  }
-
-
   updateTileBasedOnMemory(addr) {
     /* Get the address of the least significant
      byte in the tile row that was updated */
@@ -461,6 +418,48 @@ class GPU {
       if (this.STAT & 0x40) this.mmu.if |= 2;
     } else {
       this.STAT &= ~(1 << 2);
+    }
+  }
+
+  reset() {
+    if (process.env.NODE_ENV === 'test') return;
+    /* eslint-disable-next-line */
+    const canvas = document.getElementById('game-screen');
+
+    this.tileset = new Array(NUM_TILES).fill(null)
+      .map(() => new Array(ROWS_IN_TILE).fill([])
+        .map(() => new Array(COLS_IN_TILE).fill(0)));
+
+    if (canvas) {
+      this.ctx = canvas.getContext('2d');
+      this.screen = this.ctx.createImageData(SCREEN_WIDTH, SCREEN_HEIGHT);
+      const color = 0;
+      const data = new Array(SCREEN_WIDTH * SCREEN_HEIGHT).fill(null)
+        .map(() => [color, color, color, 255])
+        .join()
+        .split(',')
+        .map(num => parseInt(num, 10));
+
+      this.screen.data.set(data);
+
+      this.ctx.putImageData(this.screen, 0, 0);
+    }
+
+    this.bgPalette = [[255, 255, 255, 255], [192, 192, 192, 255], [96, 96, 96, 255], [0, 0, 0, 255]];
+    this.objPalette0 = [[255, 255, 255, 255], [192, 192, 192, 255], [96, 96, 96, 255], [0, 0, 0, 255]];
+    this.objPalette1 = [[255, 255, 255, 255], [192, 192, 192, 255], [96, 96, 96, 255], [0, 0, 0, 255]];
+
+    for (let i = 0; i < 40; i++) {
+      this.objectData[i] = {
+        y: -16,
+        x: -8,
+        tile: 0,
+        palette: 0,
+        xFlip: 0,
+        yFlip: 0,
+        xIndex: 0,
+        num: i,
+      };
     }
   }
 }
