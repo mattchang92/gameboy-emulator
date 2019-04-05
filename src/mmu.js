@@ -28,13 +28,13 @@ class MMU {
     this.testOutput = '';
 
     this.loadRom();
-
-    this.cartridgeType = this.rom[0x147];
   }
 
   loadRom(gameData) {
     if (gameData) {
-      return this.rom = gameData;
+      this.rom = gameData;
+      this.cartridgeType = this.rom[0x147];
+      return;
     }
 
     if (process.env.NODE_ENV === 'test') {
@@ -48,10 +48,11 @@ class MMU {
         this.rom = require(`../roms/test/${testRom}`);
       }
     } else {
-      // return require('../roms/tetris');
-      // return require('../roms/dr_mario');
-      this.rom = require('../roms/super_mario_land');
-      // return require('../roms/test/cpu_instrs');
+      this.rom = require('../roms/tetris');
+      // this.rom = require('../roms/dr_mario');
+      // this.rom = require('../roms/super_mario_land');
+      // this.rom = require('../roms/test/cpu_instrs');
+      this.cartridgeType = this.rom[0x147];
     }
   }
 
@@ -237,7 +238,7 @@ class MMU {
             this.romOffset = this.mbc[1].rombank * 0x4000;
             break;
           default:
-            this.rom[addr] = val; break;
+            break;
         }
         break;
 
