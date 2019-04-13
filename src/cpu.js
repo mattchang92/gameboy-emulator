@@ -8,7 +8,10 @@ const { opcodes, interrupts } = require('./opcodes/opcodes');
 // const fs = require('fs');
 
 class CPU {
-  constructor() {
+  constructor(sound) {
+    // TODO: Refactor non-cpu related functionality into GameBoy module
+    this.sound = sound;
+
     // general use registers
     this.rstCalled = false;
     this.initialCounter = 0;
@@ -52,7 +55,8 @@ class CPU {
     this.ime = 1;
 
     // components
-    this.mmu = new MMU();
+    this.apu = new APU(sound);
+    this.mmu = new MMU(this.apu);
     this.gpu = new GPU(this.mmu);
     this.timer = new Timer();
     this.controller = new Controller(this.mmu);
@@ -118,7 +122,7 @@ class CPU {
     };
     this.mmu.biosExecuted = false;
 
-    this.apu = new APU();
+    this.apu = new APU(this.sound);
     this.mmu = new MMU(this.apu);
     this.gpu = new GPU(this.mmu);
     this.timer = new Timer();
@@ -226,7 +230,7 @@ class CPU {
 
         opcodes[op](this);
 
-        this.apu.step(this.M);
+        this.apu.step(this.M * 4);
 
         // const {
         //   F, B, C, D, E, H, L, A,

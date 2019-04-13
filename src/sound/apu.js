@@ -30,19 +30,61 @@
 const SquareWave = require('./squareWave');
 
 const FRAME_SEQUENCE_COUNTDOWN_RESET = 8192;
+const DOWN_SAMPLE_COUNTER_RESET = 95;
 
 class Apu {
-  constructor() {
-    this.ram = new Array(0xff26 - 0xff10).fill(0);
+  constructor(sound) {
+    this.soundNodes = sound.soundNodes;
+    this.audioContext = sound.audioContext;
+    this.gainNodeLeft = sound.gainNodeLeft;
+    this.gainNodeRight = sound.gainNodeRight;
+    this.channel1 = new SquareWave();
+
+    this.powerEnabled = 0;
+
+    this.reset();
+  }
+
+  reset() {
     this.frameSequencer = 0;
     this.frameSequenceCounter = FRAME_SEQUENCE_COUNTDOWN_RESET;
 
-    this.channel1 = new SquareWave();
+    this.downSampleCounter = DOWN_SAMPLE_COUNTER_RESET;
+
+    this.leftVolume = 0;
+    this.rightVolume = 0;
+    this.leftRightControlRegister = 0;
+
+    this.leftChannelsEnabled = [0, 0, 0, 0];
+    this.rightChannelsEnabled = [0, 0, 0, 0];
+    this.channelsControlRegister = 0;
+
+    this.powerControLRegister = 0;
+
+    for (let i = 0; i < 5; i++) {
+      this.channel1.write(i, 0);
+    }
   }
 
   step(cycles) {
     while (cycles-- > 0) {
       this.stepFrameSequencer();
+    }
+
+    this.channel1.step();
+
+    if (--this.downSampleCounter <= 0) {
+      this.downSampleCounter - DOWN_SAMPLE_COUNTER_RESET;
+      this.gainNodeLeft.gain.value = this.leftVolume / 8;
+      this.gainNodeRight.gain.value = this.rightVolume / 8;
+
+      if (this.leftChannelsEnabled[0]) {
+        this.soundNodes.squareWave1Left.frequency.setValueAtTime(this.channel1.getActualFrequency(), this.audioContext.currentTime);
+      }
+
+      if (this.rightChannelsEnabled[0]) {
+        this.soundNodes.squareWave1Right.frequency.setValueAtTime(this.channel1.getActualFrequency(), this.audioContext.currentTime);
+      }
     }
   }
 
@@ -85,23 +127,79 @@ class Apu {
     }
   }
 
+  updateChannelsEnabled(val) {
+    for (let i = 0; i < 3; i++) {
+      this.rightChannelsEnabled[i] = (val >> i) & 1;
+      this.leftChannelsEnabled[i] = (val >> (i + 4)) & 1;
+    }
+  }
+
   read(addr) {
     addr %= 0xff10;
+    let val;
 
-    if (addr > 0x16) {
-      console.log('reading addr greater than 0xff26 from sound');
+    switch (addr) {
+      case 0x00: case 0x01: case 0x02: case 0x03: case 0x04:
+        val = this.channel1.read(addr % 5); break;
+      case 0x05: case 0x06: case 0x07: case 0x08: case 0x09:
+        // channel 2
+        break;
+      case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e:
+        // wave channel
+        break;
+      case 0x10: case 0x11: case 0x12: case 0x13:
+        // nboise channel
+        break;
+      case 0x14:
+        return this.leftRightControlRegister;
+      case 0x15:
+        return this.channelsControlRegister;
+      case 0x16:
+        return this.powerControLRegister;
+      default: console.log('reading addr greater than 0xff26 from sound');
     }
-    return this.ram[addr];
+
+    return val;
   }
 
   write(addr, val) {
     addr %= 0xff10;
 
-    if (addr > 0x16) {
-      console.log('writing to addr greater than 0xff26 from sound');
+    switch (addr) {
+      case 0x00: case 0x01: case 0x02: case 0x03: case 0x04:
+        val = this.channel1.write(addr % 5, val); break;
+      case 0x05: case 0x06: case 0x07: case 0x08: case 0x09:
+        // channel 2
+        break;
+      case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e:
+        // wave channel
+        break;
+      case 0x10: case 0x11: case 0x12: case 0x13:
+        // nboise channel
+        break;
+      case 0x14:
+        // According to docs bit 3 and 7 don't do anything. Related to cartridge mixing
+        this.rightVolume = val & 0x7;
+        this.leftVolume = (val >>> 4) & 0x7;
+        this.leftRightControlRegister = val;
+        break;
+      case 0x15:
+        this.updateChannelsEnabled(val);
+        this.channelsControlRegister = val;
+        break;
+      case 0x16:
+        if (val & 0x80 === 0) {
+          this.powerEnabled = 0;
+          this.reset();
+        } else if (!this.powerEnabled) {
+          this.frameSequencer = 0;
+          this.powerEnabled = 1;
+          // reset wave channel
+        }
+        this.powerControLRegister = val;
+        break;
+      default: console.log('writing addr greater than 0xff26 from sound');
     }
-
-    this.ram[addr] = val;
   }
 }
 

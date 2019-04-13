@@ -2,7 +2,41 @@
 /* eslint-disable */
 const CPU = require('./cpu');
 
-const cpu = new CPU();
+const audioContext = new (window.AudioContext || window.webkitAudoContext)();
+const squareWave1Left = audioContext.createOscillator();
+const squareWave1Right = audioContext.createOscillator();
+const gainNodeLeft = audioContext.createGain();
+const gainNodeRight = audioContext.createGain();
+const globalGainNode = audioContext.createGain();
+globalGainNode.gain.value = 0.1;
+gainNodeLeft.gain.value = 1;
+gainNodeRight.gain.value = 1;
+
+gainNodeLeft.connect(globalGainNode);
+gainNodeRight.connect(globalGainNode);
+
+globalGainNode.connect(audioContext.destination);
+
+squareWave1Left.type = 'square';
+squareWave1Left.frequency.setValueAtTime(0, audioContext.currentTime);
+squareWave1Left.connect(gainNodeLeft);
+
+squareWave1Right.type = 'square';
+squareWave1Right.frequency.setValueAtTime(0, audioContext.currentTime);
+squareWave1Right.connect(gainNodeRight);
+
+const soundNodes = {};
+const sound = {}
+
+soundNodes.squareWave1Left = squareWave1Left;
+soundNodes.squareWave1Right = squareWave1Right;
+
+sound.soundNodes = soundNodes;
+sound.audioContext = audioContext;
+sound.gainNodeLeft = gainNodeLeft;
+sound.gainNodeRight = gainNodeRight;
+
+const cpu = new CPU(sound);
 
 let gameLoop;
 
@@ -32,7 +66,8 @@ if (process.env.NODE_ENV === 'test') {
     // oscillator.type = 'square';
     // oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
     // oscillator.connect(gainNode);
-    // oscillator.start();
+    squareWave1Left.start();
+    squareWave1Right.start();
   };
 
   document.getElementById('step').onclick = () => {
