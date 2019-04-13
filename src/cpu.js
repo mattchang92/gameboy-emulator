@@ -1,5 +1,6 @@
 const GPU = require('./gpu');
 const MMU = require('./mmu');
+const APU = require('./sound/apu');
 const Timer = require('./timer');
 const Controller = require('./controller');
 const { opcodes, interrupts } = require('./opcodes/opcodes');
@@ -117,7 +118,8 @@ class CPU {
     };
     this.mmu.biosExecuted = false;
 
-    this.mmu = new MMU();
+    this.apu = new APU();
+    this.mmu = new MMU(this.apu);
     this.gpu = new GPU(this.mmu);
     this.timer = new Timer();
     this.controller = new Controller(this.mmu);
@@ -223,6 +225,8 @@ class CPU {
         }
 
         opcodes[op](this);
+
+        this.apu.step(this.M);
 
         // const {
         //   F, B, C, D, E, H, L, A,

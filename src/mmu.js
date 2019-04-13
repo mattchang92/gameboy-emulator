@@ -2,10 +2,11 @@
 const { testRoms, bios } = require('../config');
 
 class MMU {
-  constructor() {
+  constructor(apu) {
     this.biosExecuted = false;
     this.bios = bios;
     this.rom;
+    this.apu = apu;
 
     this.eram = new Array(0x2000).fill(0); // 0xa000 - 0xbfff
     this.oam = new Array(0xa0).fill(0); // 0xfe00 - 0xfe9f
@@ -153,6 +154,10 @@ class MMU {
               case 0x10:
               case 0x20:
                 // TODO implement sound later
+                if (addr <= 0xff26) {
+                  console.log('reading byte from sound ', addr.toString(16));
+                  this.apu.read(addr);
+                }
                 val = this.io[addr & 0x7f]; break;
               case 0x40:
                 val = cpu.gpu.read(addr); break;
@@ -306,7 +311,9 @@ class MMU {
               const char = String.fromCharCode(`${val}`);
               this.testOutput += char;
               console.log(this.testOutput);
+              break;
             }
+
             if (addr >= 0xff80) {
               this.zram[addr & 0x7f] = val; break;
             }
@@ -331,7 +338,11 @@ class MMU {
                 break;
               case 0x10:
               case 0x20:
-                // TODO implement sound later
+                if (addr <= 0xff26) {
+                  // TODO implement sound later
+                  console.log('writing byte to sound ', addr.toString(16));
+                  this.apu.write(addr, val);
+                }
                 this.io[addr & 0x7f] = val; break;
               case 0x40:
                 cpu.gpu.write(cpu, addr, val); break;

@@ -22,6 +22,17 @@ if (process.env.NODE_ENV === 'test') {
 } else {
   document.getElementById('run').onclick = () => {
     gameLoop = setInterval(cpu.frame.bind(cpu), 1);
+
+    // const audioContext = new (window.AudioContext || window.webkitAudoContext)();
+    // const oscillator = audioContext.createOscillator();
+    // const gainNode = audioContext.createGain();
+    // gainNode.gain.value = 0.03;
+    // gainNode.connect(audioContext.destination);
+
+    // oscillator.type = 'square';
+    // oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+    // oscillator.connect(gainNode);
+    // oscillator.start();
   };
 
   document.getElementById('step').onclick = () => {
