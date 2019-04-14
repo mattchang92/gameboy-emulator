@@ -49,9 +49,9 @@ class MMU {
         this.rom = require(`../roms/test/${testRom}`);
       }
     } else {
-      this.rom = require('../roms/tetris');
+      // this.rom = require('../roms/tetris');
       // this.rom = require('../roms/dr_mario');
-      // this.rom = require('../roms/super_mario_land');
+      this.rom = require('../roms/super_mario_land');
       // this.rom = require('../roms/test/cpu_instrs');
       this.cartridgeType = this.rom[0x147];
     }

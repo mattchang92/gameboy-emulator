@@ -81,7 +81,7 @@ class Apu {
     this.channel3.step();
 
     if (--this.downSampleCounter <= 0) {
-      this.downSampleCounter - DOWN_SAMPLE_COUNTER_RESET;
+      this.downSampleCounter = DOWN_SAMPLE_COUNTER_RESET;
       this.gain.gainNodeLeft.gain.value = VOLUME_ADJUST * this.leftVolume / 8;
       this.gain.gainNodeRight.gain.value = VOLUME_ADJUST * this.rightVolume / 8;
       this.gain.squareWave1Left.gain.value = this.channel1.getVolumeGain();

@@ -96,8 +96,8 @@ class SquareChannel {
   }
 
   setOutputVolume() {
-    // if (this.waveformEnabled) {
-    if (this.waveformEnabled && !!this.dutyCycles[this.duty][this.dutySequencePointer]) {
+    if (this.waveformEnabled) {
+    // if (this.waveformEnabled && !!this.dutyCycles[this.duty][this.dutySequencePointer]) {
       this.outputVolume = this.volume;
     } else {
       this.outputVolume = 0;

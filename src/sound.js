@@ -16,9 +16,6 @@ class Sound {
     gainNodeRight.connect(merger, 0, 1);
 
     merger.connect(audioContext.destination);
-    // gainNodeLeft.connect(audioContext.destination);
-    // gainNodeRight.connect(audioContext.destination);
-
 
     this.gain.gainNodeLeft = gainNodeLeft;
     this.gain.gainNodeRight = gainNodeRight;

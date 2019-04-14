@@ -33,19 +33,17 @@ class WaveChannel {
   }
 
   getVolumeGain() {
-    return this.outputVolume / 100;
-    // return this.outputVolume / 4;
-    // switch (this.volume) {
-    //   case 0: return 0;
-    //   case 1: return 1;
-    //   case 2: return 0.5;
-    //   case 3: return 0.25;
-    //   default: return 0;
-    // }
+    switch (this.volume) {
+      case 0: return 0;
+      case 1: return 1;
+      case 2: return 0.5;
+      case 3: return 0.25;
+      default: return 0;
+    }
   }
 
   getActualFrequency() {
-    return (2 ** 17) / (2048 - this.frequency);
+    return (2 ** 16) / (2048 - this.frequency);
   }
 
   resetTimer() {
