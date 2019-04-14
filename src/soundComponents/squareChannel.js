@@ -58,7 +58,7 @@ class SquareChannel {
 
   runEnvelopeCheck() {
     if (--this.envelopePeriodCounter <= 0) {
-      this.envelopePeriodCounter = this.envelopePeriod || 8; // Not sure why, following other emu examples
+      this.envelopePeriodCounter = this.envelopePeriod || 8;
 
       if (this.envelopeRunning && this.envelopePeriod > 0) {
         if (this.envelopeAddMode && this.volume < 15) {

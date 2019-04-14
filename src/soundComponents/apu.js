@@ -29,6 +29,7 @@
 
 const SquareChannel = require('./squareChannel');
 const WaveChannel = require('./waveChannel');
+const NoiseChannel = require('./noiseChannel');
 
 const FRAME_SEQUENCE_COUNTDOWN_RESET = 8192;
 const DOWN_SAMPLE_COUNTER_RESET = 96;
@@ -42,6 +43,7 @@ class Apu {
     this.channel1 = new SquareChannel();
     this.channel2 = new SquareChannel();
     this.channel3 = new WaveChannel();
+    this.channel4 = new NoiseChannel();
 
     this.powerEnabled = 0;
 
@@ -68,6 +70,7 @@ class Apu {
       this.channel1.write(i, 0);
       this.channel2.write(i, 0);
       this.channel3.write(i, 0);
+      this.channel4.write(i, 0);
     }
   }
 
@@ -79,6 +82,7 @@ class Apu {
     this.channel1.step();
     this.channel2.step();
     this.channel3.step();
+    this.channel4.step();
 
     if (--this.downSampleCounter <= 0) {
       this.downSampleCounter = DOWN_SAMPLE_COUNTER_RESET;
@@ -90,6 +94,8 @@ class Apu {
       this.gain.squareWave2Right.gain.value = this.channel2.getVolumeGain();
       this.gain.waveChannelLeft.gain.value = this.channel3.getVolumeGain();
       this.gain.waveChannelRight.gain.value = this.channel3.getVolumeGain();
+      this.gain.noiseChannelLeft.gain.value = this.channel4.getVolumeGain();
+      this.gain.noiseChannelRight.gain.value = this.channel4.getVolumeGain();
 
       if (this.leftChannelsEnabled[0]) {
         this.soundNodes.squareWave1Left.frequency.setValueAtTime(this.channel1.getActualFrequency(), this.audioContext.currentTime);
@@ -114,6 +120,14 @@ class Apu {
       if (this.rightChannelsEnabled[2]) {
         this.soundNodes.waveChannelRight.frequency.setValueAtTime(this.channel3.getActualFrequency(), this.audioContext.currentTime);
       }
+
+      if (this.leftChannelsEnabled[3]) {
+        this.soundNodes.noiseChannelLeft.frequency.setValueAtTime(this.channel4.getActualFrequency(), this.audioContext.currentTime);
+      }
+
+      if (this.rightChannelsEnabled[3]) {
+        this.soundNodes.noiseChannelRight.frequency.setValueAtTime(this.channel4.getActualFrequency(), this.audioContext.currentTime);
+      }
     }
   }
 
@@ -126,6 +140,7 @@ class Apu {
           this.channel1.runLengthCheck();
           this.channel2.runLengthCheck();
           this.channel3.runLengthCheck();
+          this.channel4.runLengthCheck();
           break;
         }
         case 1: break;
@@ -135,6 +150,7 @@ class Apu {
           this.channel2.runLengthCheck();
           this.channel2.runSweepCheck();
           this.channel3.runLengthCheck();
+          this.channel4.runLengthCheck();
           break;
         }
         case 3: break;
@@ -142,6 +158,7 @@ class Apu {
           this.channel1.runLengthCheck();
           this.channel2.runLengthCheck();
           this.channel3.runLengthCheck();
+          this.channel4.runLengthCheck();
           break;
         }
         case 5: break;
@@ -151,11 +168,13 @@ class Apu {
           this.channel2.runLengthCheck();
           this.channel2.runSweepCheck();
           this.channel3.runLengthCheck();
+          this.channel4.runLengthCheck();
           break;
         }
         case 7: {
           this.channel1.runEnvelopeCheck();
           this.channel2.runEnvelopeCheck();
+          this.channel4.runEnvelopeCheck();
           break;
         }
         default: {
@@ -190,8 +209,7 @@ class Apu {
       case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e:
         val = this.channel3.read(addr % 5); break;
       case 0x10: case 0x11: case 0x12: case 0x13:
-        // nboise channel
-        break;
+        val = this.channel4.read(addr % 5); break;
       case 0x14:
         return this.leftRightControlRegister;
       case 0x15:
@@ -219,8 +237,7 @@ class Apu {
       case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e:
         val = this.channel3.write(addr % 5, val); break;
       case 0x10: case 0x11: case 0x12: case 0x13:
-        // nboise channel
-        break;
+        val = this.channel4.write(addr % 5, val); break;
       case 0x14:
         // According to docs bit 3 and 7 don't do anything. Related to cartridge mixing
         this.rightVolume = val & 0x7;

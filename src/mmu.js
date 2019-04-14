@@ -51,6 +51,7 @@ class MMU {
     } else {
       // this.rom = require('../roms/tetris');
       // this.rom = require('../roms/dr_mario');
+      // this.rom = require('../roms/megaman');
       this.rom = require('../roms/super_mario_land');
       // this.rom = require('../roms/test/cpu_instrs');
       this.cartridgeType = this.rom[0x147];
@@ -153,7 +154,6 @@ class MMU {
                 break;
               case 0x10:
               case 0x20:
-                // TODO implement sound later
                 if (addr <= 0xff26) {
                   this.apu.read(addr);
                 }

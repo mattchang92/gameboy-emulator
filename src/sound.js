@@ -23,6 +23,34 @@ class Sound {
     this.audioContext = audioContext;
     this.initializeSquareChannels();
     this.initializeWaveChannel();
+    this.initializeNoiseChannel();
+  }
+
+  initializeNoiseChannel() {
+    const noiseChannelLeft = this.audioContext.createOscillator();
+    const noiseChannelRight = this.audioContext.createOscillator();
+
+    const channelGainLeft = this.audioContext.createGain();
+    const channelGainRight = this.audioContext.createGain();
+
+    channelGainLeft.connect(this.gain.gainNodeLeft);
+    channelGainRight.connect(this.gain.gainNodeRight);
+
+    noiseChannelLeft.connect(this.gain.gainNodeLeft);
+    noiseChannelRight.connect(this.gain.gainNodeLeft);
+
+    noiseChannelLeft.type = 'sine';
+    noiseChannelLeft.frequency.setValueAtTime(0, this.audioContext.currentTime);
+    noiseChannelLeft.connect(channelGainLeft);
+
+    noiseChannelRight.type = 'sine';
+    noiseChannelRight.frequency.setValueAtTime(0, this.audioContext.currentTime);
+    noiseChannelRight.connect(channelGainLeft);
+
+    this.soundNodes.noiseChannelLeft = noiseChannelLeft;
+    this.soundNodes.noiseChannelRight = noiseChannelRight;
+    this.gain.noiseChannelLeft = channelGainLeft;
+    this.gain.noiseChannelRight = channelGainRight;
   }
 
   initializeWaveChannel() {
