@@ -1,20 +1,21 @@
 class Sound {
   constructor() {
     const audioContext = new (window.AudioContext || window.webkitAudoContext)();
-    this.gainNodeLeft = audioContext.createGain();
-    this.gainNodeRight = audioContext.createGain();
-    const globalGainNode = audioContext.createGain();
+    const gainNodeLeft = audioContext.createGain();
+    const gainNodeRight = audioContext.createGain();
 
     this.soundNodes = {};
+    this.gain = {};
 
-    globalGainNode.gain.value = 0.1;
-    this.gainNodeLeft.gain.value = 1;
-    this.gainNodeRight.gain.value = 1;
+    gainNodeLeft.gain.value = 1;
+    gainNodeRight.gain.value = 1;
 
-    this.gainNodeLeft.connect(globalGainNode);
-    this.gainNodeRight.connect(globalGainNode);
+    gainNodeLeft.connect(audioContext.destination);
+    gainNodeRight.connect(audioContext.destination);
 
-    globalGainNode.connect(audioContext.destination);
+
+    this.gain.gainNodeLeft = gainNodeLeft;
+    this.gain.gainNodeRight = gainNodeRight;
 
     this.audioContext = audioContext;
     this.initializeSquareWaves();
@@ -25,16 +26,24 @@ class Sound {
       const squareWaveLeft = this.audioContext.createOscillator();
       const squareWaveRight = this.audioContext.createOscillator();
 
+      const channelGainLeft = this.audioContext.createGain();
+      const channelGainRight = this.audioContext.createGain();
+
+      channelGainLeft.connect(this.gain.gainNodeLeft);
+      channelGainRight.connect(this.gain.gainNodeRight);
+
       squareWaveLeft.type = 'square';
       squareWaveLeft.frequency.setValueAtTime(0, this.audioContext.currentTime);
-      squareWaveLeft.connect(this.gainNodeLeft);
+      squareWaveLeft.connect(channelGainLeft);
 
       squareWaveRight.type = 'square';
       squareWaveRight.frequency.setValueAtTime(0, this.audioContext.currentTime);
-      squareWaveRight.connect(this.gainNodeRight);
+      squareWaveRight.connect(channelGainRight);
 
       this.soundNodes[`squareWave${i}Left`] = squareWaveLeft;
       this.soundNodes[`squareWave${i}Right`] = squareWaveRight;
+      this.gain[`squareWave${i}Left`] = channelGainLeft;
+      this.gain[`squareWave${i}Right`] = channelGainRight;
     }
   }
 

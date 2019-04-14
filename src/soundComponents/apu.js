@@ -27,17 +27,17 @@
   FF26  |  NR52  |  Sound on/off
 */
 
-const SquareWave = require('./squareWave');
+const SquareWave = require('./squareChannel');
 
 const FRAME_SEQUENCE_COUNTDOWN_RESET = 8192;
-const DOWN_SAMPLE_COUNTER_RESET = 95;
+const DOWN_SAMPLE_COUNTER_RESET = 96;
+const VOLUME_ADJUST = 0.1;
 
 class Apu {
   constructor(sound) {
     this.soundNodes = sound.soundNodes;
     this.audioContext = sound.audioContext;
-    this.gainNodeLeft = sound.gainNodeLeft;
-    this.gainNodeRight = sound.gainNodeRight;
+    this.gain = sound.gain;
     this.channel1 = new SquareWave();
     this.channel2 = new SquareWave();
 
@@ -78,8 +78,12 @@ class Apu {
 
     if (--this.downSampleCounter <= 0) {
       this.downSampleCounter - DOWN_SAMPLE_COUNTER_RESET;
-      this.gainNodeLeft.gain.value = this.leftVolume / 8;
-      this.gainNodeRight.gain.value = this.rightVolume / 8;
+      this.gain.gainNodeLeft.gain.value = VOLUME_ADJUST * this.leftVolume / 8;
+      this.gain.gainNodeRight.gain.value = VOLUME_ADJUST * this.rightVolume / 8;
+      this.gain.squareWave1Left.gain.value = this.channel1.getVolumeGain();
+      this.gain.squareWave1Right.gain.value = this.channel1.getVolumeGain();
+      this.gain.squareWave2Left.gain.value = this.channel2.getVolumeGain();
+      this.gain.squareWave2Right.gain.value = this.channel2.getVolumeGain();
 
       if (this.leftChannelsEnabled[0]) {
         this.soundNodes.squareWave1Left.frequency.setValueAtTime(this.channel1.getActualFrequency(), this.audioContext.currentTime);
@@ -112,8 +116,8 @@ class Apu {
         case 1: break;
         case 2: {
           this.channel1.runLengthCheck();
-          this.channel1.runLengthCheck();
-          this.channel2.runSweepCheck();
+          this.channel1.runSweepCheck();
+          this.channel2.runLengthCheck();
           this.channel2.runSweepCheck();
           break;
         }
