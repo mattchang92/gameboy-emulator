@@ -47,6 +47,13 @@ class Apu {
 
     this.powerEnabled = 0;
 
+    this.channels = {
+      squareChannel1: 'channel1',
+      squareChannel2: 'channel2',
+      waveChannel: 'channel3',
+      noiseChannel: 'channel4',
+    };
+
     this.reset();
   }
 
@@ -88,47 +95,28 @@ class Apu {
       this.downSampleCounter = DOWN_SAMPLE_COUNTER_RESET;
       this.gain.gainNodeLeft.gain.value = VOLUME_ADJUST * this.leftVolume / 8;
       this.gain.gainNodeRight.gain.value = VOLUME_ADJUST * this.rightVolume / 8;
-      this.gain.squareWave1Left.gain.value = this.channel1.getVolumeGain();
-      this.gain.squareWave1Right.gain.value = this.channel1.getVolumeGain();
-      this.gain.squareWave2Left.gain.value = this.channel2.getVolumeGain();
-      this.gain.squareWave2Right.gain.value = this.channel2.getVolumeGain();
-      this.gain.waveChannelLeft.gain.value = this.channel3.getVolumeGain();
-      this.gain.waveChannelRight.gain.value = this.channel3.getVolumeGain();
-      this.gain.noiseChannelLeft.gain.value = this.channel4.getVolumeGain();
-      this.gain.noiseChannelRight.gain.value = this.channel4.getVolumeGain();
 
-      if (this.leftChannelsEnabled[0]) {
-        this.soundNodes.squareWave1Left.frequency.setValueAtTime(this.channel1.getActualFrequency(), this.audioContext.currentTime);
-      }
-
-      if (this.rightChannelsEnabled[0]) {
-        this.soundNodes.squareWave1Right.frequency.setValueAtTime(this.channel1.getActualFrequency(), this.audioContext.currentTime);
-      }
-
-      if (this.leftChannelsEnabled[1]) {
-        this.soundNodes.squareWave2Left.frequency.setValueAtTime(this.channel2.getActualFrequency(), this.audioContext.currentTime);
-      }
-
-      if (this.rightChannelsEnabled[1]) {
-        this.soundNodes.squareWave2Right.frequency.setValueAtTime(this.channel2.getActualFrequency(), this.audioContext.currentTime);
-      }
-
-      if (this.leftChannelsEnabled[2]) {
-        this.soundNodes.waveChannelLeft.frequency.setValueAtTime(this.channel3.getActualFrequency(), this.audioContext.currentTime);
-      }
-
-      if (this.rightChannelsEnabled[2]) {
-        this.soundNodes.waveChannelRight.frequency.setValueAtTime(this.channel3.getActualFrequency(), this.audioContext.currentTime);
-      }
-
-      if (this.leftChannelsEnabled[3]) {
-        this.soundNodes.noiseChannelLeft.frequency.setValueAtTime(this.channel4.getActualFrequency(), this.audioContext.currentTime);
-      }
-
-      if (this.rightChannelsEnabled[3]) {
-        this.soundNodes.noiseChannelRight.frequency.setValueAtTime(this.channel4.getActualFrequency(), this.audioContext.currentTime);
-      }
+      this.sampleChannels();
     }
+  }
+
+  sampleChannels() {
+    Object.keys(this.channels).forEach((channel, i) => {
+      const left = `${channel}Left`;
+      const right = `${channel}Right`;
+      const channelNumber = this.channels[channel];
+
+      this.gain[left].gain.value = this[channelNumber].getVolumeGain();
+      this.gain[right].gain.value = this[channelNumber].getVolumeGain();
+
+      if (this.leftChannelsEnabled[i]) {
+        this.soundNodes[left].frequency.setValueAtTime(this[channelNumber].getActualFrequency(), this.audioContext.currentTime);
+      }
+
+      if (this.rightChannelsEnabled[i]) {
+        this.soundNodes[right].frequency.setValueAtTime(this[channelNumber].getActualFrequency(), this.audioContext.currentTime);
+      }
+    });
   }
 
   stepFrameSequencer() {

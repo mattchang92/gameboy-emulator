@@ -27,83 +27,41 @@ class Sound {
   }
 
   initializeNoiseChannel() {
-    const noiseChannelLeft = this.audioContext.createOscillator();
-    const noiseChannelRight = this.audioContext.createOscillator();
-
-    const channelGainLeft = this.audioContext.createGain();
-    const channelGainRight = this.audioContext.createGain();
-
-    channelGainLeft.connect(this.gain.gainNodeLeft);
-    channelGainRight.connect(this.gain.gainNodeRight);
-
-    noiseChannelLeft.connect(this.gain.gainNodeLeft);
-    noiseChannelRight.connect(this.gain.gainNodeLeft);
-
-    noiseChannelLeft.type = 'sine';
-    noiseChannelLeft.frequency.setValueAtTime(0, this.audioContext.currentTime);
-    noiseChannelLeft.connect(channelGainLeft);
-
-    noiseChannelRight.type = 'sine';
-    noiseChannelRight.frequency.setValueAtTime(0, this.audioContext.currentTime);
-    noiseChannelRight.connect(channelGainLeft);
-
-    this.soundNodes.noiseChannelLeft = noiseChannelLeft;
-    this.soundNodes.noiseChannelRight = noiseChannelRight;
-    this.gain.noiseChannelLeft = channelGainLeft;
-    this.gain.noiseChannelRight = channelGainRight;
+    this.initializeChannel('noiseChannel', 'sine');
   }
 
   initializeWaveChannel() {
-    const waveChannelLeft = this.audioContext.createOscillator();
-    const waveChannelRight = this.audioContext.createOscillator();
-
-    const channelGainLeft = this.audioContext.createGain();
-    const channelGainRight = this.audioContext.createGain();
-
-    channelGainLeft.connect(this.gain.gainNodeLeft);
-    channelGainRight.connect(this.gain.gainNodeRight);
-
-    waveChannelLeft.connect(this.gain.gainNodeLeft);
-    waveChannelRight.connect(this.gain.gainNodeLeft);
-
-    waveChannelLeft.type = 'sine';
-    waveChannelLeft.frequency.setValueAtTime(0, this.audioContext.currentTime);
-    waveChannelLeft.connect(channelGainLeft);
-
-    waveChannelRight.type = 'sine';
-    waveChannelRight.frequency.setValueAtTime(0, this.audioContext.currentTime);
-    waveChannelRight.connect(channelGainLeft);
-
-    this.soundNodes.waveChannelLeft = waveChannelLeft;
-    this.soundNodes.waveChannelRight = waveChannelRight;
-    this.gain.waveChannelLeft = channelGainLeft;
-    this.gain.waveChannelRight = channelGainRight;
+    this.initializeChannel('waveChannel', 'sine');
   }
 
   initializeSquareChannels() {
     for (let i = 1; i <= 2; i++) {
-      const squareWaveLeft = this.audioContext.createOscillator();
-      const squareWaveRight = this.audioContext.createOscillator();
-
-      const channelGainLeft = this.audioContext.createGain();
-      const channelGainRight = this.audioContext.createGain();
-
-      channelGainLeft.connect(this.gain.gainNodeLeft);
-      channelGainRight.connect(this.gain.gainNodeRight);
-
-      squareWaveLeft.type = 'square';
-      squareWaveLeft.frequency.setValueAtTime(0, this.audioContext.currentTime);
-      squareWaveLeft.connect(channelGainLeft);
-
-      squareWaveRight.type = 'square';
-      squareWaveRight.frequency.setValueAtTime(0, this.audioContext.currentTime);
-      squareWaveRight.connect(channelGainRight);
-
-      this.soundNodes[`squareWave${i}Left`] = squareWaveLeft;
-      this.soundNodes[`squareWave${i}Right`] = squareWaveRight;
-      this.gain[`squareWave${i}Left`] = channelGainLeft;
-      this.gain[`squareWave${i}Right`] = channelGainRight;
+      this.initializeChannel(`squareChannel${i}`, 'square');
     }
+  }
+
+  initializeChannel(channelName, channelType) {
+    const leftOscillator = this.audioContext.createOscillator();
+    const rightOscillator = this.audioContext.createOscillator();
+
+    const channelGainLeft = this.audioContext.createGain();
+    const channelGainRight = this.audioContext.createGain();
+
+    channelGainLeft.connect(this.gain.gainNodeLeft);
+    channelGainRight.connect(this.gain.gainNodeRight);
+
+    leftOscillator.type = channelType;
+    leftOscillator.frequency.setValueAtTime(0, this.audioContext.currentTime);
+    leftOscillator.connect(channelGainLeft);
+
+    rightOscillator.type = channelType;
+    rightOscillator.frequency.setValueAtTime(0, this.audioContext.currentTime);
+    rightOscillator.connect(channelGainRight);
+
+    this.soundNodes[`${channelName}Left`] = leftOscillator;
+    this.soundNodes[`${channelName}Right`] = rightOscillator;
+    this.gain[`${channelName}Left`] = channelGainLeft;
+    this.gain[`${channelName}Right`] = channelGainRight;
   }
 
   start() {
