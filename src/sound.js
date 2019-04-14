@@ -4,24 +4,58 @@ class Sound {
     const gainNodeLeft = audioContext.createGain();
     const gainNodeRight = audioContext.createGain();
 
+    const merger = audioContext.createChannelMerger();
+
     this.soundNodes = {};
     this.gain = {};
 
     gainNodeLeft.gain.value = 1;
     gainNodeRight.gain.value = 1;
 
-    gainNodeLeft.connect(audioContext.destination);
-    gainNodeRight.connect(audioContext.destination);
+    gainNodeLeft.connect(merger, 0, 0);
+    gainNodeRight.connect(merger, 0, 1);
+
+    merger.connect(audioContext.destination);
+    // gainNodeLeft.connect(audioContext.destination);
+    // gainNodeRight.connect(audioContext.destination);
 
 
     this.gain.gainNodeLeft = gainNodeLeft;
     this.gain.gainNodeRight = gainNodeRight;
 
     this.audioContext = audioContext;
-    this.initializeSquareWaves();
+    this.initializeSquareChannels();
+    this.initializeWaveChannel();
   }
 
-  initializeSquareWaves() {
+  initializeWaveChannel() {
+    const waveChannelLeft = this.audioContext.createOscillator();
+    const waveChannelRight = this.audioContext.createOscillator();
+
+    const channelGainLeft = this.audioContext.createGain();
+    const channelGainRight = this.audioContext.createGain();
+
+    channelGainLeft.connect(this.gain.gainNodeLeft);
+    channelGainRight.connect(this.gain.gainNodeRight);
+
+    waveChannelLeft.connect(this.gain.gainNodeLeft);
+    waveChannelRight.connect(this.gain.gainNodeLeft);
+
+    waveChannelLeft.type = 'sine';
+    waveChannelLeft.frequency.setValueAtTime(0, this.audioContext.currentTime);
+    waveChannelLeft.connect(channelGainLeft);
+
+    waveChannelRight.type = 'sine';
+    waveChannelRight.frequency.setValueAtTime(0, this.audioContext.currentTime);
+    waveChannelRight.connect(channelGainLeft);
+
+    this.soundNodes.waveChannelLeft = waveChannelLeft;
+    this.soundNodes.waveChannelRight = waveChannelRight;
+    this.gain.waveChannelLeft = channelGainLeft;
+    this.gain.waveChannelRight = channelGainRight;
+  }
+
+  initializeSquareChannels() {
     for (let i = 1; i <= 2; i++) {
       const squareWaveLeft = this.audioContext.createOscillator();
       const squareWaveRight = this.audioContext.createOscillator();

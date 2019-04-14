@@ -27,7 +27,8 @@
   FF26  |  NR52  |  Sound on/off
 */
 
-const SquareWave = require('./squareChannel');
+const SquareChannel = require('./squareChannel');
+const WaveChannel = require('./waveChannel');
 
 const FRAME_SEQUENCE_COUNTDOWN_RESET = 8192;
 const DOWN_SAMPLE_COUNTER_RESET = 96;
@@ -38,8 +39,9 @@ class Apu {
     this.soundNodes = sound.soundNodes;
     this.audioContext = sound.audioContext;
     this.gain = sound.gain;
-    this.channel1 = new SquareWave();
-    this.channel2 = new SquareWave();
+    this.channel1 = new SquareChannel();
+    this.channel2 = new SquareChannel();
+    this.channel3 = new WaveChannel();
 
     this.powerEnabled = 0;
 
@@ -65,6 +67,7 @@ class Apu {
     for (let i = 0; i < 5; i++) {
       this.channel1.write(i, 0);
       this.channel2.write(i, 0);
+      this.channel3.write(i, 0);
     }
   }
 
@@ -75,6 +78,7 @@ class Apu {
 
     this.channel1.step();
     this.channel2.step();
+    this.channel3.step();
 
     if (--this.downSampleCounter <= 0) {
       this.downSampleCounter - DOWN_SAMPLE_COUNTER_RESET;
@@ -84,6 +88,8 @@ class Apu {
       this.gain.squareWave1Right.gain.value = this.channel1.getVolumeGain();
       this.gain.squareWave2Left.gain.value = this.channel2.getVolumeGain();
       this.gain.squareWave2Right.gain.value = this.channel2.getVolumeGain();
+      this.gain.waveChannelLeft.gain.value = this.channel3.getVolumeGain();
+      this.gain.waveChannelRight.gain.value = this.channel3.getVolumeGain();
 
       if (this.leftChannelsEnabled[0]) {
         this.soundNodes.squareWave1Left.frequency.setValueAtTime(this.channel1.getActualFrequency(), this.audioContext.currentTime);
@@ -100,6 +106,14 @@ class Apu {
       if (this.rightChannelsEnabled[1]) {
         this.soundNodes.squareWave2Right.frequency.setValueAtTime(this.channel2.getActualFrequency(), this.audioContext.currentTime);
       }
+
+      if (this.leftChannelsEnabled[2]) {
+        this.soundNodes.waveChannelLeft.frequency.setValueAtTime(this.channel3.getActualFrequency(), this.audioContext.currentTime);
+      }
+
+      if (this.rightChannelsEnabled[2]) {
+        this.soundNodes.waveChannelRight.frequency.setValueAtTime(this.channel3.getActualFrequency(), this.audioContext.currentTime);
+      }
     }
   }
 
@@ -111,6 +125,7 @@ class Apu {
         case 0: {
           this.channel1.runLengthCheck();
           this.channel2.runLengthCheck();
+          this.channel3.runLengthCheck();
           break;
         }
         case 1: break;
@@ -119,12 +134,14 @@ class Apu {
           this.channel1.runSweepCheck();
           this.channel2.runLengthCheck();
           this.channel2.runSweepCheck();
+          this.channel3.runLengthCheck();
           break;
         }
         case 3: break;
         case 4: {
           this.channel1.runLengthCheck();
           this.channel2.runLengthCheck();
+          this.channel3.runLengthCheck();
           break;
         }
         case 5: break;
@@ -133,6 +150,7 @@ class Apu {
           this.channel1.runSweepCheck();
           this.channel2.runLengthCheck();
           this.channel2.runSweepCheck();
+          this.channel3.runLengthCheck();
           break;
         }
         case 7: {
@@ -160,14 +178,17 @@ class Apu {
     addr %= 0xff10;
     let val;
 
+    if (addr >= 0x20) {
+      return this.channel3.readWaveTable(addr);
+    }
+
     switch (addr) {
       case 0x00: case 0x01: case 0x02: case 0x03: case 0x04:
         val = this.channel1.read(addr % 5); break;
       case 0x05: case 0x06: case 0x07: case 0x08: case 0x09:
         val = this.channel2.read(addr % 5); break;
       case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e:
-        // wave channel
-        break;
+        val = this.channel3.read(addr % 5); break;
       case 0x10: case 0x11: case 0x12: case 0x13:
         // nboise channel
         break;
@@ -186,14 +207,17 @@ class Apu {
   write(addr, val) {
     addr %= 0xff10;
 
+    if (addr >= 0x20) {
+      return this.channel3.writeWaveTable(addr, val);
+    }
+
     switch (addr) {
       case 0x00: case 0x01: case 0x02: case 0x03: case 0x04:
         val = this.channel1.write(addr % 5, val); break;
       case 0x05: case 0x06: case 0x07: case 0x08: case 0x09:
         val = this.channel2.write(addr % 5, val); break;
       case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e:
-        // wave channel
-        break;
+        val = this.channel3.write(addr % 5, val); break;
       case 0x10: case 0x11: case 0x12: case 0x13:
         // nboise channel
         break;

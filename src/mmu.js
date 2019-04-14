@@ -49,9 +49,9 @@ class MMU {
         this.rom = require(`../roms/test/${testRom}`);
       }
     } else {
-      // this.rom = require('../roms/tetris');
+      this.rom = require('../roms/tetris');
       // this.rom = require('../roms/dr_mario');
-      this.rom = require('../roms/super_mario_land');
+      // this.rom = require('../roms/super_mario_land');
       // this.rom = require('../roms/test/cpu_instrs');
       this.cartridgeType = this.rom[0x147];
     }
@@ -158,6 +158,8 @@ class MMU {
                   this.apu.read(addr);
                 }
                 val = this.io[addr & 0x7f]; break;
+              case 0x30:
+                this.apu.read(addr); break;
               case 0x40:
                 val = cpu.gpu.read(addr); break;
               default:
@@ -338,10 +340,11 @@ class MMU {
               case 0x10:
               case 0x20:
                 if (addr <= 0xff26) {
-                  // TODO implement sound later
                   this.apu.write(addr, val);
                 }
                 this.io[addr & 0x7f] = val; break;
+              case 0x30:
+                this.apu.write(addr, val); break;
               case 0x40:
                 cpu.gpu.write(cpu, addr, val); break;
               default:

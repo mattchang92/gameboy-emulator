@@ -19,6 +19,7 @@ class SquareChannel {
 
     // NRx1 Length
     this.length = 0;
+    this.lengthEnabled = false;
     this.duty = 0;
     this.dutySequencePointer = 0;
     this.dutyCycles = [
@@ -74,7 +75,7 @@ class SquareChannel {
   }
 
   runLengthCheck() {
-    if (this.length > 0 && this.waveformEnabled) {
+    if (this.length > 0 && this.lengthEnabled) {
       this.length--;
       if (this.length === 0) {
         this.waveformEnabled = false;
@@ -95,6 +96,7 @@ class SquareChannel {
   }
 
   setOutputVolume() {
+    // if (this.waveformEnabled) {
     if (this.waveformEnabled && !!this.dutyCycles[this.duty][this.dutySequencePointer]) {
       this.outputVolume = this.volume;
     } else {
@@ -105,7 +107,7 @@ class SquareChannel {
   step() {
     if (--this.timer <= 0) {
       this.resetTimer();
-      this.dutySequencePointer = (++this.dutySequencePointer) % 8;
+      this.dutySequencePointer = (this.dutySequencePointer + 1) % 8;
     }
 
     this.setOutputVolume();
