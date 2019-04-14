@@ -39,6 +39,7 @@ class Apu {
     this.gainNodeLeft = sound.gainNodeLeft;
     this.gainNodeRight = sound.gainNodeRight;
     this.channel1 = new SquareWave();
+    this.channel2 = new SquareWave();
 
     this.powerEnabled = 0;
 
@@ -63,6 +64,7 @@ class Apu {
 
     for (let i = 0; i < 5; i++) {
       this.channel1.write(i, 0);
+      this.channel2.write(i, 0);
     }
   }
 
@@ -72,6 +74,7 @@ class Apu {
     }
 
     this.channel1.step();
+    this.channel2.step();
 
     if (--this.downSampleCounter <= 0) {
       this.downSampleCounter - DOWN_SAMPLE_COUNTER_RESET;
@@ -85,6 +88,14 @@ class Apu {
       if (this.rightChannelsEnabled[0]) {
         this.soundNodes.squareWave1Right.frequency.setValueAtTime(this.channel1.getActualFrequency(), this.audioContext.currentTime);
       }
+
+      if (this.leftChannelsEnabled[1]) {
+        this.soundNodes.squareWave2Left.frequency.setValueAtTime(this.channel2.getActualFrequency(), this.audioContext.currentTime);
+      }
+
+      if (this.rightChannelsEnabled[1]) {
+        this.soundNodes.squareWave2Right.frequency.setValueAtTime(this.channel2.getActualFrequency(), this.audioContext.currentTime);
+      }
     }
   }
 
@@ -95,27 +106,34 @@ class Apu {
       switch (this.frameSequencer) {
         case 0: {
           this.channel1.runLengthCheck();
+          this.channel2.runLengthCheck();
           break;
         }
         case 1: break;
         case 2: {
           this.channel1.runLengthCheck();
-          this.channel1.runSweepCheck();
+          this.channel1.runLengthCheck();
+          this.channel2.runSweepCheck();
+          this.channel2.runSweepCheck();
           break;
         }
         case 3: break;
         case 4: {
           this.channel1.runLengthCheck();
+          this.channel2.runLengthCheck();
           break;
         }
         case 5: break;
         case 6: {
           this.channel1.runLengthCheck();
           this.channel1.runSweepCheck();
+          this.channel2.runLengthCheck();
+          this.channel2.runSweepCheck();
           break;
         }
         case 7: {
           this.channel1.runEnvelopeCheck();
+          this.channel2.runEnvelopeCheck();
           break;
         }
         default: {
@@ -142,8 +160,7 @@ class Apu {
       case 0x00: case 0x01: case 0x02: case 0x03: case 0x04:
         val = this.channel1.read(addr % 5); break;
       case 0x05: case 0x06: case 0x07: case 0x08: case 0x09:
-        // channel 2
-        break;
+        val = this.channel2.read(addr % 5); break;
       case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e:
         // wave channel
         break;
@@ -169,8 +186,7 @@ class Apu {
       case 0x00: case 0x01: case 0x02: case 0x03: case 0x04:
         val = this.channel1.write(addr % 5, val); break;
       case 0x05: case 0x06: case 0x07: case 0x08: case 0x09:
-        // channel 2
-        break;
+        val = this.channel2.write(addr % 5, val); break;
       case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e:
         // wave channel
         break;
@@ -190,6 +206,7 @@ class Apu {
       case 0x16:
         if (val & 0x80 === 0) {
           this.powerEnabled = 0;
+          this.sound.stop();
           this.reset();
         } else if (!this.powerEnabled) {
           this.frameSequencer = 0;

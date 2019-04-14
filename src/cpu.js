@@ -1,6 +1,6 @@
 const GPU = require('./gpu');
 const MMU = require('./mmu');
-const APU = require('./sound/apu');
+const APU = require('./soundComponents/apu');
 const Timer = require('./timer');
 const Controller = require('./controller');
 const { opcodes, interrupts } = require('./opcodes/opcodes');
