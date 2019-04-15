@@ -24,6 +24,8 @@ class CPU {
 
     this.timeStamp = 0;
 
+    const SKIP_BOOT_ROM = true;
+
     this.registers = {
       A: 0,
       F: 0,
@@ -45,7 +47,7 @@ class CPU {
 
     this.RUN = 0;
 
-    this.USE_ACTUAL_SPEED = false;
+    this.USE_ACTUAL_SPEED = true;
 
     this.clock = {
       m: 0,
@@ -60,6 +62,8 @@ class CPU {
     this.gpu = new GPU(this.mmu);
     this.timer = new Timer();
     this.controller = new Controller(this.mmu);
+
+    if (SKIP_BOOT_ROM) this.skipBootRom();
   }
 
   get A() { return this.registers.A; }
@@ -127,6 +131,28 @@ class CPU {
     this.gpu = new GPU(this.mmu);
     this.timer = new Timer();
     this.controller = new Controller(this.mmu);
+  }
+
+  skipBootRom() {
+    this.registers = {
+      A: 0x11,
+      F: 0xb0,
+      B: 0,
+      C: 0x13,
+      D: 0,
+      E: 0xd8,
+      H: 0x01,
+      L: 0x4d,
+      PC: 0x100,
+      SP: 0xfffe,
+    };
+
+    this.mmu.write8(this, 0xff40, 0x91);
+    this.mmu.write8(this, 0xff47, 0xfc);
+    this.mmu.write8(this, 0xff48, 0xff);
+    this.mmu.write8(this, 0xff49, 0xff);
+
+    this.mmu.biosExecuted = true;
   }
 
   disableInterrupt() {
