@@ -24,7 +24,7 @@ class CPU {
 
     this.timeStamp = 0;
 
-    const SKIP_BOOT_ROM = true;
+    const SKIP_BOOT_ROM = false;
 
     this.registers = {
       A: 0,

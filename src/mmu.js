@@ -23,6 +23,8 @@ class MMU {
       { rombank: 0, mode: 0 },
     ];
 
+    this.roms = {};
+
     this.romOffset = 0x4000;
     this.printed = false;
 
@@ -53,6 +55,13 @@ class MMU {
       // this.rom = require('../roms/dr_mario');
       // this.rom = require('../roms/megaman');
       this.rom = require('../roms/super_mario_land');
+
+      this.roms = {
+        mario: require('../roms/super_mario_land'),
+        tetris: require('../roms/tetris'),
+        drMario: require('../roms/dr_mario'),
+        kirby: require("../roms/Kirby's Dream Land"),
+      };
       // this.rom = require('../roms/test/cpu_instrs');
       this.cartridgeType = this.rom[0x147];
     }

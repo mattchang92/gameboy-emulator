@@ -20,6 +20,14 @@ const bindController = (cou) => {
 if (process.env.NODE_ENV === 'test') {
   gameLoop = setInterval(cpu.frame.bind(cpu), 1);
 } else {
+  const reset = () => {
+    clearInterval(gameLoop);
+    cpu.reset();
+    bindController(cpu);
+    running = false;
+    sound.stop();
+  }
+
   document.getElementById('run').onclick = () => {
     if (running) {
       return null;
@@ -46,9 +54,27 @@ if (process.env.NODE_ENV === 'test') {
   };
 
   document.getElementById('reset').onclick = () => {
-    clearInterval(gameLoop);
-    cpu.reset();
-    bindController(cpu);
+    reset();
+  };
+
+  document.getElementById('mario').onclick = () => {
+    reset();
+    cpu.mmu.rom = cpu.mmu.roms.mario;
+  };
+
+  document.getElementById('tetris').onclick = () => {
+    reset();
+    cpu.mmu.rom = cpu.mmu.roms.tetris;
+  };
+
+  document.getElementById('dr-mario').onclick = () => {
+    reset();
+    cpu.mmu.rom = cpu.mmu.roms.drMario;
+  };
+
+  document.getElementById('kirby').onclick = () => {
+    reset();
+    cpu.mmu.rom = cpu.mmu.roms.kirby;
   };
 
   document.getElementById('stop').onclick = () => {
