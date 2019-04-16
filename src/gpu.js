@@ -102,6 +102,7 @@ class GPU {
     this.mode = 0; // bit 0-1
 
     this.mapCounter = 0; // test variable
+    this.windowLineCounter = 0;
 
     this.reset();
   }
@@ -167,7 +168,6 @@ class GPU {
         this.gpuRam[addr - 0xff40] = val; break;
       case STAT:
         this.setSTAT(val);
-        // this.STAT = val;
         this.STAT = this.STAT & ~0x78 | (val & 0xf8);
         this.gpuRam[addr - 0xff40] = val; break;
       case SCY:
@@ -176,8 +176,8 @@ class GPU {
         this.SCX = val; break;
       case 0x4:
         this.LY = 0;
-        console.log('should not be writing to LY'); break;
-        // this.LY = val; break;
+        this.windowLineCounter = 0;
+        break;
       case LYC:
         this.LYC = val; break;
       case DMA:
@@ -237,11 +237,22 @@ class GPU {
     // if (!this.LCDEnable) return;
 
     if (this.bgEnable) this._renderBackgroundLine(tileMapAddress, tileSet, scanRow);
+    if (this.windowEnable) this._renderWindowLine();
     if (this.objEnable) this._renderSpritesLine(scanRow);
   }
 
   step(cpu) {
     this.MODECLOCK += cpu.M;
+
+    if (!this.LCDEnable) {
+      this.MODECLOCK = 0;
+      this.LY = 0;
+      this.windowLineCounter = 0;
+      this.MODE = 0;
+      this.setSTAT(this.STAT & 0xfc);
+      return;
+    }
+
     switch (this.MODE) {
       case 0: // Hblank
         if (this.MODECLOCK >= 51) {
@@ -264,13 +275,17 @@ class GPU {
         if (this.MODECLOCK >= 114) {
           this.MODECLOCK -= 114;
           this.LY++;
+          this._checkLYC();
 
-          if (this.LY > 153) {
+          if (this.LY === 153) {
+            this.LY = 0;
+            this.windowLineCounter = 0;
+            this._checkLYC();
+          } else if (this.LY === 1) {
             this._changeMode(2);
             this.MODE = 2;
             this.LY = 0;
           }
-          this._checkLYC();
         }
         break;
 
@@ -347,19 +362,66 @@ class GPU {
     }
   }
 
+  _renderWindowLine() {
+    const windowX = this.WX - 7;
+    const windowY = this.WY;
+
+    if (windowX >= 160 || windowY > this.LY) {
+      return null;
+    }
+
+    const x = 7 - this.WX;
+    const y = this.windowLinterCounter++;
+
+    for (let i = 0; i < 160; i++) {
+      const tileNum = Math.floor(x / 8) + Math.floor((y / 8) * 32);
+
+      let mapLocation;
+
+      if (this.windowTileAddress) {
+        mapLocation = 0x1c00 + tileNum;
+      } else {
+        mapLocation = 0x1800 + tileNum;
+      }
+
+      let tileLocation = this.vram[mapLocation];
+
+      if (this.bgAndWindowTileData) {
+        tileLocation << 4;
+      } else {
+        tileLocation = (128 + tileLocation) & 0xff;
+        tileLocation = 0x800 + (tileLocation << 4);
+      }
+
+      // console.log(tileLocation.toString(16));
+    }
+  }
+
   _renderSpritesLine(scanRow) {
     const isOnScreen = (obj, x) => ((obj.x + x) >= 0) && ((obj.x + x) < 160);
     const isNotTransparent = (tileRow, x) => tileRow[x];
     const isDisplayed = (obj, x) => obj.zIndex || !scanRow[obj.x + x];
+    let numSpritesRendered = 0;
 
     for (let i = 0; i < NUM_SPRITES; i++) {
       const obj = this.objectData[i];
       const height = this.objSize ? 16 : 8;
-      if (obj.y <= this.LY && (obj.y + height) > this.LY) {
+      if (obj.y <= this.LY && (obj.y + height) > this.LY && (++numSpritesRendered <= 10)) {
         const palette = obj.palette ? this.objPalette1 : this.objPalette0;
         const baseIndex = ((this.LY * SCREEN_WIDTH) + obj.x) * CANVAS_ELEMENTS_PER_PIXEL;
-        const row = obj.yFlip ? (height - 1) - (this.LY - obj.y) : this.LY - obj.y;
-        const tileRow = this.tileset[obj.tile][row];
+        let row = obj.yFlip ? (height - 1) - (this.LY - obj.y) : this.LY - obj.y;
+        let spriteTile = obj.tile;
+
+        if (this.objSize) {
+          if (row < 8) {
+            spriteTile &= 0xfe;
+          } else {
+            spriteTile |= 1;
+          }
+          row &= 0x7;
+        }
+
+        const tileRow = this.tileset[spriteTile][row];
 
         for (let x = 0; x < 8; x++) {
           const pixel = obj.xFlip ? (7 - x) : x;

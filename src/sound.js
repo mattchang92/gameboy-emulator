@@ -15,7 +15,8 @@ class Sound {
     gainNodeLeft.connect(merger, 0, 0);
     gainNodeRight.connect(merger, 0, 1);
 
-    merger.connect(audioContext.destination);
+    this.audioContext = audioContext;
+    this.merger = merger;
 
     this.gain.gainNodeLeft = gainNodeLeft;
     this.gain.gainNodeRight = gainNodeRight;
@@ -64,12 +65,16 @@ class Sound {
     this.gain[`${channelName}Right`] = channelGainRight;
   }
 
-  start() {
+  startChannels() {
     Object.values(this.soundNodes).forEach(node => node.start());
   }
 
+  play() {
+    this.merger.connect(this.audioContext.destination);
+  }
+
   stop() {
-    Object.values(this.soundNodes).forEach(node => node.stop());
+    this.merger.disconnect(this.audioContext.destination);
   }
 }
 

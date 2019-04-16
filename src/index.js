@@ -8,11 +8,9 @@ const cpu = new CPU(sound);
 
 let gameLoop;
 
-// const fs = require('fs');
 
-// if (cpu.writeLog) {
-  // fs.writeFileSync('/Users/matthewchang/Desktop/mine.txt', '');
-// }
+let init = false;
+let running = false;
 
 const bindController = (cou) => {
   window.onkeydown = cpu.controller.keyDown.bind(cpu.controller);
@@ -23,13 +21,28 @@ if (process.env.NODE_ENV === 'test') {
   gameLoop = setInterval(cpu.frame.bind(cpu), 1);
 } else {
   document.getElementById('run').onclick = () => {
+    if (running) {
+      return null;
+    } else {
+      running = true;
+    }
+
     gameLoop = setInterval(cpu.frame.bind(cpu), 1);
 
-    sound.start();
+    if (!init) {
+      init = true;
+      sound.startChannels();
+    }
+
+    sound.play();
   };
 
   document.getElementById('step').onclick = () => {
     cpu.step();
+  };
+
+  document.getElementById('toggleFrameRate').onclick = () => {
+    cpu.USE_ACTUAL_SPEED = !cpu.USE_ACTUAL_SPEED;
   };
 
   document.getElementById('reset').onclick = () => {
@@ -41,6 +54,7 @@ if (process.env.NODE_ENV === 'test') {
   document.getElementById('stop').onclick = () => {
     console.log('stopping!!!');
     clearInterval(gameLoop);
+    running = false;
     sound.stop();
   };
 
