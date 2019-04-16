@@ -39,6 +39,9 @@ class CPU {
       SP: 0,
     };
 
+    this.framesProcessed = 0;
+    this.frameRateTimeStamp = new Date().getTime();
+
     // stack pointer
     this.T = 0;
 
@@ -216,6 +219,7 @@ class CPU {
   executeCycle() {
     this.timeStamp = new Date().getTime();
     const frameEnd = this.clock.m + 17556 * 1;
+    this.framesProcessed++;
 
     while (this.clock.m < frameEnd) {
       const registers = ['B', 'C', 'D', 'E', 'H', 'L', 'A', 'F'];
@@ -287,6 +291,13 @@ class CPU {
       this.timer.increment(this);
 
       this.gpu.step(this);
+    }
+
+    const now = new Date().getTime();
+    if (now - this.frameRateTimeStamp > 1000) {
+      document.getElementById('frame-rate-display').innerHTML = this.framesProcessed;
+      this.framesProcessed = 0;
+      this.frameRateTimeStamp = now;
     }
   }
 }

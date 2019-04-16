@@ -41,7 +41,7 @@ if (process.env.NODE_ENV === 'test') {
     cpu.step();
   };
 
-  document.getElementById('toggleFrameRate').onclick = () => {
+  document.getElementById('toggle-frame-rate').onclick = () => {
     cpu.USE_ACTUAL_SPEED = !cpu.USE_ACTUAL_SPEED;
   };
 
