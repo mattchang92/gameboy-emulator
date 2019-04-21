@@ -19,7 +19,7 @@
 */
 
 class Timer {
-  constructor() {
+  constructor(mmu) {
     this.clock = {
       main: 0,
       sub: 0,
@@ -29,10 +29,12 @@ class Timer {
     this.tima = 0; // timer counter
     this.tma = 0; // timer modulo
     this.tac = 0; // timer control
+
+    this.mmu = mmu;
   }
 
-  increment(cpu) {
-    this.clock.sub += cpu.M;
+  increment(mCycles) {
+    this.clock.sub += mCycles;
 
     if (this.clock.sub >= 4) {
       this.clock.main++;
@@ -45,10 +47,10 @@ class Timer {
       }
     }
 
-    this.check(cpu);
+    this.check();
   }
 
-  check(cpu) {
+  check() {
     if (this.tac & 4) {
       let threshold;
       switch (this.tac & 3) {
@@ -59,21 +61,21 @@ class Timer {
         default: break;
       }
 
-      if (this.clock.main >= threshold) this.step(cpu);
+      if (this.clock.main >= threshold) this.step();
     }
   }
 
-  step(cpu) {
+  step() {
     this.clock.main = 0;
     this.tima++;
 
     if (this.tima > 255) {
       this.tima = this.tma;
-      cpu.mmu.if |= 4;
+      this.mmu.if |= 4;
     }
   }
 
-  read(cpu, addr) {
+  read(addr) {
     switch (addr) {
       case 0xff04: return this.div;
       case 0xff05: return this.tima;
@@ -83,7 +85,7 @@ class Timer {
     }
   }
 
-  write(cpu, addr, val) {
+  write(addr, val) {
     switch (addr) {
       case 0xff04: this.div = 0; break;
       case 0xff05: this.tima = val; break;

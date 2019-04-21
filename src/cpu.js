@@ -1,30 +1,13 @@
-const GPU = require('./gpu');
-const MMU = require('./mmu');
-const APU = require('./soundComponents/apu');
-const Timer = require('./timer');
-const Controller = require('./controller');
 const { opcodes, interrupts } = require('./opcodes/opcodes');
 
-// const fs = require('fs');
-
 class CPU {
-  constructor(sound) {
-    // TODO: Refactor non-cpu related functionality into GameBoy module
-    this.sound = sound;
-
-    // general use registers
+  constructor(apu, mmu, gpu, timer, controller) {
     this.rstCalled = false;
     this.initialCounter = 0;
     this.logsEnabled = false;
-    this.counter = 0;
-    this.offset = 2100000;
-    // this.offset = 2199852;
-    this.limit = 60000;
-    this.writeLog = false;
-
     this.timeStamp = 0;
 
-    const SKIP_BOOT_ROM = false;
+    const SKIP_BOOT_ROM = true;
 
     this.registers = {
       A: 0,
@@ -42,15 +25,10 @@ class CPU {
     this.framesProcessed = 0;
     this.frameRateTimeStamp = new Date().getTime();
 
-    // stack pointer
     this.T = 0;
-
-    // halt
     this.HALT = 0;
-
     this.RUN = 0;
-
-    this.USE_ACTUAL_SPEED = true;
+    this.USE_ACTUAL_SPEED = false;
 
     this.clock = {
       m: 0,
@@ -60,11 +38,11 @@ class CPU {
     this.ime = 1;
 
     // components
-    this.apu = new APU(sound);
-    this.mmu = new MMU(this.apu);
-    this.gpu = new GPU(this.mmu);
-    this.timer = new Timer();
-    this.controller = new Controller(this.mmu);
+    this.apu = apu;
+    this.mmu = mmu;
+    this.gpu = gpu;
+    this.timer = timer;
+    this.controller = controller;
 
     if (SKIP_BOOT_ROM) this.skipBootRom();
   }
@@ -102,39 +80,6 @@ class CPU {
 
   set PC(x) { this.registers.PC = x & 0xffff; }
   set SP(x) { this.registers.SP = x & 0xffff; }
-
-  reset() {
-    this.registers = {
-      A: 0,
-      F: 0,
-      B: 0,
-      C: 0,
-      D: 0,
-      E: 0,
-      H: 0,
-      L: 0,
-      PC: 0,
-      SP: 0,
-    };
-    this.M = 0;
-    this.T = 0;
-    this.HALT = 0;
-    this.RUN = 0;
-    this.timeStamp = 0;
-
-    this.ime = 1;
-    this.clock = {
-      m: 0,
-      t: 0,
-    };
-    this.mmu.biosExecuted = false;
-
-    this.apu = new APU(this.sound);
-    this.mmu = new MMU(this.apu);
-    this.gpu = new GPU(this.mmu);
-    this.timer = new Timer();
-    this.controller = new Controller(this.mmu);
-  }
 
   skipBootRom() {
     this.registers = {
@@ -222,63 +167,18 @@ class CPU {
     this.framesProcessed++;
 
     while (this.clock.m < frameEnd) {
-      const registers = ['B', 'C', 'D', 'E', 'H', 'L', 'A', 'F'];
-      registers.forEach((r, i) => {
-        if (typeof this[r] !== 'number') {
-          console.log('not a number', r, i);
-        }
-      });
-
-      if (this.FAIL) {
-        const op = this.mmu.read8(this, this.PC - 1);
-        console.log('write byte failed', op.toString(16));
-        this.FAIL = false;
-      }
+      this._validateState();
 
       if (this.HALT) {
         this.M = 1;
       } else {
-        // const pc = this.PC;
-        // const sp = this.SP;
         const op = this.mmu.read8(this, this.PC++);
 
-        // if (this.writeLog && this.counter > this.offset && this.counter < (this.offset + this.limit)) {
-        //   fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', `Initial flag: ${this.F.toString(2)}\n`);
-        // }
-
-        this.initialCounter++;
-        if (this.initialCounter > this.offset) {
-          // this.logsEnabled = true;
-          // this.counter++;
-        }
-
-        if (typeof opcodes[op] !== 'function') {
-          const prevOp = this.mmu.read8(this, this.PC - 2);
-          console.log('num instructions implemented: ', Object.keys(opcodes).length);
-          console.log('not a function!!!', op, `0x${op.toString(16)}`, opcodes[op], ' previous is ', prevOp.toString(16), ' pc is at ', this.PC);
-        }
+        this._validateOpcode(op);
 
         opcodes[op](this);
 
         this.apu.step(this.M * 4);
-
-        // const {
-        //   F, B, C, D, E, H, L, A,
-        // } = this;
-        // console.log(F, pc, op.toString(16));
-        // const getFlags = val => [val >> 7 & 1, val >> 6 & 1, val >> 5 & 1, val >> 4 & 1];
-
-        if (this.writeLog && this.counter > this.offset && this.counter < (this.offset + this.limit)) {
-          // const test = `PC: ${pc},  OP: ${op.toString(16)}, F: ${getFlags(F)}, LY: ${this.gpu.LY}, CLOCK: ${this.gpu.MODECLOCK}, M: ${this.M}\n`;
-          // const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${F.toString(2).slice(0, 4)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L}, M: ${this.M}\n`;
-          // const test = `PC: ${pc},  OP: ${op.toString(16)},  F: ${getFlags(F)},  SP: ${sp},  B: ${B},  C: ${C},  D: ${D},  E: ${E},  H: ${H},  L: ${L}, A: ${A}, M: ${this.M}\n`;
-          // fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', test);
-        }
-        this.counter++;
-
-        // if (this.counter < this.limit && this.logsEnabled) {
-        // console.log('PC:', pc, ' OP:', op.toString(16), ' F:', this.F.toString(2).slice(0, 4), ' SP:', sp, ' B:', this.B, ' C:', this.C, ' D:', this.D, ' E:', this.E, ' H:', this.H, ' L:', this.L, ' A:', this.A);
-        // }
 
         this.PC &= 0xffff;
       }
@@ -288,11 +188,38 @@ class CPU {
 
       this.clock.m += this.M;
       this.clock.t += this.T;
-      this.timer.increment(this);
+      this.timer.increment(this.M);
 
-      this.gpu.step(this);
+      this.gpu.step(this.M);
     }
 
+    this._calculateFrameRate();
+  }
+
+  _validateOpcode(op) {
+    if (typeof opcodes[op] !== 'function') {
+      const prevOp = this.mmu.read8(this, this.PC - 2);
+      console.log('num instructions implemented: ', Object.keys(opcodes).length);
+      console.log('not a function!!!', op, `0x${op.toString(16)}`, opcodes[op], ' previous is ', prevOp.toString(16), ' pc is at ', this.PC);
+    }
+  }
+
+  _validateState() {
+    const registers = ['B', 'C', 'D', 'E', 'H', 'L', 'A', 'F'];
+    registers.forEach((r, i) => {
+      if (typeof this[r] !== 'number') {
+        console.log('not a number', r, i);
+      }
+    });
+
+    if (this.FAIL) {
+      const op = this.mmu.read8(this, this.PC - 1);
+      console.log('write byte failed', op.toString(16));
+      this.FAIL = false;
+    }
+  }
+
+  _calculateFrameRate() {
     const now = new Date().getTime();
     if (now - this.frameRateTimeStamp > 1000) {
       document.getElementById('frame-rate-display').innerHTML = this.framesProcessed;

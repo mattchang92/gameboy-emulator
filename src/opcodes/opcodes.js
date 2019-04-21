@@ -711,41 +711,6 @@ const opcodes = {
   [OPCODES.DECH]: DECREMENT.DECH,
   [OPCODES.LDHn]: LOAD.LDHn,
   [OPCODES.DAA]: (cpu) => {
-    // const isSub = (cpu.F & 0x40) ? 1 : 0;
-    // const half = (cpu.F & 0x20) ? 1 : 0;
-    // const carry = (cpu.F & 0x10) ? 1 : 0;
-
-    // if (isSub) {
-    //   if (carry || cpu.A > 0x99) { cpu.A = (cpu.A + 0x60) & 0xff; cpu.F |= 0x10; }
-    //   if (half || (cpu.A & 0x0f) > 0x09) { cpu.A = (cpu.A + 0x6) & 0xff; }
-    // } else {
-    //   if (carry) { cpu.A = (cpu.A - 0x60) & 0xff; }
-    //   if (half) { cpu.A = (cpu.A - 0x6) & 0xff; }
-    // }
-
-    // cpu.F |= (cpu.A === 0 ? 0x80 : 0);
-    // cpu.F &= ~0x20;
-
-    // const sub = (cpu.F & 0x40) ? 1 : 0;
-    // const half = (cpu.F & 0x20) ? 1 : 0;
-    // let carry = (cpu.F & 0x10) ? 1 : 0;
-    // if (sub) {
-    //   if (carry) cpu.A -= 0x60;
-    //   if (half) cpu.A = (cpu.A - 0x6) & 0xFF;
-    // } else {
-    //   if ((cpu.A & 0xF) > 9 || half) cpu.A += 0x6;
-    //   if (cpu.A > 0x9F || carry) cpu.A += 0x60;
-    // }
-
-    // if (cpu.A & 0x100) carry = 1;
-
-    // cpu.A &= 0xFF;
-    // cpu.F &= 0x40;
-
-    // if (cpu.A === 0) cpu.F |= 0x80;
-    // if (carry) cpu.F |= 0x10;
-
-
     let r;
     let adjust = 0;
 
@@ -966,9 +931,6 @@ const opcodes = {
   [OPCODES.RET]: RETURN.RET,
   [OPCODES.JPZnn]: JUMP.JPZnn,
   [OPCODES.EXTops]: (cpu) => {
-    // cpu.F = 0; cpu.PC++;
-    // console.log(cpu.mmu.biosExecuted);
-    // console.log('startin extops', cpu.PC);
     const op = cpu.mmu.read8(cpu, cpu.PC++);
     if (cbopcodes[op]) {
       // if (cpu.logsEnabled && cpu.counter < cpu.limit) {

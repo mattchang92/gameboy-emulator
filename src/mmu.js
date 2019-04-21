@@ -26,7 +26,6 @@ class MMU {
     this.roms = {};
 
     this.romOffset = 0x4000;
-    this.printed = false;
 
     this.testOutput = '';
 
@@ -81,8 +80,6 @@ class MMU {
 
     switch (addr & 0xf000) {
       // Bios (256 B) /ROM0 (16K)
-      // 0x0104-0x0133
-
       case 0x0000:
         if (!this.biosExecuted) {
           if (addr < 0x100) {
@@ -156,7 +153,7 @@ class MMU {
                   case 5:
                   case 6:
                   case 7:
-                    val = cpu.timer.read(cpu, addr); break;
+                    val = cpu.timer.read(addr); break;
                   default:
                     val = this.io[addr & 0x7f]; break;
                 }
@@ -185,35 +182,17 @@ class MMU {
         break;
     }
 
-    if (cpu.writeLog && cpu.counter > cpu.offset && cpu.counter < (cpu.offset + cpu.limit)) {
-      // if (addr !== 0xff44) {
-      // fs.appendFileSync('/Userss/matthewchang/Desktop/mine.txt', `reading byte from ram: addr: 0x${addr.toString(16)} with value: ${val}\n`);
-      // }
-    }
     return val;
   }
 
   read16(cpu, addr) {
     addr &= 0xffff;
-    if (cpu.counter < cpu.limit && cpu.logsEnabled) {
-      // console.log(`Reading word from address ${addr}`);
-    }
-
-    // const one = this.read8(cpu, addr);
-    // const two = (this.read8(cpu, addr + 1) << 8);
 
     return ((this.read8(cpu, addr + 1) << 8) | this.read8(cpu, addr)) & 0xffff;
-    // console.log('reading form addr ', addr, 'what are the vals', one, '  ', two);
-    // console.log('reading 16 bit val from memory', one + two, ' from address ', addr);
-    // return one + two;
   }
 
   write8(cpu, addr, val) {
     val &= 0xff;
-
-    // if (cpu.writeLog && cpu.counter > cpu.offset && cpu.counter < (cpu.offset + cpu.limit)) {
-    //   fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', `writing byte to ram: addr: 0x${addr.toString(16)}, val: ${val}\n`);
-    // }
 
     if (cpu === undefined || addr === undefined || val === undefined) {
       console.log('Missing required params for write byte');
@@ -223,14 +202,7 @@ class MMU {
       cpu.FAIL = true;
     }
     if (addr === 0xff50 && !this.biosExecuted) {
-      this.printed = true;
       this.biosExecuted = true;
-      // fs.appendFileSync('/Users/matthewchang/Desktop/mine.txt', this.vram.join('\n'));
-
-      // console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!s!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-    }
-    if (cpu.counter < cpu.limit && cpu.logsEnabled) {
-      // console.log(`Writing byte to address ${addr} with value ${val}`);
     }
     addr &= 0xffff;
 
@@ -341,7 +313,7 @@ class MMU {
                   case 5:
                   case 6:
                   case 7:
-                    cpu.timer.write(cpu, addr, val); break;
+                    cpu.timer.write(addr, val); break;
                   default:
                     this.io[addr & 0x7f] = val; break;
                 }
@@ -371,15 +343,6 @@ class MMU {
   }
 
   write16(cpu, addr, val) {
-    if (cpu.counter < cpu.limit && cpu.logsEnabled) {
-      // console.log(`Writing word to address ${addr} with value ${val}`);
-    }
-
-    if (cpu === undefined || addr === undefined || val === undefined) {
-      // console.log('Missing required params for write word');
-    }
-
-    // if (addr === 0xff50) console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BIOS SUCCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     addr &= 0xffff;
 
     const leastSigByte = val & 0xff;

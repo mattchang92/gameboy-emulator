@@ -230,19 +230,18 @@ class GPU {
 
     // const tileSet = 1;
     const tileMapAddress = this.bgTileMapAddress ? 0x1c00 : 0x1800; // (0=8800-97FF, 1=8000-8FFF)
-    const tileSet = this.bgAndWindowTileData; // (0=9800-9BFF, 1=9C00-9FFF)
-    // const tileSet = this.bgAndWindowTileData ? 1 : 2;
+    const tileSetSelect = this.bgAndWindowTileData; // (0=9800-9BFF, 1=9C00-9FFF)
     const scanRow = [];
 
     // if (!this.LCDEnable) return;
 
-    if (this.bgEnable) this._renderBackgroundLine(tileMapAddress, tileSet, scanRow);
+    if (this.bgEnable) this._renderBackgroundLine(tileMapAddress, tileSetSelect, scanRow);
     if (this.windowEnable) this._renderWindowLine();
     if (this.objEnable) this._renderSpritesLine(scanRow);
   }
 
-  step(cpu) {
-    this.MODECLOCK += cpu.M;
+  step(mCycles) {
+    this.MODECLOCK += mCycles;
 
     if (!this.LCDEnable) {
       this.MODECLOCK = 0;
@@ -330,7 +329,7 @@ class GPU {
     }
   }
 
-  _renderBackgroundLine(tileMapAddress, tileSet, scanRow) {
+  _renderBackgroundLine(tileMapAddress, tileSetSelect, scanRow) {
     for (let col = 0; col < SCREEN_WIDTH; col++) {
       const actualRow = (this.LY + this.SCY) & 0xff;
       const actualCol = (col + this.SCX) & 0xff;
@@ -340,12 +339,7 @@ class GPU {
       const tileId = this.vram[tileMapAddress + tileIndex];
 
 
-      const tile = tileSet ? this.tileset[tileId] : this.tileset[256 + tileId.signed()];
-      // if (tileSet === 1 || tileId > 127) {
-      //   tile = this.tileset[tileId];
-      // } else {
-      //   tile = this.tileset[256 + tileId];
-      // }
+      const tile = tileSetSelect ? this.tileset[tileId] : this.tileset[256 + tileId.signed()];
 
       if (tile) {
         const colorId = tile[actualRow % ROWS_IN_TILE][actualCol % COLS_IN_TILE];
@@ -392,8 +386,6 @@ class GPU {
         tileLocation = (128 + tileLocation) & 0xff;
         tileLocation = 0x800 + (tileLocation << 4);
       }
-
-      // console.log(tileLocation.toString(16));
     }
   }
 
