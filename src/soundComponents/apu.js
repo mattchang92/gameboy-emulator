@@ -54,6 +54,13 @@ class Apu {
       noiseChannel: 'channel4',
     };
 
+    this.disabledChannels = {
+      channel1: 0,
+      channel2: 0,
+      channel3: 0,
+      channel4: 0,
+    };
+
     this.reset();
   }
 
@@ -106,8 +113,8 @@ class Apu {
       const right = `${channel}Right`;
       const channelNumber = this.channels[channel];
 
-      this.gain[left].gain.value = this[channelNumber].getVolumeGain();
-      this.gain[right].gain.value = this[channelNumber].getVolumeGain();
+      this.gain[left].gain.value = this.disabledChannels[channelNumber] ? 0 : this[channelNumber].getVolumeGain();
+      this.gain[right].gain.value = this.disabledChannels[channelNumber] ? 0 : this[channelNumber].getVolumeGain();
 
       if (this.leftChannelsEnabled[i]) {
         this.soundNodes[left].frequency.setValueAtTime(this[channelNumber].getActualFrequency(), this.audioContext.currentTime);
@@ -175,6 +182,7 @@ class Apu {
   }
 
   updateChannelsEnabled(val) {
+    // TODO: Enable 4 once noise channel is implemented/fixed
     for (let i = 0; i < 3; i++) {
       this.rightChannelsEnabled[i] = (val >> i) & 1;
       this.leftChannelsEnabled[i] = (val >> (i + 4)) & 1;

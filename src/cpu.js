@@ -7,7 +7,7 @@ class CPU {
     this.logsEnabled = false;
     this.timeStamp = 0;
 
-    const SKIP_BOOT_ROM = true;
+    const SKIP_BOOT_ROM = false;
 
     this.registers = {
       A: 0,
@@ -28,7 +28,7 @@ class CPU {
     this.T = 0;
     this.HALT = 0;
     this.RUN = 0;
-    this.USE_ACTUAL_SPEED = false;
+    this.USE_ACTUAL_SPEED = true;
 
     this.clock = {
       m: 0,
