@@ -4,6 +4,8 @@
 
 A GameBoy emulator that utilizes HTML5 canvas to provide an emulation of the console. The goal of this project is to explore the world of emulation and to learn how basic computers work at a low level. Perfect cycle accuracy is not of primary concern.
 
+[Current Version](http://gameboy.mattchang.ca/)
+
 CPU instruction set accuracy test results (Blargg's test ROMs):
 -----------------------------------------------------
 Currently passes all CPU instruction tests.
